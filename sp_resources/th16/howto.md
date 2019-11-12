@@ -1,6 +1,7 @@
 Every ECL script was modified in this way:
 
-* Import a utility script.
+* Use [priw8's ECL map](https://github.com/Priw8/eclmap/blob/0f29802f8a22b09eac970da2175aad5a43345c6e/th16.eclm)
+* Add a line to import a utility script.
 * Locate the line in `sub main` beginning with `unless ($SPELL_ID >= 0) goto ...` and add two lines after it that spawn an enemy using the sub defined in the utility script.
 
 ```diff
