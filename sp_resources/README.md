@@ -1,6 +1,6 @@
 # `sp_resources` - Spell Practice Resources
 
-**Currently supports:** TH16 (v1.00a), TH17 (v1.00b)
+**Currently supports:** TH13 (v1.00c), TH14 (v1.00b), TH16 (v1.00a), TH17 (v1.00b)
 
 This patch modifies games with Spell Practice to:
 
@@ -20,4 +20,6 @@ This requires only very basic experience with Cheat Engine.
 2. Do basic by-value searches for the current resource value while playing the game or watching a replay. ZUN tends to store these resource amounts in static globals. (green address in Cheat Engine)
 3. Once you find the address, right click on it and "Find out what writes to this address."
 4. Begin spell practice.  The instruction that writes the initial value should get logged.
-5. Add a binhack that changes the constant operand to this instruction.
+5. Add a binhack that changes the immediate operand to this instruction.
+
+Some games may require trickier fixes if the values stored aren't immediate operands.  A `"COMMENT"` field (ignored by `thcrap`) may be added to the binhack describing what it is doing.
