@@ -11,12 +11,19 @@ int ClipInt(int x, int a, int b) {
 }
 
 int CurrentSeason() { return $GI4; }
-int CurrentSeasonPower() { return $GI5; }
-int ReleaseInCooldown() { return $GI6; }
-int DebuggerGlobal() { return $GI7; }
 void SetCurrentSeason(int season) { $GI4 = season; return; }
+
+int CurrentSeasonPower() { return $GI5; }
 void SetCurrentSeasonPower(int power) { $GI5 = ClipInt(power, 0, MAX_SEASON_POWER); return; }
-void SetReleaseInCooldown(int b) { $GI6 = b; return; }
+
+// 0: no release, no cooldown
+// -1: in cooldown
+// positive: enemy id of release
+global RELEASE_IN_COOLDOWN = -1;
+int ActiveReleaseState() { return $GI6; }
+void SetActiveReleaseState(int value) { $GI6 = value; return; }
+
+int DebuggerGlobal() { return $GI7; }
 void SetDebuggerGlobal(int value) { $GI7 = value; return; }
 
 global SMENU_BG_ANM_SCRIPT = 2 * NUM_SEASONS;  // season menu
@@ -32,13 +39,14 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 // TODO: Season items on damage dealt
 // TODO: Season items from release bullet cancels (tricky) (important!)
 // TODO: Season items from bomb bullet cancels (tricky)
-// TODO: Fix text alignments and fonts
 // TODO: Better menu
 //   - thought: 5 icons around player
 //   - thought: have selected icon fly over to gauge, then gauge appears.
 //     (tricky due to different coord systems)
 // TODO: (MAYBE) allow disabling beast items (fish and specials only)
 // TODO: Fix gauge positioning w.r.t. beast items
+// TODO: Consume season levels
+// TODO: Why is spring release not working?
 
 int BitNot(int x) {
     return 0xFFFFFFFF - x;
@@ -57,7 +65,7 @@ void SeasonMenuEnemy() {
 
     SetCurrentSeason(SPRING);
     SetCurrentSeasonPower(0);
-    SetReleaseInCooldown(0);
+    SetActiveReleaseState(0);
 
     anmSelect(4);
     anmSetSprite(0, SMENU_BG_ANM_SCRIPT);
@@ -224,25 +232,16 @@ void SeasonInputEnemy() {
     int oldInput = $INPUT;
     int releaseId = 0;
 
-    enmCreate("SeasonDebugGlobalsEnemy", 0f, 0f, 1, 0, 0);
-
-    SetCurrentSeasonPower(98);
-    SetReleaseInCooldown(0);
+    SetCurrentSeasonPower(500);
+    SetActiveReleaseState(0);
 
     while(true) {
         int risingEdge = $INPUT & BitNot(oldInput);
         if (risingEdge & KEY_SKIP) {
-            if (!ReleaseInCooldown()) {
-
-                // if ($INPUT & KEY_SLOW) {
-                //     printf("Old Season Release!!\n");
-                //     enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
-                //     releaseId = LAST_ENM_ID;
-                // } else {
-                    printf("New Season Release!!\n");
-                    enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
-                    releaseId = LAST_ENM_ID;
-                // }
+            if (!ActiveReleaseState()) {
+                printf("New Season Release!!\n");
+                enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
+                releaseId = LAST_ENM_ID;
             }
         }
         oldInput = $INPUT;
@@ -405,7 +404,7 @@ void SeasonReleaseEnemy() {
     flagSet(128); // not killed by dialogRead or enmKillAll
     flagSet(12); // don't delete beyond screen edges (cooldown would be stuck on)
 
-    SetReleaseInCooldown(true);
+    SetActiveReleaseState(ID);
 
     int season = CurrentSeason();
     int seasonAlpha = SeasonAlphabeticalOrder(season);
@@ -555,10 +554,11 @@ CASE_1:
     //
     // I'm not actually sure if this should be wait(90) or wait(91) for
     // best accuracy, but who cares about 1 frame.
-    flagSet(32);
+    SetActiveReleaseState(RELEASE_IN_COOLDOWN);
+    flagSet(32); // intangible
     wait(90);
 
-    SetReleaseInCooldown(false);
+    SetActiveReleaseState(0);
     delete();
 }
 
@@ -581,10 +581,9 @@ void ReleaseWait(int frames, int season, int damage) {
         int count; // output var
         enmDamageRad(count, %FINAL_X, %FINAL_Y, %F2, -1, damage);
 
-        // TODO: These gotta spawn season items for chaining!
-        //       TH16 does this by using a mode of 4 when canceling the bullets from a release
-        //       (etCancel is mode 0, and etClear is mode 1).  But what can we do?
-        etCancel(%F2);
+        // Cancel bullets.
+        // We supply a negative value to let the binhack know it's a release.
+        etCancel2(-%F2);
 
         wait(1);
     }
@@ -689,7 +688,6 @@ void DebugAnmEnemy() {
         wait(1);
     }
 }
-
 
 void SoundTestEnemy() {
     flagSet(32); // intangible

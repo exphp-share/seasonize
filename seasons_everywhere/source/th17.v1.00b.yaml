@@ -36,7 +36,7 @@ binhacks:
       - "0F1F440000       " # NOP DWORD ptr [EAX + EAX*1 + 00]
       - "0F1F8000000000   " # NOP DWORD ptr [EAX + 00000000H]
 
-  Spawn season item on graze:
+  Season items on graze:
     addr: "0x0044a0dc"
     expected: "5f // 5e // 8be5 // 5d"
     code: "E9 [codecave:ExpHP.seasons-everywhere.item-on-graze]"
@@ -60,8 +60,20 @@ binhacks:
     addr: "0x433b2d"
     expected: "8d41ff // 83f80d"
     code:
-      - "E9 [codecave:ExpHP.seasons-everywhere.season-item-pickup-effect]"
+      - "E9 [codecave:ExpHP.seasons-everywhere.item-pickup-effect]"
       - "CC"
+
+  Use season release bullet cancel mode:
+    addr: "0x425c9f"
+    expected: "6a01 // 8bcf // f30f1185 98fbffff"
+    code:
+      - "E9 [codecave:ExpHP.seasons-everywhere.use-release-cancel-mode]"
+
+  Implement season bullet cancel modes:
+    addr: "0x419c9c"
+    expected: "83fa01 // 7544"
+    code:
+      - "E9 [codecave:ExpHP.seasons-everywhere.impl-cancel-modes]"
 
 codecaves:
   #==============================================
@@ -187,7 +199,7 @@ codecaves:
     - "C70424 E1A04400             " # mov [esp], 0x0044a0e1
     - "C3                          " # ret
 
-  ExpHP.seasons-everywhere.season-item-pickup-effect:
+  ExpHP.seasons-everywhere.item-pickup-effect:
     - "83F930                    " #  cmp     ecx, 0x30
     - "7413                      " #  je      .effect
    
@@ -242,17 +254,18 @@ codecaves:
   # extern "stdcall" int GetSeason(void);
   # Additionally preserves ecx, edx, and xmm registers, but not the FPU.
   ExpHP.seasons-everywhere.get-season:
-    - "55                    " # push   ebp
-    - "89 E5                 " # mov    ebp,esp
-
     # Query ECLPlus
-    - "6A 00                 " # push 0      # arg 3: mode    (0 = get value)
-    - "68 CAE0FFFF           " # push -7990  # arg 2: var ID  (GI4)
-    - "6A 00                 " # push 0      # arg 1: enemy   (null)
+    - "6A 00                 " # push    0           ; arg 3: mode    (0 = get value)
+    - "68 CAE0FFFF           " # push    VAR_SEASON  ; arg 2: var ID
+    - "6A 00                 " # push    0           ; arg 1: enemy   (null)
     - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
+    - "C3                    " # ret
 
-    - "89 EC                 " # mov    esp,ebp
-    - "5D                    " # pop    ebp
+  ExpHP.seasons-everywhere.get-active-release:
+    - "6A 00                 " # push    0                   ; arg 3: mode    (0 = get value)
+    - "68 CCE0FFFF           " # push    VAR_ACTIVE_RELEASE  ; arg 2: var ID
+    - "6A 00                 " # push    0                   ; arg 1: enemy   (null)
+    - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
     - "C3                    " # ret
 
   # extern "stdcall" int IncrementSeasonPower();
@@ -411,6 +424,92 @@ codecaves:
     - "E8 00000000               " #  call    (next instruction)
     - "C70424 20354300           " #  mov     dword [esp], 0x00433520
     - "C3                        " #  ret
+
+  ExpHP.seasons-everywhere.use-release-cancel-mode:
+    # An explanation:
+    # In TH17, the stack argument to the "cancel_bullets_in_radius" functions
+    # looks like a boolean `is_cancel` because it only has the values 0 and 1,
+    # but in fact it is more like a `cancel_mode` enum.
+    # In TH16, bullets cancelled by releases had a "cancel mode" of 4,
+    # which was checked to generate the season items. Given that the function that
+    # generates the items is used by many different types of objects (not just the
+    # Bullet struct), it seems best to continue this practice.
+    #
+    # We can't supply a cancel mode from ECL, so instead, releases are scripted
+    # to supply negative radii.
+    - "52                " # push    edx
+    - "51                " # push    ecx
+    - "83EC04            " # sub     esp, 0x4
+    - "F30F110424        " # movss   [esp], xmm0  ; xmm0 has radius
+
+    # if radius < 0, it's a release.
+    # we'll operate on the sign bit using an integer register because it's easier.
+    - "8B0C24            " # mov     ecx, [esp]  ; reinterpreting bits as integer
+    - "85C9              " # test    ecx, ecx
+    - "B801000000        " # mov     eax, 0x1
+    - "BA04000000        " # mov     edx, 0x4
+    - "0F4CC2            " # cmovl   eax, edx
+    - "81E1FFFFFF7F      " # and     ecx, 0x7fffffff  ; take absolute value
+    - "890C24            " # mov     [esp], ecx
+
+    - "F30F100424        " # movss   xmm0, [esp]
+    - "83C404            " # add     esp, 0x4
+    - "59                " # pop     ecx
+    - "5A                " # pop     edx
+
+    - "50                " # push    eax  ; supply as stack arg to cancel_bullets_in_radius function
+
+    # original code
+    - "89F9              " # mov     ecx, edi
+    - "F30F118598FBFFFF  " # movss   dword [ebp-0x468], xmm0
+    # abs_jmp_hack  0x425cab
+    - "E800000000        " # <1>  call %%next
+    - "C70424AB5C4200    " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
+
+  ExpHP.seasons-everywhere.impl-cancel-modes:
+    - "83FA01            " # cmp     edx, 0x1
+    - "7407              " # je      .mode_1
+    - "83FA04            " # cmp     edx, 0x4
+    - "740F              " # je      .mode_4
+    - "EB5F              " # jmp     .mode_0
+
+    # .mode_1:
+    # abs_jmp_hack 0x419ca1
+    - "E800000000        " # <1>  call %%next
+    - "C70424A19C4100    " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
+
+    # .mode_4:
+    # Random direction +/- 10 degrees from straight up
+    - "B968764B00        " # mov     ecx, SAFE_RNG
+    - "B880284000        " # mov     eax, RANDF_NEG_1_TO_1
+    - "FFD0              " # call    eax
+    - "D80DF83A4A00      " # fmul    dword [FLOAT_PI_OVER_18]
+    - "D95DFC            " # fstp    dword [ebp-0x4]
+    - "F30F1045FC        " # movss   xmm0, dword [ebp-0x4]
+    - "F30F5C05F43B4A00  " # subss   xmm0, dword [FLOAT_PI_OVER_2]
+
+    - "6AFF              " # push    0xffffffff ; stack arg 20:  (unknown, new in TH17)
+    - "51                " # push    ecx ; stack arg 1c:  (unused/optimized away)
+    - "6A00              " # push    0x0 ; stack arg 18:  intangibility frames (ignored for PIV/season)
+    - "83EC0C            " # sub     esp, 0xc
+    - "C7442408CDCC0C40  " # mov     dword [esp+0x8], 0x400ccccd  ; stack arg 14: vel_norm
+    - "F30F11442404      " # movss   dword [esp+0x4], xmm0        ; stack arg 10: vel_angle
+    - "56                " # push    esi   ; stack arg 8: pos
+    - "6A30              " # push    0x30  ; stack arg 4: item type
+    - "8B0DB8764B00      " # mov     ecx, dword [ITEM_MANAGER_PTR]
+    - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
+    - "FFD0              " # call    eax
+    # Make the item get autocollected once it stops moving.
+    # (this is implemented by another binhack; this field is an unused leftover from TH16)
+    - "C780700C000001000000" # mov     dword [eax+en_force_autocollect], 1
+
+    # .mode_0:
+    # abs_jmp_hack 0x419ce5
+    - "E800000000        " # <1>  call %%next
+    - "C70424E59C4100    " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
 
   ExpHP.seasons-everywhere.item-noattract:
     # The original two checks
