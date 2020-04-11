@@ -31,10 +31,20 @@
             "expected": "8d41ff // 83f80d",
             "code": "E9 [codecave:ExpHP.seasons-everywhere.item-pickup-effect] // CC"
         },
+        "Season release autocollects items in Falling state": {
+            "addr": "0x433590",
+            "expected": "a1 88764b00",
+            "code": "E9 [codecave:ExpHP.seasons-everywhere.autocollect-state-1]"
+        },
+        "Season release autocollects items in Attracted state": {
+            "addr": "0x4338b3",
+            "expected": "a1 88764b00",
+            "code": "E9 [codecave:ExpHP.seasons-everywhere.autocollect-state-4]"
+        },
         "Use season release bullet cancel mode": {
             "addr": "0x425c9f",
             "expected": "6a01 // 8bcf // f30f1185 98fbffff",
-            "code": "E9 [codecave:ExpHP.seasons-everywhere.use-release-cancel-mode]"
+            "code": "E9 [codecave:ExpHP.seasons-everywhere.use-release-cancel-mode] // CCCCCC CCCCCCCC"
         },
         "Implement season bullet cancel modes": {
             "addr": "0x419c9c",
@@ -44,16 +54,19 @@
     },
     "codecaves": {
         "ExpHP.seasons-everywhere.global-var-store": "00000000 // 00000000 // 00000000 // 00000000 // ",
-        "ExpHP.seasons-everywhere.new-enemy-ex": "6A1C // B850B24700 // FFD0 // B9 <codecave:ExpHP.seasons-everywhere.global-var-store> // 8D09 // 51 // 89C1 // E8 [ExpHP.seasons-everywhere.zunlist-insert-after] // 8901 // C3",
-        "ExpHP.seasons-everywhere.free-enemy-ex-by-id": "E8 [ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 89C1 // E8 [ExpHP.seasons-everywhere.zunlist-remove-node] // 50 // B89FEF4700 // FFD0 // C3",
+        "ExpHP.seasons-everywhere.new-enemy-ex": "6A1C // B850B24700 // FFD0 // B9 <codecave:ExpHP.seasons-everywhere.global-var-store> // 8D09 // 51 // 89C1 // E8 [codecave:ExpHP.seasons-everywhere.zunlist-insert-after] // 8901 // C3",
+        "ExpHP.seasons-everywhere.free-enemy-ex-by-id": "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 89C1 // E8 [codecave:ExpHP.seasons-everywhere.zunlist-remove-node] // 50 // B89FEF4700 // FFD0 // C3",
         "ExpHP.seasons-everywhere.find-enemy-ex-by-id": "B9 <codecave:ExpHP.seasons-everywhere.global-var-store> // 8D09 // 8B542404 // 8B4104 // 85C0 // 740D // 3B5010 // 7405 // 8B4004 // EBF2 // C20400 // 0F0B",
         "ExpHP.seasons-everywhere.item-anm-script": "83F8 30 // 74 13 // C787 580C0000 02000000 // FF34C5 A80D4A00 // EB 15 // C787 580C0000 09000000 // E8 [codecave:ExpHP.seasons-everywhere.get-season] // 05 81000000 // 50 // E8 00000000 // C70424 B8344300 // C3",
         "ExpHP.seasons-everywhere.item-on-graze": "8B15 D0774B00 // 8D92 10060000 // 8B7B 08 // 83EC 20 // F30F1047 04 // F30F5C42 04 // F30F114424 0C // D94424 0C // F30F1007 // F30F5C02 // F30F114424 0C // D94424 0C // B8 706E4900 // FF D0 // C74424 1C FFFFFFFF // C74424 10 3333F33F // D95C24 0C // 897C24 04 // C70424 30000000 // 8B0D B8764B00 // B8 40474300 // FF D0 // 5f // 5e // 8be5 // 5d // E8 00000000 // C70424 E1A04400 // C3",
         "ExpHP.seasons-everywhere.item-pickup-effect": "83F930 // 7413 // 8D41FF // 83F80D // E800000000 // C70424333B4300 // C3 // E8 [codecave:ExpHP.seasons-everywhere.increment-season-power] // 85C0 // 7422 // 6840FFFFFF // 6AFF // 8DB7100C0000 // 56 // B8 700b4500 // FFD0 // F30F1016 // 6A3F // B8 F0544600 // FFD0 // 8B35D0774B00 // 8974240C // E800000000 // C70424863F4300 // C3",
         "ExpHP.seasons-everywhere.get-season": "6A 00 // 68 CAE0FFFF // 6A 00 // E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch] // C3",
         "ExpHP.seasons-everywhere.get-active-release": "6A 00 // 68 CCE0FFFF // 6A 00 // E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch] // C3",
+        "ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting": "A188764B00 // 83783001 // 7508 // 8378383C // 7D02 // EB0E // E8 [codecave:ExpHP.seasons-everywhere.get-active-release] // 85C0 // 7E02 // EB03 // 31C0 // C3 // B801000000 // C3",
         "ExpHP.seasons-everywhere.increment-season-power": "51 // 52 // 6A 01 // 68 CBE0FFFF // 6A 00 // E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch] // 8138 74040000 // 7D 33 // FF00 // 8B00 // 83F8 64 // 74 27 // 3D E6000000 // 74 20 // 3D 86010000 // 74 19 // 3D 4E020000 // 74 12 // 3D 48030000 // 74 0B // 3D 74040000 // 74 04 // 31C0 // EB 05 // B8 01000000 // 5A // 59 // C3",
-        "ExpHP.seasons-everywhere.item-flyout-state": "83F8 03 // 74 07 // 83F8 09 // 74 1C // EB 0D // E8 00000000 // C70424 23384300 // C3 // E8 00000000 // C70424 72384300 // C3 // F30F1005 18594B00 // F30F108F 1C0C0000 // F30F1097 200C0000 // F30F109F 240C0000 // F30F59C8 // F30F59D0 // F30F59D8 // F30F588F 100C0000 // F30F5897 140C0000 // F30F589F 180C0000 // F30F118F 100C0000 // F30F1197 140C0000 // F30F119F 180C0000 // F30F1087 280C0000 // F30F5C05 C03A4A00 // F30F1187 280C0000 // 83EC 08 // F30F114424 04 // F30F1087 2C0C0000 // F30F110424 // 8D8F 1C0C0000 // B8 F04C4300 // FFD0 // A1 88764B00 // 8378 30 01 // 75 10 // 8378 38 3C // 7D 0A // C787 700C0000 01000000 // 0F2FAF 280C0000 // 7315 // F30F1087 140C0000 // E8 00000000 // C70424 27374300 // C3 // 8B35 D0774B00 // 83BF 700C0000 00 // B8 03000000 // B9 01000000 // 0F44C1 // 8987 580C0000 // C787 1C0C0000 00000000 // C787 200C0000 00000000 // C787 240C0000 00000000 // C787 280C0000 00000000 // C787 2C0C0000 DB0FC93F // 8B86 3C900100 // 8B40 08 // 8987 640C0000 // 8B4C24 10 // E8 00000000 // C70424 20354300 // C3",
+        "ExpHP.seasons-everywhere.item-flyout-state": "83F8 03 // 74 07 // 83F8 09 // 74 1C // EB 0D // E8 00000000 // C70424 23384300 // C3 // E8 00000000 // C70424 72384300 // C3 // F30F1005 18594B00 // F30F108F 1C0C0000 // F30F1097 200C0000 // F30F109F 240C0000 // F30F59C8 // F30F59D0 // F30F59D8 // F30F588F 100C0000 // F30F5897 140C0000 // F30F589F 180C0000 // F30F118F 100C0000 // F30F1197 140C0000 // F30F119F 180C0000 // F30F1087 280C0000 // F30F5C05 C03A4A00 // F30F1187 280C0000 // 83EC 08 // F30F114424 04 // F30F1087 2C0C0000 // F30F110424 // 8D8F 1C0C0000 // B8 F04C4300 // FFD0 // E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting] // 0987700C0000 // 0F2FAF 280C0000 // 7315 // F30F1087 140C0000 // E8 00000000 // C70424 27374300 // C3 // 8B35 D0774B00 // 83BF 700C0000 00 // B8 03000000 // B9 01000000 // 0F44C1 // 8987 580C0000 // C787 1C0C0000 00000000 // C787 200C0000 00000000 // C787 240C0000 00000000 // C787 280C0000 00000000 // C787 2C0C0000 DB0FC93F // 8B86 3C900100 // 8B40 08 // 8987 640C0000 // 8B4C24 10 // E8 00000000 // C70424 20354300 // C3",
+        "ExpHP.seasons-everywhere.autocollect-state-1": "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting] // 85C0 // 740D // E8 00000000 // C70424 0A384300 // C3 // E8 00000000 // C70424 A5354300 // C3",
+        "ExpHP.seasons-everywhere.autocollect-state-4": "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting] // 85C0 // 740D // E8 00000000 // C70424 0A384300 // C3 // E8 00000000 // C70424 C8384300 // C3",
         "ExpHP.seasons-everywhere.use-release-cancel-mode": "52 // 51 // 83EC04 // F30F110424 // 8B0C24 // 85C9 // B801000000 // BA04000000 // 0F4CC2 // 81E1FFFFFF7F // 890C24 // F30F100424 // 83C404 // 59 // 5A // 50 // 89F9 // F30F118598FBFFFF // E800000000 // C70424AB5C4200 // C3",
         "ExpHP.seasons-everywhere.impl-cancel-modes": "83FA01 // 7407 // 83FA04 // 740F // EB5F // E800000000 // C70424A19C4100 // C3 // B968764B00 // B880284000 // FFD0 // D80DF83A4A00 // D95DFC // F30F1045FC // F30F5C05F43B4A00 // 6AFF // 51 // 6A00 // 83EC0C // C7442408CDCC0C40 // F30F11442404 // 56 // 6A30 // 8B0DB8764B00 // B840474300 // FFD0 // C780700C000001000000 // E800000000 // C70424E59C4100 // C3",
         "ExpHP.seasons-everywhere.item-noattract": "83F804 // 740C // 83F803 // 7407 // 83F809 // 7402 // EB0D // E800000000 // C7042498404300 // C3 // E800000000 // C70424E93F4300 // C3",

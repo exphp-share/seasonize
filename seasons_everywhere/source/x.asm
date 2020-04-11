@@ -28,19 +28,23 @@
 %define ITMMGR_SPAWN_ITEM 0x434740
 %define FIND_ENEMY_FULL_BY_ID 0x41ddd0
 
+%define ECLP_GET_VALUE 0
+%define ECLP_GET_PTR   1
+
 %define VAR_GI4 -7990
 %define VAR_GI5 -7989
 %define VAR_GI6 -7988
 %define VAR_GI7 -7987
 
-%define VAR_SEASON VAR_GI4
-%define VAR_SEASON_POWER VAR_GI5
-%define VAR_ACTIVE_RELEASE VAR_GI6
+%define VAR_SEASON          VAR_GI4
+%define VAR_SEASON_POWER    VAR_GI5
+%define VAR_ACTIVE_RELEASE  VAR_GI6
 
 %define FLOAT_ONE_HALF 0x4a3b48
 %define FLOAT_PI_OVER_18 0x4a3af8
 %define FLOAT_PI_OVER_2 0x4a3bf4
 
+%define SHOTTYPE_PTR 0x4b7688
 %define ITEM_MANAGER_PTR 0x4b76b8
 %define SAFE_RNG 0x4b7668
 
@@ -51,6 +55,9 @@
 %define et_diameter 0x64c
 %define et_pos_x 0x62c
 %define et_pos_y 0x630
+
+%define st_bomb_is_active 0x30
+%define st_bomb_time 0x38
 
 %define efull_enemy 0x120c
 
@@ -186,16 +193,13 @@ item_flyout:
     mov     eax, 0x434cf0  ; cartesian_from_polar
     call    eax
 
-    ; TODO: TEST THIS BRANCH
-    ; If bomb is autocollecting, set the force_autocollect flag.
-    mov     eax, dword [0x4b7688]  ; SHOTTYPE_PTR
-    cmp     dword [eax+0x30], 0x1  ; {ShotType::bool__related_to_bombs}
-    jne     .skip
-    cmp     dword [eax+0x38], 0x3c ; {ShotType::bomb_time.current}
-    jge     .skip
-    mov     dword [edi+0xc70], 0x1 ; {Item::force_autocollect__season_only}
+    ; TODO: TEST SEASON AUTOCOLLECT (graze and then quickly use spring release)
+    ;
+    ; If a bomb/release autocollects during any frame of the flyout state,
+    ; the item will be autocollected once it stops moving
+    call    codecave_is_bomb_or_release_autocollecting
+    or      [edi+en_force_autocollect], eax
 
-.skip:
     comiss  xmm5, dword [edi+0xc28] ; compare 0.0f to {Item::velocity_magnitude}
     jnb     .velocity_nonpositive
 
@@ -475,12 +479,37 @@ zunlist_remove_node:
 
 codecave_eclplus_int_switch:
 
+; returns enemy id if there is a release, -1 if in cooldown, 0 otherwise.
 codecave_get_active_release:
-    push    0                   ; arg 3: mode    (1 = get pointer)
-    push    VAR_ACTIVE_RELEASE  ; arg 2: var ID  (GI5)
-    push    0                   ; arg 1: enemy   (null)
+    push    ECLP_GET_VALUE      ; arg 3: mode
+    push    VAR_ACTIVE_RELEASE  ; arg 2: var ID
+    push    0                   ; arg 1: enemy ptr
     call    codecave_eclplus_int_switch
+    ret
 
+; Several places in the item update code check the following two conditions for autocollection:
+; - Is there an active bomb less than 60 frames old?
+; - Is there an active release, period?
+;
+; (of course, TH17 only checks the first condition. We add the latter!)
+codecave_is_bomb_or_release_autocollecting:
+    mov     eax, [SHOTTYPE_PTR]
+    cmp     dword [eax+st_bomb_is_active], 0x1
+    jne     .nobomb
+    cmp     dword [eax+st_bomb_time], 0x3c  ; < 60 frames
+    jge     .nobomb
+    jmp     .success
+.nobomb:
+    call    codecave_get_active_release
+    test    eax, eax
+    jng     .norelease    ; positive (active)
+    jmp     .success
+.norelease:
+    xor     eax, eax
+    ret
+.success:
+    mov     eax, 0x1
+    ret
 
 codecave_use_release_cancel_mode:
     ; An explanation:
@@ -612,3 +641,21 @@ codecave_impl_release_cancel_modes:
 
 .mode_0:
     abs_jmp_hack 0x419ce5
+
+codecave_autocollect_state_1: ; 0x433590
+    call    codecave_is_bomb_or_release_autocollecting
+    test    eax, eax
+    jz      .failure
+.success:
+    abs_jmp_hack 0x43380a
+.failure:
+    abs_jmp_hack 0x4335a5
+
+codecave_autocollect_state_4: ; 0x4338b3
+    call    codecave_is_bomb_or_release_autocollecting
+    test    eax, eax
+    jz      .failure
+.success:
+    abs_jmp_hack 0x43380a
+.failure:
+    abs_jmp_hack 0x4338c8

@@ -63,11 +63,22 @@ binhacks:
       - "E9 [codecave:ExpHP.seasons-everywhere.item-pickup-effect]"
       - "CC"
 
+  Season release autocollects items in Falling state:
+    addr: "0x433590"
+    expected: "a1 88764b00"
+    code: "E9 [codecave:ExpHP.seasons-everywhere.autocollect-state-1]"
+
+  Season release autocollects items in Attracted state:
+    addr: "0x4338b3"
+    expected: "a1 88764b00"
+    code: "E9 [codecave:ExpHP.seasons-everywhere.autocollect-state-4]"
+
   Use season release bullet cancel mode:
     addr: "0x425c9f"
     expected: "6a01 // 8bcf // f30f1185 98fbffff"
     code:
       - "E9 [codecave:ExpHP.seasons-everywhere.use-release-cancel-mode]"
+      - "CCCCCC CCCCCCCC"
 
   Implement season bullet cancel modes:
     addr: "0x419c9c"
@@ -105,16 +116,16 @@ codecaves:
     - "8D09                      " # lea    ecx, [ecx+g_enemy_ex_head]
     - "51                        " # push   ecx
     - "89C1                      " # mov    ecx, eax
-    - "E8 [ExpHP.seasons-everywhere.zunlist-insert-after]" # call
+    - "E8 [codecave:ExpHP.seasons-everywhere.zunlist-insert-after]" # call
     - "8901                      " # mov    [ecx], eax  ;  globals.list_head = new_ex
     # return the EnemyEx
     - "C3                        " # ret
 
   # [esp+0x4] is an enemy id.
   ExpHP.seasons-everywhere.free-enemy-ex-by-id:
-    - "E8 [ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
+    - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
     - "89C1                      " # mov    ecx, eax
-    - "E8 [ExpHP.seasons-everywhere.zunlist-remove-node]" # call
+    - "E8 [codecave:ExpHP.seasons-everywhere.zunlist-remove-node]" # call
     - "50                        " # push   eax
     - "B89FEF4700                " # mov    eax, FREE
     - "FFD0                      " # call   eax
@@ -250,7 +261,6 @@ codecaves:
     - "C70424863F4300            " #  mov     dword [esp], 0x433f86
     - "C3                        " #  ret
 
-
   # extern "stdcall" int GetSeason(void);
   # Additionally preserves ecx, edx, and xmm registers, but not the FPU.
   ExpHP.seasons-everywhere.get-season:
@@ -261,12 +271,37 @@ codecaves:
     - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
     - "C3                    " # ret
 
+  # returns enemy id if there is a release, -1 if in cooldown, 0 otherwise.
   ExpHP.seasons-everywhere.get-active-release:
     - "6A 00                 " # push    0                   ; arg 3: mode    (0 = get value)
     - "68 CCE0FFFF           " # push    VAR_ACTIVE_RELEASE  ; arg 2: var ID
     - "6A 00                 " # push    0                   ; arg 1: enemy   (null)
     - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
     - "C3                    " # ret
+
+  # Several places in the item update code check the following two conditions for autocollection:
+  # - Is there an active bomb less than 60 frames old?
+  # - Is there an active release, period?
+  #
+  # (of course, TH17 only checks the first condition. We add the latter!)
+  ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting:
+    - "A188764B00        " # mov     eax, [SHOTTYPE_PTR]
+    - "83783001          " # cmp     dword [eax+st_bomb_is_active], 0x1
+    - "7508              " # jne     .nobomb
+    - "8378383C          " # cmp     dword [eax+st_bomb_time], 0x3c  ; < 60 frames
+    - "7D02              " # jge     .nobomb
+    - "EB0E              " # jmp     .success
+    # .nobomb:
+    - "E8 [codecave:ExpHP.seasons-everywhere.get-active-release]" # call    codecave_get_active_release
+    - "85C0              " # test    eax, eax
+    - "7E02              " # jng     .norelease    ; positive (active)
+    - "EB03              " # jmp     .success
+    # .norelease:
+    - "31C0              " # xor     eax, eax
+    - "C3                " # ret
+    # .success:
+    - "B801000000        " # mov     eax, 0x1
+    - "C3                " # ret
 
   # extern "stdcall" int IncrementSeasonPower();
   #
@@ -368,16 +403,13 @@ codecaves:
     - "B8 F04C4300               " # mov     eax, 0x434cf0  ; cartesian_from_polar
     - "FFD0                      " # call    eax
    
-    # TODO: TEST THIS BRANCH
-    # If bomb is autocollecting, set the force_autocollect flag.
-    - "A1 88764B00               " # mov     eax, dword [0x4b7688]  ; SHOTTYPE_PTR
-    - "8378 30 01                " # cmp     dword [eax+0x30], 0x1  ; {ShotType::bool__related_to_bombs}
-    - "75 10                     " # jne     .skip
-    - "8378 38 3C                " # cmp     dword [eax+0x38], 0x3c ; {ShotType::bomb_time.current}
-    - "7D 0A                     " # jge     .skip
-    - "C787 700C0000 01000000    " # mov     dword [edi+0xc70], 0x1 ; {Item::force_autocollect__season_only}
-   
-    # LABEL .skip:
+    # TODO: TEST SEASON AUTOCOLLECT (graze and then quickly use spring release)
+    #
+    # If a bomb/release autocollects during any frame of the flyout state,
+    # the item will be autocollected once it stops moving
+    - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+    - "0987700C0000              " # or      [edi+en_force_autocollect], eax
+
     # Has this item stopped moving?
     - "0F2FAF 280C0000           " # comiss  xmm5, dword [edi+0xc28] ; compare 0.0f to {Item::velocity_magnitude}
     - "7315                      " # jnb     .velocity_nonpositive
@@ -424,6 +456,36 @@ codecaves:
     - "E8 00000000               " #  call    (next instruction)
     - "C70424 20354300           " #  mov     dword [esp], 0x00433520
     - "C3                        " #  ret
+
+  ExpHP.seasons-everywhere.autocollect-state-1:
+    - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+    - "85C0              " # test    eax, eax
+    - "740D              " # jz      .failure
+    # .success:
+    # abs_jmp_hack 0x43380a
+    - "E8 00000000       " # <1>  call %%next
+    - "C70424 0A384300   " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
+    # .failure:
+    # abs_jmp_hack 0x4335a5
+    - "E8 00000000       " # <1>  call %%next
+    - "C70424 A5354300   " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
+
+  ExpHP.seasons-everywhere.autocollect-state-4:
+    - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+    - "85C0              " # test    eax, eax
+    - "740D              " # jz      .failure
+    # .success:
+    # abs_jmp_hack 0x43380a
+    - "E8 00000000       " # <1>  call %%next
+    - "C70424 0A384300   " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
+    # .failure:
+    # abs_jmp_hack 0x4338c8
+    - "E8 00000000       " # <1>  call %%next
+    - "C70424 C8384300   " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
 
   ExpHP.seasons-everywhere.use-release-cancel-mode:
     # An explanation:
@@ -502,7 +564,12 @@ codecaves:
     - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
     - "FFD0              " # call    eax
     # Make the item get autocollected once it stops moving.
+    # (this field used to be an argument to spawn_item in TH16)
     # (this is implemented by another binhack; this field is an unused leftover from TH16)
+    #
+    # Given that all season items are already autocollected (or this flag is set) on any frame
+    # that a release is active, this may seem unnecessary. AFAIK its only impact is during the
+    # few frames that a season item has not had its ANM initialized yet.
     - "C780700C000001000000" # mov     dword [eax+en_force_autocollect], 1
 
     # .mode_0:
