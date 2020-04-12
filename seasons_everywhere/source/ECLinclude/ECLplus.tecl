@@ -43,6 +43,8 @@
 #ins "2107 S"
 #ins "2108 S"
 #ins "2109 S"
+#ins "2110 f"
+#ins "2111 f"
 
 #ins "2200"
 #ins "2201 S"
@@ -100,3 +102,9 @@ global PL_DYING = 4;
 global PL_DEAD = 2;
 global PL_NORMAL = 1;
 global PL_RESPAWN = 0;
+
+global ANCHOR_CENTER = 0;
+global ANCHOR_LEFT = 1;
+global ANCHOR_RIGHT = 2;
+global ANCHOR_TOP = 1;
+global ANCHOR_BOTTOM = 2;
