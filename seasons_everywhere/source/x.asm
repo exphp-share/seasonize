@@ -23,10 +23,12 @@
 ; ...you'll see.
 
 %define MALLOC 0x47b250
-%define FREE 0x47ef9f
+%define MEMSET 0x47ce60
+%define FREE_SIZED 0x47b280
 %define RANDF_NEG_1_TO_1 0x402880
 %define ITMMGR_SPAWN_ITEM 0x434740
 %define FIND_ENEMY_FULL_BY_ID 0x41ddd0
+%define TIMER_SET_VALUE 0x405bc0
 
 %define ECLP_GET_VALUE 0
 %define ECLP_GET_PTR   1
@@ -60,6 +62,7 @@
 %define st_bomb_time 0x38
 
 %define efull_enemy 0x120c
+%define efull_id 0x5760
 
 segment .data
 struc ZunList
@@ -78,6 +81,10 @@ struc EnemyEx
     ex_id   resd 1
     ex_damage_per_season_item resd 1
     ex_damage_accounted_for   resd 1
+    ex_bonus_timer resd 5
+    ex_max_time resd 1
+    ex_item_max resd 1
+    ex_item_min resd 1
 endstruc
 
 ; workaround for [Rx] being broken  (side-effect-free absolute jump)
@@ -371,31 +378,62 @@ effect_codecave:
     ret
 
 
-
+; NewEnemyEx(id)
 new_enemy_ex:
-    push   0x1c
-    mov    eax, MALLOC
+    push   ebp
+    mov    ebp, esp
+    push   esi
+    push   edi
+
+    push   EnemyEx_size
+    call   calloc  ; FIXUP
+    mov    edi, eax
+
+    mov    esi, 0x55555555  ; REPLACE WITH <codecave for globals>
+
+    lea    ecx, [esi+g_enemy_ex_head]
+    push   ecx
+    mov    ecx, edi
+    call   zunlist_insert_after  ; FIXUP
+
+    mov    eax, [ebp+0x8]
+    mov    [edi+ex_id], eax
+
+    mov    dword [edi+ex_item_max], 0xa
+    mov    dword [edi+ex_item_min], 0x1
+    lea    ecx, [edi+ex_bonus_timer]
+    push   0x60
+    mov    eax, TIMER_SET_VALUE
     call   eax
 
-    mov    ecx, 0x55555555  ; REPLACE WITH <codecave for globals>
-
-    lea    ecx, [ecx+g_enemy_ex_head]
-    push   ecx
-    mov    ecx, eax
-    call   zunlist_insert_after  ; FIXUP
-    mov    [ecx], eax  ;  globals.list_head = new_ex
     ; return the EnemyEx
-    ret
+    mov    eax, edi
+    pop    edi
+    pop    esi
 
-; [esp+0x4] is an enemy id.
+    mov    esp, ebp
+    pop    ebp
+    ret    0x4
+
+; FreeEnemyExById(id)
 free_enemy_ex_by_id:
+    push   ebp
+    mov    ebp, esp
+
+    mov    eax, [ebp+0x8]
+    push   eax
     call   find_enemy_ex_by_id  ; FIXUP
     mov    ecx, eax
     call   zunlist_remove_node  ; FIXUP
+
+    push   EnemyEx_size
     push   eax
-    mov    eax, FREE
+    mov    eax, FREE_SIZED
     call   eax
-    ret    ; not ret 4; we forwarded the arg to find_enemy_by_id
+
+    mov    esp, ebp
+    pop    ebp
+    ret    4
 
 ; [esp+0x4] is an enemy id.
 find_enemy_ex_by_id:
@@ -410,10 +448,10 @@ find_enemy_ex_by_id:
     je     .found
     mov    eax, [eax+l_next]
     jmp    .loop
+.notfound:
+    xor    eax, eax
 .found:
     ret 4
-.notfound:
-    ud2
 
 ; ecx is a node not in any list. (this is checked)
 ; [esp+0x4] is a list head. (this is checked)
@@ -446,7 +484,7 @@ zunlist_insert_after:
     mov    [ecx+l_next], eax  ; this.next = node.next
     test   eax, eax
     jz     .no_next
-    mov    ecx, [eax+l_prev]  ; node.next.prev = this
+    mov    [eax+l_prev], ecx  ; node.next.prev = this
 .no_next:
 
     mov    [ecx+l_prev], edx  ; this.prev = node
@@ -659,3 +697,61 @@ codecave_autocollect_state_4: ; 0x4338b3
     abs_jmp_hack 0x43380a
 .failure:
     abs_jmp_hack 0x4338c8
+
+
+codecave_alloc_enemy_ex: ; 0x41ed32
+    push   ecx
+    push   edx
+
+    ; at this point, eax holds enemy id
+    push   eax
+    call   new_enemy_ex ; FIXME
+
+    pop    edx
+    pop    ecx
+
+    ; original code
+    mov    eax, dword [ecx+0x90]
+    abs_jmp_hack 0x41ed38
+
+
+codecave_free_enemy_ex: ; 41db7a
+    push   ecx
+    push   edx
+
+    push   dword [esi+efull_id]
+    call   free_enemy_ex_by_id  ; FIXUP
+
+    pop    edx
+    pop    ecx
+
+    ; original code
+    mov    eax, dword [esi+0x5290]
+    abs_jmp_hack 0x41db80
+
+
+; calloc(size)
+calloc:
+    push   ebp
+    mov    ebp, esp
+    push   edi
+
+    mov    eax, [ebp+0x8]
+    push   eax
+    mov    eax, MALLOC
+    call   eax
+    mov    edi, eax
+
+    mov    eax, [ebp+0x8]
+    push   eax
+    push   dword 0x0
+    push   edi
+    mov    eax, MEMSET
+    call   eax
+
+    mov    eax, edi
+    pop    edi
+
+    mov    esp, ebp
+    pop    ebp
+    ret    4

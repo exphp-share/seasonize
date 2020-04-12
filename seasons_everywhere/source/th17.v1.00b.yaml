@@ -86,7 +86,24 @@ binhacks:
     code:
       - "E9 [codecave:ExpHP.seasons-everywhere.impl-cancel-modes]"
 
+  Allocate season data for enemies:
+    addr: "0x41ed32"
+    expected: "8b8190000000"
+    code:
+      - "E9 [codecave:ExpHP.seasons-everywhere.allocate-enemy-exes]"
+      - "CC"
+
+  Free season data for enemies:
+    addr: "0x41db7a"
+    expected: "8b8690520000"
+    code:
+      - "E9 [codecave:ExpHP.seasons-everywhere.deallocate-enemy-exes]"
+      - "CC"
+
 codecaves:
+  # So that we can use a codecave to store data.
+  protection: 0x40 # PAGE_EXECUTE_READWRITE
+
   #==============================================
   # Global variables
   ExpHP.seasons-everywhere.global-var-store:
@@ -100,37 +117,72 @@ codecaves:
   # Types
 
   # struct EnemyEx {
-  #   /* 0x00 */  ZunList node;
-  #   /* 0x10 */  int enemy_id;
-  #   /* 0x14 */  int damage_per_season_item;
-  #   /* 0x18 */  int damage_accounted_for_season_items;
-  # } /* 0x1c TOTAL SIZE */
+  #   ZunList node;
+  #   int enemy_id;
+  #   int damage_per_season_item;
+  #   int damage_accounted_for_season_items;
+  #   ZunTime bonus_timer;
+  #   int item_max;
+  #   int item_min;
+  # }
 
+  # stdcall EnemyEx* NewEnemyEx(id)
   ExpHP.seasons-everywhere.new-enemy-ex:
-    - "6A1C                      " # push   0x1c
-    - "B850B24700                " # mov    eax, MALLOC
-    - "FFD0                      " # call   eax
-    
-    - "B9 <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov    ecx, GLOBALS
-    
-    - "8D09                      " # lea    ecx, [ecx+g_enemy_ex_head]
-    - "51                        " # push   ecx
-    - "89C1                      " # mov    ecx, eax
-    - "E8 [codecave:ExpHP.seasons-everywhere.zunlist-insert-after]" # call
-    - "8901                      " # mov    [ecx], eax  ;  globals.list_head = new_ex
-    # return the EnemyEx
-    - "C3                        " # ret
+    - "55                " # push   ebp
+    - "89E5              " # mov    ebp, esp
+    - "56                " # push   esi
+    - "57                " # push   edi
 
-  # [esp+0x4] is an enemy id.
+    - "6A3C              " # push   EnemyEx_size
+    - "E8 [codecave:ExpHP.seasons-everywhere.calloc]" # call
+    - "89C7              " # mov    edi, eax
+
+    - "BE <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov esi, GLOBALS
+
+    - "8D0E              " # lea    ecx, [esi+g_enemy_ex_head]
+    - "51                " # push   ecx
+    - "89F9              " # mov    ecx, edi
+    - "E8 [codecave:ExpHP.seasons-everywhere.zunlist-insert-after]" # call
+
+    - "8B4508            " # mov    eax, [ebp+0x8]
+    - "894710            " # mov    [edi+ex_id], eax
+
+    - "C747340A000000    " # mov    dword [edi+ex_item_max], 0xa
+    - "C7473801000000    " # mov    dword [edi+ex_item_min], 0x1
+    - "8D4F1C            " # lea    ecx, [edi+ex_bonus_timer]
+    - "6A60              " # push   0x60
+    - "B8C05B4000        " # mov    eax, TIMER_SET_VALUE
+    - "FFD0              " # call   eax
+
+    # return the EnemyEx
+    - "89F8              " # mov    eax, edi
+    - "5F                " # pop    edi
+    - "5E                " # pop    esi
+
+    - "89EC              " # mov    esp, ebp
+    - "5D                " # pop    ebp
+    - "C20400            " # ret    0x4
+
+  # stdcall void FreeEnemyExById(id)
   ExpHP.seasons-everywhere.free-enemy-ex-by-id:
+    - "55                " # push   ebp
+    - "89E5              " # mov    ebp, esp
+
+    - "8B4508            " # mov    eax, [ebp+0x8]
+    - "50                " # push   eax
     - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
-    - "89C1                      " # mov    ecx, eax
+    - "89C1              " # mov    ecx, eax
     - "E8 [codecave:ExpHP.seasons-everywhere.zunlist-remove-node]" # call
-    - "50                        " # push   eax
-    - "B89FEF4700                " # mov    eax, FREE
-    - "FFD0                      " # call   eax
-    - "C3                        " # ret    ; not ret 4; we forwarded the arg to find_enemy_by_id
-  
+
+    - "6A3C              " # push   EnemyEx_size
+    - "50                " # push   eax
+    - "B880B24700        " # mov    eax, FREE_SIZED
+    - "FFD0              " # call   eax
+
+    - "89EC              " # mov    esp, ebp
+    - "5D                " # pop    ebp
+    - "C20400            " # ret    4
+
   # [esp+0x4] is an enemy id.
   ExpHP.seasons-everywhere.find-enemy-ex-by-id:
     - "B9 <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov    ecx, GLOBALS
@@ -151,6 +203,40 @@ codecaves:
 
   #==============================================
   # Code
+
+  ExpHP.seasons-everywhere.allocate-enemy-exes:
+    - "51                " # push   ecx
+    - "52                " # push   edx
+
+    # at this point, eax holds enemy id
+    - "50                      " # push eax
+    - "E8 [codecave:ExpHP.seasons-everywhere.new-enemy-ex]" # call
+
+    - "5A                " # pop    edx
+    - "59                " # pop    ecx
+
+    # original code
+    - "8B8190000000      " # mov    eax, dword [ecx+0x90]
+    # abs_jmp_hack 0x41ed38
+    - "E800000000        " # <1>  call %%next
+    - "C7042438ED4100    " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
+
+  ExpHP.seasons-everywhere.deallocate-enemy-exes:
+    - "51                " # push   ecx
+    - "52                " # push   edx
+
+    - "FFB660570000      " # push   dword [esi+efull_id]
+    - "E8 [codecave:ExpHP.seasons-everywhere.free-enemy-ex-by-id]" # call
+
+    - "5A                " # pop    edx
+    - "59                " # pop    ecx
+
+    # original code
+    - "8B8690520000      " # mov    eax, dword [esi+0x5290]
+    - "E800000000        " # <1>  call %%next
+    - "C7042480DB4100    " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
 
   ExpHP.seasons-everywhere.item-anm-script:
     - "83F8 30               " # cmp eax, 0x30
@@ -677,7 +763,7 @@ codecaves:
     - "894104                    " # mov    [ecx+l_next], eax  ; this.next = node.next
     - "85C0                      " # test   eax, eax
     - "7403                      " # jz     .no_next
-    - "8B4808                    " # mov    ecx, [eax+l_prev]  ; node.next.prev = this
+    - "894808                    " # mov    [eax+l_prev], ecx  ; node.next.prev = this
     # .no_next:
     
     - "895108                    " # mov    [ecx+l_prev], edx  ; this.prev = node
@@ -707,3 +793,29 @@ codecaves:
     - "C7410800000000            " # mov    DWORD [ecx+l_prev], 0x0  ; this.next = 0
     - "89C8                      " # mov    eax, ecx
     - "C3                        " # ret
+
+  # Calloc(size)
+  ExpHP.seasons-everywhere.calloc:
+    - "55                " # push   ebp
+    - "89E5              " # mov    ebp, esp
+    - "57                " # push   edi
+
+    - "8B4508            " # mov    eax, [ebp+0x8]
+    - "50                " # push   eax
+    - "B850B24700        " # mov    eax, MALLOC
+    - "FFD0              " # call   eax
+    - "89C7              " # mov    edi, eax
+
+    - "8B4508            " # mov    eax, [ebp+0x8]
+    - "50                " # push   eax
+    - "6A00              " # push   dword 0x0
+    - "57                " # push   edi
+    - "B860CE4700        " # mov    eax, MEMSET
+    - "FFD0              " # call   eax
+
+    - "89F8              " # mov    eax, edi
+    - "5F                " # pop    edi
+
+    - "89EC              " # mov    esp, ebp
+    - "5D                " # pop    ebp
+    - "C20400            " # ret    4

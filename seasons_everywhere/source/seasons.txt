@@ -34,12 +34,13 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 // TODO: Correct damage amounts
 //    - compare scaling of HP in HSiFS vs WBaWC
 // TODO: Season items on enemy kill
-// TODO: Season items on damage dealt
+// TODO: Season items on damage dealt (NOT WORTH IT)
+//    - TODO: Strip the relevant code instead.
 // TODO: Season items from bomb bullet cancels (tricky)
-// TODO: Better menu
-//   - thought: 5 icons around player
-//   - thought: have selected icon fly over to gauge, then gauge appears.
-//     (tricky due to different coord systems)
+// TODO: Less distracting menu
+//   - make the 5 icons identical or make the unselected ones invisible
+//     so that the viewer isn't tempted to search for the right symbol
+//     (that takes too long and enemies will start shooting at you)
 // TODO: (MAYBE) allow disabling beast items (fish and specials only)
 // TODO: Fix gauge positioning w.r.t. beast items
 // TODO: Consume season levels
@@ -54,7 +55,7 @@ void SeasonMenuEnemy() {
     flagSet(128); // not killed by dialogRead or enmKillAll
     flagSet(12); // don't delete beyond screen edges
 
-    enmCreate("SeasonGaugeEnemy", 0f, 0f, 1, 0, 0);
+    enmCreate("SeasonGaugeEnemy", 0f, 0f, 09, 0, 0);
 
     playerAllowShot(false);
     playerAllowBomb(false);
@@ -126,6 +127,7 @@ void SeasonMenuEnemy() {
         }
         drawColor(0xFFFFFF00);
         drawAnchor(0, 0);
+        drawf(0f, 224f-12f, "Act Fast!!");
         drawf(0f, 224f, "SHOT: Change season");
         drawf(0f, 224f+12f, "SKIP: Confirm");
         drawColor(0xFFFFFFFF);
