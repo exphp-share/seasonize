@@ -100,6 +100,12 @@ binhacks:
       - "E9 [codecave:ExpHP.seasons-everywhere.deallocate-enemy-exes]"
       - "CC"
 
+  Enemies can drop season items:
+    addr: "0x41da35"
+    expected: "6888000000"
+    code:
+      - "E9 [codecave:ExpHP.seasons-everywhere.drop-season-items]"
+
 codecaves:
   # So that we can use a codecave to store data.
   protection: 0x40 # PAGE_EXECUTE_READWRITE
@@ -149,8 +155,9 @@ codecaves:
 
     - "C747340A000000    " # mov    dword [edi+ex_item_max], 0xa
     - "C7473801000000    " # mov    dword [edi+ex_item_min], 0x1
+    - "C747303C000000    " # mov    dword [edi+ex_max_time], 0x3c
     - "8D4F1C            " # lea    ecx, [edi+ex_bonus_timer]
-    - "6A60              " # push   0x60
+    - "6A3C              " # push   0x3c ; 60
     - "B8C05B4000        " # mov    eax, TIMER_SET_VALUE
     - "FFD0              " # call   eax
 
@@ -689,6 +696,132 @@ codecaves:
     - "C70424E93F4300            " #  mov     dword [esp], 0x00433fe9
     - "C3                        " #  ret
 
+  # void __thiscall EnemyFull::DropSeasonItems(Float3*)
+  ExpHP.seasons-everywhere.impl-drop-season-items:
+    - "55                " # push   ebp
+    - "89E5              " # mov    ebp, esp
+    - "57                " # push   edi
+    - "56                " # push   esi
+
+    # For some silly reason, TH16 computes the true season item bonus in
+    # multiple places (at 0x41d600 in EnemyFull::die for killed enemies, and
+    # god knows where for defeated spells/nonspells), overwriting the "max"
+    # value stored in the EnemyDrop. Then in EnemyDrop::drop_ex it drops
+    # that overwritten value.
+
+    # However, it's much easier to just compute the bonus right before the
+    # items are generated.  (My best guess as to why TH16 doesn't do this is
+    # because EnemyDrop::drop_ex only has a pointer to the EnemyDrop and not
+    # to the EnemyFull).
+
+    # Get our patch's extra data associated with this enemy.
+    - "8B8160570000      " # mov     eax, [ecx+efull_id]
+    - "50                " # push    eax
+    - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
+    - "89C7              " # mov     edi, eax
+
+    # Find out item bonus based on time.
+    - "89F9              " # mov     ecx, edi
+    - "E8 [codecave:ExpHP.seasons-everywhere.ex-get-season-bonus]" # call
+    - "89C6              " # mov     esi, eax
+
+    - "85F6              " # test    esi, esi
+    - "7E0C              " # jle     .loopend
+
+    # .loop:
+    - "8B4508            " # mov     eax, [ebp+0x8]
+    - "50                " # push    eax
+    - "E8 [codecave:ExpHP.seasons-everywhere.drop-one-item]" # call
+    - "4E                " # dec     esi
+    - "7FF4              " # jg      .loop
+
+    # .loopend:
+    - "C7473400000000    " # mov    dword [edi+ex_item_max], 0x0
+    - "C7473800000000    " # mov    dword [edi+ex_item_min], 0x0
+
+    - "5E                " # pop    esi
+    - "5F                " # pop    edi
+    - "89EC              " # mov    esp, ebp
+    - "5D                " # pop    ebp
+    - "C20400            " # ret    0x4
+
+  # Factored out to make relative jumps in the caller more stable.
+  # DWORD __thiscall EnemyEx::GetSeasonBonus()
+  ExpHP.seasons-everywhere.ex-get-season-bonus:
+    - "8B4120            " # mov     eax, dword [ecx+ex_bonus_timer+time_cur]
+    - "85C0              " # test    eax, eax
+    - "7F04              " # jg      .positivetime
+
+    - "8B4138            " # mov     eax, dword [ecx+ex_item_min]
+    - "C3                " # ret
+
+    # .positivetime:
+    # compute  min + (max - min) * (remaining_time / max_time)
+    - "8B4134            " # mov     eax, dword [ecx+ex_item_max]
+    - "2B4138            " # sub     eax, dword [ecx+ex_item_min]
+    - "0FAF4120          " # imul    eax, dword [ecx+ex_bonus_timer+time_cur]
+    - "99                " # cdq    ; I'm not sure why the original code did this...
+    - "F77930            " # idiv    dword [ecx+ex_max_time]
+    - "034138            " # add     eax, dword [ecx+ex_item_min]
+    - "C3                " # ret
+
+  # Factored out to make relative jumps in the caller more stable.
+  # void __stdcall DropOneItem(Float3*);
+  ExpHP.seasons-everywhere.drop-one-item:
+    - "55                " # push   ebp
+    - "89E5              " # mov    ebp, esp
+
+    - "83EC24            " # sub    esp, 0x24   ; 0x20 arg size + 0x4 to match offsets in function
+    - "C7442420FFFFFFFF  " # mov    dword [esp+0x20], -1     ; arg 20: (unknown, new in TH17)
+    - "C744241C0DF00000  " # mov    dword [esp+0x1c], 0xf00d ; arg 1c: (unused/optimized away)
+    - "C744241800000000  " # mov    dword [esp+0x18], 0      ; arg 18: intangibility frames (ignored for PIV/season)
+
+    # velocity = uniform(0.2f, 2.1f)
+    - "B968764B00        " # mov    ecx, SAFE_RNG
+    - "B840284000        " # mov    eax, RANDF_0_TO_1
+    - "FFD0              " # call   eax
+
+    - "C704243333F33F    " # mov    dword [esp], 0x3ff33333  ; 1.9f
+    - "D80C24            " # fmul   dword [esp]
+    - "D805043B4A00      " # fadd   dword [FLOAT_0_POINT_2]
+    - "D95C2414          " # fstp   dword [esp+0x14]  ; arg 14: vel_norm
+
+    - "B968764B00        " # mov    ecx, SAFE_RNG
+    - "E8 [codecave:ExpHP.seasons-everywhere.randf-minus-pi-to-pi]" # call
+    - "D95C2410          " # fstp   dword [esp+0x10]  ; arg 10: vel_angle
+
+    - "C744240C0DF00000  " # mov    dword [esp+0x0c], 0xf00d ; arg  c:  (unused/optimized away)
+    - "8B4D08            " # mov    ecx, dword [ebp+0x8]
+    - "894C2408          " # mov    dword [esp+0x08], ecx   ; arg 8: pos
+    - "C744240430000000  " # mov    dword [esp+0x04], 0x30  ; arg 4: item type
+
+    - "83C404            " # add    esp, 0x4  ; point esp to first arg
+    - "8B0DB8764B00      " # mov    ecx, [ITEM_MANAGER_PTR]
+    - "B840474300        " # mov    eax, ITMMGR_SPAWN_ITEM
+    - "FFD0              " # call   eax
+
+    - "89EC              " # mov    esp, ebp
+    - "5D                " # pop    ebp
+    - "C20400            " # ret    0x4
+
+  ExpHP.seasons-everywhere.drop-season-items:
+    - "8B4508            " # mov    eax, [ebp+0x8]  ; Float3* pos arg
+    - "50                " # push   eax
+
+    # Recover the EnemyFull.
+    - "8B4DF8            " # mov    ecx, [ebp-0x8]  ; EnemyDrop* in local var
+    - "8D8970C0FFFF      " # lea    ecx, [ecx-en_drop]
+    - "8D89F4EDFFFF      " # lea    ecx, [ecx-efull_enemy]
+
+    - "E8 [codecave:ExpHP.seasons-everywhere.impl-drop-season-items]" # call
+
+    # original code
+    - "6888000000        " # push    0x88
+    # abs_jmp_hack 0x41da3a
+    - "E800000000        " # <1>  call %%next
+    - "C704243ADA4100    " # <1>  mov dword [esp], %1
+    - "C3                " # <1>  ret
+
   # Wrapper around ECLPlus' IntVarSwitch that preserves the volatile ecx, edx, and xmm registers.
   ExpHP.seasons-everywhere.eclplus-int-switch:
     # Prologue that saves volatile registers
@@ -794,7 +927,7 @@ codecaves:
     - "89C8                      " # mov    eax, ecx
     - "C3                        " # ret
 
-  # Calloc(size)
+  # void* __stdcall Calloc(size)
   ExpHP.seasons-everywhere.calloc:
     - "55                " # push   ebp
     - "89E5              " # mov    ebp, esp
@@ -819,3 +952,42 @@ codecaves:
     - "89EC              " # mov    esp, ebp
     - "5D                " # pop    ebp
     - "C20400            " # ret    4
+
+  # This is th16.exe+0x402cf0, which doesn't exist in TH17.
+  #
+  # Much like the TH16 function, the ABI is that of returning a long double,
+  # but it only has the precision of a float.
+  #
+  # long double __thiscall Rng::randf_minus_pi_to_pi()
+  ExpHP.seasons-everywhere.randf-minus-pi-to-pi:
+    - "55                " # push     ebp
+    - "89E5              " # mov      ebp, esp
+    - "51                " # push     ecx
+    - "9B                " # fwait
+    - "DBE3              " # fninit
+    - "B8B0274000        " # mov      eax, RAND_DWORD
+    - "FFD0              " # call     eax
+    - "660F6EC0          " # movd     xmm0, eax
+
+    # (ebp-0x4 is the space in the red zone left behind by
+    #  the arg to rand_int, used as scratch)
+    #
+    # This is the float value 683565248.0, which is 2**32 / 2PI.
+    - "C745FC83F9224E    " # mov      dword [ebp-0x4], 0x4e22f983
+
+    # These three lines together are a cast from uint32_t to double
+    - "F30FE6C0          " # cvtdq2pd xmm0, xmm0
+    - "C1E81F            " # shr      eax, 0x1f
+    - "F20F5804C5303F4A00" # addsd    xmm0, qword [eax*8+0x4a3f30]
+
+    # Map into range from -PI to PI
+    - "660F5AC0          " # cvtpd2ps xmm0, xmm0
+    - "F30F5E45FC        " # divss    xmm0, dword [ebp-0x4]
+    - "F30F5C0588454900  " # subss    xmm0, dword [FLOAT_PI]
+
+    # Return in the FPU for seemingly no good reason.
+    - "F30F1145FC        " # movss    dword [ebp-0x4], xmm0
+    - "D945FC            " # fld      dword [ebp-0x4]
+    - "89EC              " # mov      esp, ebp
+    - "5D                " # pop      ebp
+    - "C3                " # retn

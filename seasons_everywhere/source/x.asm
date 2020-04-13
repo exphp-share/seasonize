@@ -22,13 +22,15 @@
 ; Same with that horrifying "call .next" stuff. (that's an absolute jump)
 ; ...you'll see.
 
-%define MALLOC 0x47b250
-%define MEMSET 0x47ce60
-%define FREE_SIZED 0x47b280
-%define RANDF_NEG_1_TO_1 0x402880
-%define ITMMGR_SPAWN_ITEM 0x434740
-%define FIND_ENEMY_FULL_BY_ID 0x41ddd0
-%define TIMER_SET_VALUE 0x405bc0
+%define MALLOC            0x47b250
+%define MEMSET            0x47ce60
+%define FREE_SIZED        0x47b280
+%define RAND_DWORD        0x4027b0
+%define RANDF_0_TO_1      0x402840
+%define RANDF_NEG_1_TO_1  0x402880
+%define ITMMGR_SPAWN_ITEM      0x434740
+%define FIND_ENEMY_FULL_BY_ID  0x41ddd0
+%define TIMER_SET_VALUE        0x405bc0
 
 %define ECLP_GET_VALUE 0
 %define ECLP_GET_PTR   1
@@ -42,27 +44,30 @@
 %define VAR_SEASON_POWER    VAR_GI5
 %define VAR_ACTIVE_RELEASE  VAR_GI6
 
-%define FLOAT_ONE_HALF 0x4a3b48
-%define FLOAT_PI_OVER_18 0x4a3af8
-%define FLOAT_PI_OVER_2 0x4a3bf4
+%define FLOAT_PI          0x494588
+%define FLOAT_ONE_HALF    0x4a3b48
+%define FLOAT_PI_OVER_18  0x4a3af8
+%define FLOAT_PI_OVER_2   0x4a3bf4
+%define FLOAT_0_POINT_2   0x4a3b04
 
-%define SHOTTYPE_PTR 0x4b7688
-%define ITEM_MANAGER_PTR 0x4b76b8
-%define SAFE_RNG 0x4b7668
+%define SHOTTYPE_PTR      0x4b7688
+%define ITEM_MANAGER_PTR  0x4b76b8
+%define SAFE_RNG          0x4b7668
 
-%define en_final_pos 0x44
-%define en_var_f2 0x2a4
-%define en_force_autocollect 0xc70
+%define en_final_pos          0x44
+%define en_var_f2             0x2a4
+%define en_force_autocollect  0xc70
+%define en_drop               0x3f90
 
-%define et_diameter 0x64c
-%define et_pos_x 0x62c
-%define et_pos_y 0x630
+%define et_diameter  0x64c
+%define et_pos_x     0x62c
+%define et_pos_y     0x630
 
-%define st_bomb_is_active 0x30
-%define st_bomb_time 0x38
+%define st_bomb_is_active  0x30
+%define st_bomb_time       0x38
 
-%define efull_enemy 0x120c
-%define efull_id 0x5760
+%define efull_enemy  0x120c
+%define efull_id     0x5760
 
 segment .data
 struc ZunList
@@ -74,6 +79,14 @@ endstruc
 
 struc Globals
     g_enemy_ex_head resd 4
+endstruc
+
+struc ZunTime
+    time_prev    resd 1
+    time_cur     resd 1
+    time_curf    resd 1
+    time_fld_c   resd 1
+    time_control resd 1
 endstruc
 
 struc EnemyEx
@@ -401,8 +414,9 @@ new_enemy_ex:
 
     mov    dword [edi+ex_item_max], 0xa
     mov    dword [edi+ex_item_min], 0x1
+    mov    dword [edi+ex_max_time], 0x3c
     lea    ecx, [edi+ex_bonus_timer]
-    push   0x60
+    push   0x3c ; 60
     mov    eax, TIMER_SET_VALUE
     call   eax
 
@@ -728,6 +742,170 @@ codecave_free_enemy_ex: ; 41db7a
     ; original code
     mov    eax, dword [esi+0x5290]
     abs_jmp_hack 0x41db80
+
+; In TH16 this function was only ever used when spawning season drops,
+; so both it and its peculiar associated constant are missing from TH17.
+;
+; Much like the TH16 function, the ABI is that of returning a long double,
+; but it only has the precision of a float.
+;
+; long double Rng::randf_minus_pi_to_pi()
+randf_minus_pi_to_pi:
+    push     ebp
+    mov      ebp, esp
+    push     ecx
+    fwait
+    fninit
+    mov      eax, RAND_DWORD
+    call     eax
+    movd     xmm0, eax
+
+    ; (ebp-0x4 is the space in the red zone left behind by
+    ;  the arg to rand_int, used as scratch)
+    ;
+    ; This is the float value 683565248.0, which is 2**32 / 2PI.
+    mov      dword [ebp-0x4], 0x4e22f983
+
+    ; These three lines together are a cast from uint32_t to double
+    cvtdq2pd xmm0, xmm0
+    shr      eax, 0x1f
+    addsd    xmm0, qword [eax*8+0x4a3f30]
+
+    ; Map into range from -PI to PI
+    cvtpd2ps xmm0, xmm0
+    divss    xmm0, dword [ebp-0x4]
+    subss    xmm0, dword [FLOAT_PI]
+
+    ; Return as a long double, for seemingly no good reason.
+    movss    dword [ebp-0x4], xmm0
+    fld      dword [ebp-0x4]
+    mov      esp, ebp
+    pop      ebp
+    retn
+
+; void __thiscall EnemyEx::GetSeasonBonus()
+ex_get_season_bonus:
+    mov     eax, dword [ecx+ex_bonus_timer+time_cur]
+    test    eax, eax
+    jg      .positivetime
+
+    mov     eax, dword [ecx+ex_item_min]
+    ret
+
+.positivetime:
+    ; compute  min + (max - min) * (remaining_time / max_time)
+    mov     eax, dword [ecx+ex_item_max]
+    sub     eax, dword [ecx+ex_item_min]
+    imul    eax, dword [ecx+ex_bonus_timer+time_cur]
+    cdq    ; I'm not sure why the original code did this...
+    idiv    dword [ecx+ex_max_time]
+    add     eax, dword [ecx+ex_item_min]
+    ret
+
+; void __thiscall EnemyFull::DropSeasonItems(Float3*)
+impl_drop_season_items:
+    push   ebp
+    mov    ebp, esp
+    push   edi
+    push   esi
+
+    ; For some silly reason, TH16 computes the true season item bonus in
+    ; multiple places (at 0x41d600 in EnemyFull::die for killed enemies, and
+    ; god knows where for defeated spells/nonspells), overwriting the "max"
+    ; value stored in the EnemyDrop. Then in EnemyDrop::drop_ex it drops
+    ; that overwritten value.
+
+    ; However, it's much easier to just compute the bonus right before the
+    ; items are generated.  (My best guess as to why TH16 doesn't do this is
+    ; because EnemyDrop::drop_ex only has a pointer to the EnemyDrop and not
+    ; to the EnemyFull).
+
+    ; Get our patch's extra data associated with this enemy.
+    mov     eax, [ecx+efull_id]
+    push    eax
+    call    find_enemy_ex_by_id  ; FIXUP
+    mov     edi, eax
+
+    ; Find out item bonus based on time.
+    mov     ecx, edi
+    call    ex_get_season_bonus ; FIXUP
+    mov     esi, eax
+
+    test    esi, esi
+    jle     .loopend
+
+.loop:
+    mov     eax, [ebp+0x8]
+    push    eax
+    call    drop_one_item ; FIXUP
+
+    dec     esi
+    jg      .loop
+
+.loopend:
+    mov    dword [edi+ex_item_max], 0x0
+    mov    dword [edi+ex_item_min], 0x0
+
+    pop    esi
+    pop    edi
+    mov    esp, ebp
+    pop    ebp
+    ret    0x4
+
+; DWORD __stdcall DropOneItem(Float3*);
+; Factored out to make relative jumps in caller more stable.
+drop_one_item:
+    push   ebp
+    mov    esp, ebp
+
+    sub    esp, 0x24   ; 0x20 arg size + 0x4 to match offsets in function
+    mov    dword [esp+0x20], -1     ; arg 20: (unknown, new in TH17)
+    mov    dword [esp+0x1c], 0xf00d ; arg 1c: (unused/optimized away)
+    mov    dword [esp+0x18], 0      ; arg 18: intangibility frames (ignored for PIV/season)
+
+    ; velocity = uniform(0.2f, 2.1f)
+    mov    ecx, SAFE_RNG
+    mov    eax, RANDF_0_TO_1
+    call   eax
+
+    mov    dword [esp], 0x3ff33333  ; 1.9f
+    fmul   dword [esp]
+    fadd   dword [FLOAT_0_POINT_2]
+    fstp   dword [esp+0x14]  ; arg 14: vel_norm
+
+    mov    ecx, SAFE_RNG
+    call   randf_minus_pi_to_pi ; FIXUP
+    fstp   dword [esp+0x10]  ; arg 10: vel_angle
+
+    mov    dword [esp+0x0c], 0xf00d ; arg  c:  (unused/optimized away)
+    mov    ecx, dword [ebp+0x8]
+    mov    dword [esp+0x08], ecx   ; arg 8: pos
+    mov    dword [esp+0x04], 0x30  ; arg 4: item type
+
+    add    esp, 0x4  ; point esp to first arg
+    mov    ecx, [ITEM_MANAGER_PTR]
+    mov    eax, ITMMGR_SPAWN_ITEM
+    call   eax
+
+    mov    esp, ebp
+    pop    ebp
+    ret    0x4
+
+codecave_drop_season_items:
+    mov    eax, [ebp+0x8]  ; Float3* pos arg
+    push   eax
+
+    ; Recover the EnemyFull.
+    mov    ecx, [ebp-0x8]  ; EnemyDrop* in local var
+    lea    ecx, [ecx-en_drop]
+    lea    ecx, [ecx-efull_enemy]
+
+    call   impl_drop_season_items ; FIXUP
+
+    ; original code
+    push    0x88
+    abs_jmp_hack 0x41da3a
+
 
 
 ; calloc(size)
