@@ -66,12 +66,38 @@ binhacks:
   Season release autocollects items in Falling state:
     addr: "0x433590"
     expected: "a1 88764b00"
-    code: "E9 [codecave:ExpHP.seasons-everywhere.autocollect-state-1]"
+    codecave:
+      - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+      - "85C0              " # test    eax, eax
+      - "740D              " # jz      .failure
+      # .success:
+      # abs_jmp_hack 0x43380a
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 0A384300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+      # .failure:
+      # abs_jmp_hack 0x4335a5
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 A5354300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
 
   Season release autocollects items in Attracted state:
     addr: "0x4338b3"
     expected: "a1 88764b00"
-    code: "E9 [codecave:ExpHP.seasons-everywhere.autocollect-state-4]"
+    codecave:
+      - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+      - "85C0              " # test    eax, eax
+      - "740D              " # jz      .failure
+      # .success:
+      # abs_jmp_hack 0x43380a
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 0A384300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+      # .failure:
+      # abs_jmp_hack 0x4338c8
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 C8384300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
 
   Use season release bullet cancel mode:
     addr: "0x425c9f"
@@ -89,22 +115,63 @@ binhacks:
   Allocate season data for enemies:
     addr: "0x41ed32"
     expected: "8b8190000000"
-    code:
-      - "E9 [codecave:ExpHP.seasons-everywhere.allocate-enemy-exes]"
-      - "CC"
+    codecave:
+      - "51                " # push   ecx
+      - "52                " # push   edx
+
+      # at this point, eax holds enemy id
+      - "50                      " # push eax
+      - "E8 [codecave:ExpHP.seasons-everywhere.new-enemy-ex]" # call
+
+      - "5A                " # pop    edx
+      - "59                " # pop    ecx
+
+      # original code
+      - "8B8190000000      " # mov    eax, dword [ecx+0x90]
+      # abs_jmp_hack 0x41ed38
+      - "E800000000        " # <1>  call %%next
+      - "C7042438ED4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
 
   Free season data for enemies:
     addr: "0x41db7a"
     expected: "8b8690520000"
-    code:
-      - "E9 [codecave:ExpHP.seasons-everywhere.deallocate-enemy-exes]"
-      - "CC"
+    codecave:
+      - "51                " # push   ecx
+      - "52                " # push   edx
+
+      - "FFB660570000      " # push   dword [esi+efull_id]
+      - "E8 [codecave:ExpHP.seasons-everywhere.free-enemy-ex-by-id]" # call
+
+      - "5A                " # pop    edx
+      - "59                " # pop    ecx
+
+      # original code
+      - "8B8690520000      " # mov    eax, dword [esi+0x5290]
+      - "E800000000        " # <1>  call %%next
+      - "C7042480DB4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
 
   Enemies can drop season items:
     addr: "0x41da35"
     expected: "6888000000"
-    code:
-      - "E9 [codecave:ExpHP.seasons-everywhere.drop-season-items]"
+    codecave:
+      - "8B4508            " # mov    eax, [ebp+0x8]  ; Float3* pos arg
+      - "50                " # push   eax
+
+      # Recover the EnemyFull.
+      - "8B4DF8            " # mov    ecx, [ebp-0x8]  ; EnemyDrop* in local var
+      - "8D8970C0FFFF      " # lea    ecx, [ecx-en_drop]
+      - "8D89F4EDFFFF      " # lea    ecx, [ecx-efull_enemy]
+
+      - "E8 [codecave:ExpHP.seasons-everywhere.drop-season-items]" # call
+
+      # original code
+      - "6888000000        " # push    0x88
+      # abs_jmp_hack 0x41da3a
+      - "E800000000        " # <1>  call %%next
+      - "C704243ADA4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
 
 codecaves:
   # So that we can use a codecave to store data.
@@ -210,40 +277,6 @@ codecaves:
 
   #==============================================
   # Code
-
-  ExpHP.seasons-everywhere.allocate-enemy-exes:
-    - "51                " # push   ecx
-    - "52                " # push   edx
-
-    # at this point, eax holds enemy id
-    - "50                      " # push eax
-    - "E8 [codecave:ExpHP.seasons-everywhere.new-enemy-ex]" # call
-
-    - "5A                " # pop    edx
-    - "59                " # pop    ecx
-
-    # original code
-    - "8B8190000000      " # mov    eax, dword [ecx+0x90]
-    # abs_jmp_hack 0x41ed38
-    - "E800000000        " # <1>  call %%next
-    - "C7042438ED4100    " # <1>  mov dword [esp], %1
-    - "C3                " # <1>  ret
-
-  ExpHP.seasons-everywhere.deallocate-enemy-exes:
-    - "51                " # push   ecx
-    - "52                " # push   edx
-
-    - "FFB660570000      " # push   dword [esi+efull_id]
-    - "E8 [codecave:ExpHP.seasons-everywhere.free-enemy-ex-by-id]" # call
-
-    - "5A                " # pop    edx
-    - "59                " # pop    ecx
-
-    # original code
-    - "8B8690520000      " # mov    eax, dword [esi+0x5290]
-    - "E800000000        " # <1>  call %%next
-    - "C7042480DB4100    " # <1>  mov dword [esp], %1
-    - "C3                " # <1>  ret
 
   ExpHP.seasons-everywhere.item-anm-script:
     - "83F8 30               " # cmp eax, 0x30
@@ -550,36 +583,6 @@ codecaves:
     - "C70424 20354300           " #  mov     dword [esp], 0x00433520
     - "C3                        " #  ret
 
-  ExpHP.seasons-everywhere.autocollect-state-1:
-    - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
-    - "85C0              " # test    eax, eax
-    - "740D              " # jz      .failure
-    # .success:
-    # abs_jmp_hack 0x43380a
-    - "E8 00000000       " # <1>  call %%next
-    - "C70424 0A384300   " # <1>  mov dword [esp], %1
-    - "C3                " # <1>  ret
-    # .failure:
-    # abs_jmp_hack 0x4335a5
-    - "E8 00000000       " # <1>  call %%next
-    - "C70424 A5354300   " # <1>  mov dword [esp], %1
-    - "C3                " # <1>  ret
-
-  ExpHP.seasons-everywhere.autocollect-state-4:
-    - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
-    - "85C0              " # test    eax, eax
-    - "740D              " # jz      .failure
-    # .success:
-    # abs_jmp_hack 0x43380a
-    - "E8 00000000       " # <1>  call %%next
-    - "C70424 0A384300   " # <1>  mov dword [esp], %1
-    - "C3                " # <1>  ret
-    # .failure:
-    # abs_jmp_hack 0x4338c8
-    - "E8 00000000       " # <1>  call %%next
-    - "C70424 C8384300   " # <1>  mov dword [esp], %1
-    - "C3                " # <1>  ret
-
   ExpHP.seasons-everywhere.use-release-cancel-mode:
     # An explanation:
     # In TH17, the stack argument to the "cancel_bullets_in_radius" functions
@@ -624,10 +627,10 @@ codecaves:
 
   ExpHP.seasons-everywhere.impl-cancel-modes:
     - "83FA01            " # cmp     edx, 0x1
-    - "7407              " # je      .mode_1
+    - "740A              " # je      .mode_1
     - "83FA04            " # cmp     edx, 0x4
-    - "740F              " # je      .mode_4
-    - "EB5F              " # jmp     .mode_0
+    - "7412              " # je      .mode_4
+    - "E982000000        " # jmp     .mode_0
 
     # .mode_1:
     # abs_jmp_hack 0x419ca1
@@ -645,14 +648,15 @@ codecaves:
     - "F30F1045FC        " # movss   xmm0, dword [ebp-0x4]
     - "F30F5C05F43B4A00  " # subss   xmm0, dword [FLOAT_PI_OVER_2]
 
-    - "6AFF              " # push    0xffffffff ; stack arg 20:  (unknown, new in TH17)
-    - "51                " # push    ecx ; stack arg 1c:  (unused/optimized away)
-    - "6A00              " # push    0x0 ; stack arg 18:  intangibility frames (ignored for PIV/season)
-    - "83EC0C            " # sub     esp, 0xc
-    - "C7442408CDCC0C40  " # mov     dword [esp+0x8], 0x400ccccd  ; stack arg 14: vel_norm
-    - "F30F11442404      " # movss   dword [esp+0x4], xmm0        ; stack arg 10: vel_angle
-    - "56                " # push    esi   ; stack arg 8: pos
-    - "6A30              " # push    0x30  ; stack arg 4: item type
+    - "83EC20            " # sub     esp, 0x20
+    - "C744241CFFFFFFFF  " # mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
+    - "C7442418ADDE0000  " # mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
+    - "C744241400000000  " # mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
+    - "C7442410CDCC0C40  " # mov     dword [esp+0x10], 0x400ccccd  ; stack arg 14: vel_norm
+    - "F30F1144240C      " # movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
+    - "C7442408ADDE0000  " # mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
+    - "89742404          " # mov     dword [esp+0x04], esi         ; stack arg  8: pos
+    - "C7042430000000    " # mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
     - "8B0DB8764B00      " # mov     ecx, dword [ITEM_MANAGER_PTR]
     - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
     - "FFD0              " # call    eax
@@ -697,7 +701,7 @@ codecaves:
     - "C3                        " #  ret
 
   # void __thiscall EnemyFull::DropSeasonItems(Float3*)
-  ExpHP.seasons-everywhere.impl-drop-season-items:
+  ExpHP.seasons-everywhere.drop-season-items:
     - "55                " # push   ebp
     - "89E5              " # mov    ebp, esp
     - "57                " # push   edi
@@ -803,24 +807,6 @@ codecaves:
     - "89EC              " # mov    esp, ebp
     - "5D                " # pop    ebp
     - "C20400            " # ret    0x4
-
-  ExpHP.seasons-everywhere.drop-season-items:
-    - "8B4508            " # mov    eax, [ebp+0x8]  ; Float3* pos arg
-    - "50                " # push   eax
-
-    # Recover the EnemyFull.
-    - "8B4DF8            " # mov    ecx, [ebp-0x8]  ; EnemyDrop* in local var
-    - "8D8970C0FFFF      " # lea    ecx, [ecx-en_drop]
-    - "8D89F4EDFFFF      " # lea    ecx, [ecx-efull_enemy]
-
-    - "E8 [codecave:ExpHP.seasons-everywhere.impl-drop-season-items]" # call
-
-    # original code
-    - "6888000000        " # push    0x88
-    # abs_jmp_hack 0x41da3a
-    - "E800000000        " # <1>  call %%next
-    - "C704243ADA4100    " # <1>  mov dword [esp], %1
-    - "C3                " # <1>  ret
 
   # Wrapper around ECLPlus' IntVarSwitch that preserves the volatile ecx, edx, and xmm registers.
   ExpHP.seasons-everywhere.eclplus-int-switch:

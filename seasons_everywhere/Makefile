@@ -20,5 +20,7 @@ th17/%.ecl: source/%.txt $(shell find source -name '*.tecl')
 th17/%.anm: source/%.spec $(shell find source/img -name '*.png')
 	thanm -m source/maps/v8.anmm -c $@ $<
 
-th17.v%.js: source/th17.v%.yaml
-	scripts/convert-yaml.py -o $@ $<
+th17.v%.js: \
+		source/th17.v%.yaml \
+		source/zunlist.yaml
+	scripts/convert-yaml.py -o $@ $^

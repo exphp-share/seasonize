@@ -676,19 +676,25 @@ codecave_impl_release_cancel_modes:
     movss   xmm0, dword [ebp-0x4]
     subss   xmm0, dword [FLOAT_PI_OVER_2]
 
-    push    0xffffffff ; stack arg 20:  (unknown, new in TH17)
-    push    ecx ; stack arg 1c:  (unused/optimized away)
-    push    0x0 ; stack arg 18:  intangibility frames (ignored for PIV/season)
-    sub     esp, 0xc
-    mov     dword [esp+0x8], 0x400ccccd  ; stack arg 14: vel_norm
-    movss   dword [esp+0x4], xmm0        ; stack arg 10: vel_angle
-    push    esi   ; stack arg 8: pos
-    push    0x30  ; stack arg 4: item type
+    sub     esp, 0x20
+    mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
+    mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
+    mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
+    mov     dword [esp+0x10], 0x400ccccd  ; stack arg 14: vel_norm
+    movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
+    mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
+    mov     dword [esp+0x04], esi         ; stack arg  8: pos
+    mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
     mov     ecx, dword [ITEM_MANAGER_PTR]
     mov     eax, ITMMGR_SPAWN_ITEM
     call    eax
     ; Make the item get autocollected once it stops moving.
+    ; (this field used to be an argument to spawn_item in TH16)
     ; (this is implemented by another binhack; this field is an unused leftover from TH16)
+    ;
+    ; Given that all season items are already autocollected (or this flag is set) on any frame
+    ; that a release is active, this may seem unnecessary. AFAIK its only impact is during the
+    ; few frames that a season item has not had its ANM initialized yet.
     mov     dword [eax+en_force_autocollect], 1
 
 .mode_0:
