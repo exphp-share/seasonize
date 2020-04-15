@@ -939,10 +939,10 @@ codecave_tick_bonus_timer: ; 00420a1e
 
 get_token_setting:
 codecave_disable_token:
-    ; at this point, 16 <= ITEM_TYPE <= 32  (i.e. it is a non-random token)
+    ; at this point, [ebp + c] holds the item type - 16
     call   get_token_setting  ; FIXUP
     cmp    eax, 0    ; all tokens
-    je     .token
+    je     .originalcode
     cmp    eax, 1    ; no beast
     je     .nobeast
     cmp    eax, 2    ; no tokens
@@ -950,22 +950,23 @@ codecave_disable_token:
     ud2
 
 .nobeast:
-    cmp    edi, 18
-    jle    .notoken  ; [16, 17, 18] are static beast items
-    cmp    edi, 30
-    jge    .notoken  ; [30, 31, 32] are changing beast items
-    jmp    .token
+    cmp    dword [ebp + 0xc], 2
+    jle    .notoken  ; [0, 1, 2] are static beast items
+    cmp    dword [ebp + 0xc], 14
+    jge    .notoken  ; [14, 15, 16] are changing beast items
+    jmp    .originalcode
 
-.notoken:
-    ; AFAICT no callsite that can create tokens uses the return value
-    ; of spawn_item, so we can return NULL.
-    mov    edx, 0  ; function will return edx
-    abs_jmp_hack 0x434b6f
+.originalcode:
+    cmp     dword [ebx+0x10], 40
+    jl      .token
+    jmp     .notoken
 
 .token:
-    ; original code
-    mov    eax, dword [PLAYER_PTR]
-    abs_jmp_hack 0x4347b4
+    abs_jmp_hack 0x4103a2
+
+.notoken:
+    abs_jmp_hack 0x410396
+
 
 ; calloc(size)
 calloc:

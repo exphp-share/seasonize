@@ -67,7 +67,12 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 // TODO: Consume season levels
 // TODO: fix bug where we set a flag on the output of spawn item
 //       which can possibly be null for PIV items
+// TODO: Make beast items disappear if disabled
+// TODO: Show "NB" near beast items if No Hyper
 // TODO: Rethink initialization because enemies disappear between stages.
+// TODO: Hunt down where beast items are generated at the end of a hyper
+//       (or as spoils of a secret token) because apparently it doesn't
+//       call the spawn_item function >_>
 
 void SeasonMenuEnemy() {
     flagSet(1); // no hurtbox
