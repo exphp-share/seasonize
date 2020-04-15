@@ -20,7 +20,11 @@ th17/%.ecl: source/%.txt $(shell find source -name '*.tecl')
 th17/%.anm: source/%.spec $(shell find source/img -name '*.png')
 	thanm -m source/maps/v8.anmm -c $@ $<
 
-th17.v%.js: \
-		source/th17.v%.yaml \
-		source/zunlist.yaml
+th17.v1.00b.js: \
+		source/binhacks/th17.v1.00b.yaml \
+		source/binhacks/th17-data.yaml \
+		source/binhacks/th17-cancels.yaml \
+		source/binhacks/th17-drops.yaml \
+		source/binhacks/th17-item-tick.yaml \
+		source/binhacks/zunlist.yaml
 	scripts/convert-yaml.py -o $@ $^

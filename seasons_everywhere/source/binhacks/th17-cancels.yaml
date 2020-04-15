@@ -1,0 +1,103 @@
+
+
+
+
+binhacks:
+  Use season release bullet cancel mode:
+    addr: "0x425c9f"
+    expected: "6a01 // 8bcf // f30f1185 98fbffff"
+    codecave:
+      # An explanation:
+      # In TH17, the stack argument to the "cancel_bullets_in_radius" functions
+      # looks like a boolean `is_cancel` because it only has the values 0 and 1,
+      # but in fact it is more like a `cancel_mode` enum.
+      # In TH16, bullets cancelled by releases had a "cancel mode" of 4,
+      # which was checked to generate the season items. Given that the function that
+      # generates the items is used by many different types of objects (not just the
+      # Bullet struct), it seems best to continue this practice.
+      #
+      # We can't supply a cancel mode from ECL, so instead, releases are scripted
+      # to supply negative radii.
+      - "52                " # push    edx
+      - "51                " # push    ecx
+      - "83EC04            " # sub     esp, 0x4
+      - "F30F110424        " # movss   [esp], xmm0  ; xmm0 has radius
+
+      # if radius < 0, it's a release.
+      # we'll operate on the sign bit using an integer register because it's easier.
+      - "8B0C24            " # mov     ecx, [esp]  ; reinterpreting bits as integer
+      - "85C9              " # test    ecx, ecx
+      - "B801000000        " # mov     eax, 0x1
+      - "BA04000000        " # mov     edx, 0x4
+      - "0F4CC2            " # cmovl   eax, edx
+      - "81E1FFFFFF7F      " # and     ecx, 0x7fffffff  ; take absolute value
+      - "890C24            " # mov     [esp], ecx
+
+      - "F30F100424        " # movss   xmm0, [esp]
+      - "83C404            " # add     esp, 0x4
+      - "59                " # pop     ecx
+      - "5A                " # pop     edx
+
+      - "50                " # push    eax  ; supply as stack arg to cancel_bullets_in_radius function
+
+      # original code
+      - "89F9              " # mov     ecx, edi
+      - "F30F118598FBFFFF  " # movss   dword [ebp-0x468], xmm0
+      # abs_jmp_hack  0x425cab
+      - "E800000000        " # <1>  call %%next
+      - "C70424AB5C4200    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+
+  Implement season bullet cancel modes:
+    addr: "0x419c9c"
+    expected: "83fa01 // 7544"
+    codecave:
+      - "83FA01            " # cmp     edx, 0x1
+      - "740A              " # je      .mode_1
+      - "83FA04            " # cmp     edx, 0x4
+      - "7412              " # je      .mode_4
+      - "E982000000        " # jmp     .mode_0
+
+      # .mode_1:
+      # abs_jmp_hack 0x419ca1
+      - "E800000000        " # <1>  call %%next
+      - "C70424A19C4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+      # .mode_4:
+      # Random direction +/- 10 degrees from straight up
+      - "B968764B00        " # mov     ecx, SAFE_RNG
+      - "B880284000        " # mov     eax, RANDF_NEG_1_TO_1
+      - "FFD0              " # call    eax
+      - "D80DF83A4A00      " # fmul    dword [FLOAT_PI_OVER_18]
+      - "D95DFC            " # fstp    dword [ebp-0x4]
+      - "F30F1045FC        " # movss   xmm0, dword [ebp-0x4]
+      - "F30F5C05F43B4A00  " # subss   xmm0, dword [FLOAT_PI_OVER_2]
+
+      - "83EC20            " # sub     esp, 0x20
+      - "C744241CFFFFFFFF  " # mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
+      - "C7442418ADDE0000  " # mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
+      - "C744241400000000  " # mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
+      - "C7442410CDCC0C40  " # mov     dword [esp+0x10], 0x400ccccd  ; stack arg 14: vel_norm
+      - "F30F1144240C      " # movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
+      - "C7442408ADDE0000  " # mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
+      - "89742404          " # mov     dword [esp+0x04], esi         ; stack arg  8: pos
+      - "C7042430000000    " # mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
+      - "8B0DB8764B00      " # mov     ecx, dword [ITEM_MANAGER_PTR]
+      - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
+      - "FFD0              " # call    eax
+      # Make the item get autocollected once it stops moving.
+      # (this field used to be an argument to spawn_item in TH16)
+      # (this is implemented by another binhack; this field is an unused leftover from TH16)
+      #
+      # Given that all season items are already autocollected (or this flag is set) on any frame
+      # that a release is active, this may seem unnecessary. AFAIK its only impact is during the
+      # few frames that a season item has not had its ANM initialized yet.
+      - "C780700C000001000000" # mov     dword [eax+en_force_autocollect], 1
+
+      # .mode_0:
+      # abs_jmp_hack 0x419ce5
+      - "E800000000        " # <1>  call %%next
+      - "C70424E59C4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret

@@ -1,0 +1,63 @@
+
+codecaves:
+  # ecx is a node not in any list. (this is checked)
+  # [esp+0x4] is a list head. (this is checked)
+  # Makes ecx into a list head, and returns it.
+  ExpHP.seasons-everywhere.zunlist-prepend:
+    - "8B542404                  " # mov    edx, [esp+0x4]
+    - "8B4208                    " # mov    eax, [edx+0x8]  ; head.prev
+    - "0B4104                    " # or     eax, [ecx+0x4]  ; this.next
+    - "0B4108                    " # or     eax, [ecx+0x8]  ; this.prev
+    - "85C0                      " # test   eax, eax        ; are any nonnull?
+    - "750B                      " # jnz    .error
+    
+    - "895104                    " # mov    [ecx+0x4], edx  ; this.next = head
+    - "894A08                    " # mov    [edx+0x8], ecx  ; head.prev = this
+    - "89C8                      " # mov    eax, ecx
+    - "C20400                    " # ret    0x4
+    # .error:
+    - "0F0B                      " # ud2
+
+  # ecx is a node not in any list. (this is checked)
+  # [esp+0x4] is any node.
+  ExpHP.seasons-everywhere.zunlist-insert-after:
+    - "8B542404                  " # mov    edx, [esp+0x4]
+    - "8B4104                    " # mov    eax, [ecx+l_next]  ; this.next
+    - "0B4108                    " # or     eax, [ecx+l_prev]  ; this.prev
+    - "85C0                      " # test   eax, eax        ; are any nonnull?
+    - "7518                      " # jnz    .error
+    
+    - "8B4204                    " # mov    eax, [edx+l_next]
+    - "894104                    " # mov    [ecx+l_next], eax  ; this.next = node.next
+    - "85C0                      " # test   eax, eax
+    - "7403                      " # jz     .no_next
+    - "894808                    " # mov    [eax+l_prev], ecx  ; node.next.prev = this
+    # .no_next:
+    
+    - "895108                    " # mov    [ecx+l_prev], edx  ; this.prev = node
+    - "894A04                    " # mov    [edx+l_next], ecx  ; node.next = this
+    - "89C8                      " # mov    eax, ecx
+    - "C20400                    " # ret    0x4
+    # .error:
+    - "0F0B                      " # ud2
+  
+  # Removes the node in ecx from its list.
+  # Returns ecx.
+  ExpHP.seasons-everywhere.zunlist-remove-node:
+    - "8B4104                    " # mov    eax, [ecx+l_next]  ; this.next
+    - "8B5108                    " # mov    edx, [ecx+l_prev]  ; this.prev
+    
+    - "85C0                      " # test   eax, eax
+    - "7403                      " # jz     .no_next
+    - "895008                    " # mov    [eax+l_prev], edx  ; next.prev = this.prev
+    # .no_next:
+    
+    - "85D2                      " # test   edx, edx
+    - "7403                      " # jz     .no_prev
+    - "894204                    " # mov    [edx+l_next], eax  ; prev.next = this.next
+    # .no_prev:
+    
+    - "C7410400000000            " # mov    DWORD [ecx+l_next], 0x0  ; this.prev = 0
+    - "C7410800000000            " # mov    DWORD [ecx+l_prev], 0x0  ; this.next = 0
+    - "89C8                      " # mov    eax, ecx
+    - "C3                        " # ret
