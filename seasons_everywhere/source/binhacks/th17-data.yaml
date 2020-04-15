@@ -151,10 +151,22 @@ codecaves:
   # extern __stdcall int GetSeason(void);
   ExpHP.seasons-everywhere.get-season:
     # Query ECLPlus
-    - "6A 00                 " # push    0           ; arg 3: mode    (0 = get value)
-    - "68 CAE0FFFF           " # push    VAR_SEASON  ; arg 2: var ID
-    - "6A 00                 " # push    0           ; arg 1: enemy   (null)
+    - "6A 00                 " # push   0          ; arg 3: mode    (0 = get value)
+    - "68 CAE0FFFF           " # push   VAR_FLAGS  ; arg 2: var ID
+    - "6A 00                 " # push   0          ; arg 1: enemy   (null)
     - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
+    - "83E0 07               " # and    eax, 0x7
+    - "C3                    " # ret
+
+  # extern __stdcall int GetTokenSetting(void);
+  ExpHP.seasons-everywhere.get-token-setting:
+    # Query ECLPlus
+    - "6A 00                 " # push   0          ; arg 3: mode    (0 = get value)
+    - "68 CAE0FFFF           " # push   VAR_FLAGS  ; arg 2: var ID
+    - "6A 00                 " # push   0          ; arg 1: enemy   (null)
+    - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
+    - "C1E8 03               " # shr    eax, 3
+    - "83E0 07               " # and    eax, 0x7
     - "C3                    " # ret
 
   # returns enemy id if there is a release, -1 if in cooldown, 0 otherwise.

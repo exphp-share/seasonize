@@ -25,6 +25,7 @@ th17.v1.00b.js: \
 		source/binhacks/th17-data.yaml \
 		source/binhacks/th17-cancels.yaml \
 		source/binhacks/th17-drops.yaml \
+		source/binhacks/th17-tokens.yaml \
 		source/binhacks/th17-item-tick.yaml \
 		source/binhacks/zunlist.yaml
 	scripts/convert-yaml.py -o $@ $^

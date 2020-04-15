@@ -52,6 +52,7 @@
 %define FLOAT_PI_OVER_2   0x4a3bf4
 %define FLOAT_0_POINT_2   0x4a3b04
 
+%define PLAYER_PTR        0x4b77d0
 %define SHOTTYPE_PTR      0x4b7688
 %define ITEM_MANAGER_PTR  0x4b76b8
 %define SAFE_RNG          0x4b7668
@@ -936,8 +937,35 @@ codecave_tick_bonus_timer: ; 00420a1e
 .notick:
     abs_jmp_hack 0x420a23
 
+get_token_setting:
+codecave_disable_token:
+    ; at this point, 16 <= ITEM_TYPE <= 32  (i.e. it is a non-random token)
+    call   get_token_setting  ; FIXUP
+    cmp    eax, 0    ; all tokens
+    je     .token
+    cmp    eax, 1    ; no beast
+    je     .nobeast
+    cmp    eax, 2    ; no tokens
+    je     .notoken
+    ud2
 
+.nobeast:
+    cmp    edi, 18
+    jle    .notoken  ; [16, 17, 18] are static beast items
+    cmp    edi, 30
+    jge    .notoken  ; [30, 31, 32] are changing beast items
+    jmp    .token
 
+.notoken:
+    ; AFAICT no callsite that can create tokens uses the return value
+    ; of spawn_item, so we can return NULL.
+    mov    edx, 0  ; function will return edx
+    abs_jmp_hack 0x434b6f
+
+.token:
+    ; original code
+    mov    eax, dword [PLAYER_PTR]
+    abs_jmp_hack 0x4347b4
 
 ; calloc(size)
 calloc:

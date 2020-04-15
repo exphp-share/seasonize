@@ -10,8 +10,30 @@ int ClipInt(int x, int a, int b) {
     else { return x; }
 }
 
-int CurrentSeason() { return $GI4; }
-void SetCurrentSeason(int season) { $GI4 = season; return; }
+int BitNot(int x) {
+    return 0xFFFFFFFF - x;
+}
+
+// GI4:
+// - 00: 3 bits for season
+// - 03: 3 bits for beast item setting
+int CurrentSeason() { return $GI4 & 0b111; }
+void SetCurrentSeason(int season) {
+    $GI4 &= BitNot(0b111);
+    $GI4 |= season;
+    return;
+}
+
+global TOKEN_SETTING_ALL = 0;
+global TOKEN_SETTING_SIMPLE = 1;
+global TOKEN_SETTING_NONE = 2;
+global NUM_TOKEN_SETTINGS = 3;
+int CurrentTokenSetting() { return ($GI4 / 8) & 0b111; }
+void SetCurrentTokenSetting(int setting) {
+    $GI4 &= BitNot(0b111 * 8);
+    $GI4 |= setting * 8;
+    return;
+}
 
 int CurrentSeasonPower() { return $GI5; }
 void SetCurrentSeasonPower(int power) { $GI5 = ClipInt(power, 0, MAX_SEASON_POWER); return; }
@@ -33,21 +55,19 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 
 // TODO: Correct damage amounts
 //    - compare scaling of HP in HSiFS vs WBaWC
-// TODO: Season items on enemy kill
-// TODO: Season items on damage dealt (NOT WORTH IT)
-//    - TODO: Strip the relevant code instead.
+// TODO: Better drop values for different enemies and bosses
+// TODO: Season items on damage dealt
 // TODO: Season items from bomb bullet cancels (tricky)
 // TODO: Less distracting menu
 //   - make the 5 icons identical or make the unselected ones invisible
 //     so that the viewer isn't tempted to search for the right symbol
 //     (that takes too long and enemies will start shooting at you)
-// TODO: (MAYBE) allow disabling beast items (fish and specials only)
 // TODO: Fix gauge positioning w.r.t. beast items
+// TODO: Fix positioning of season level
 // TODO: Consume season levels
-
-int BitNot(int x) {
-    return 0xFFFFFFFF - x;
-}
+// TODO: fix bug where we set a flag on the output of spawn item
+//       which can possibly be null for PIV items
+// TODO: Rethink initialization because enemies disappear between stages.
 
 void SeasonMenuEnemy() {
     flagSet(1); // no hurtbox
@@ -55,12 +75,13 @@ void SeasonMenuEnemy() {
     flagSet(128); // not killed by dialogRead or enmKillAll
     flagSet(12); // don't delete beyond screen edges
 
-    enmCreate("SeasonGaugeEnemy", 0f, 0f, 09, 0, 0);
+    enmCreate("SeasonGaugeEnemy", 0f, 0f, 1, 0, 0);
 
     playerAllowShot(false);
     playerAllowBomb(false);
 
     SetCurrentSeason(SPRING);
+    SetCurrentTokenSetting(TOKEN_SETTING_ALL);
     SetCurrentSeasonPower(0);
     SetActiveReleaseState(0);
 
@@ -80,8 +101,10 @@ void SeasonMenuEnemy() {
     int oldInput = $INPUT;
     int oldSeason = -1; // ensure background change on first frame
     int shouldEnd = 0;
+    int tokenSetting = CurrentTokenSetting();
 
-    while(true) {
+    int menuTime = 180;
+    while (true) {
         int risingEdge = $INPUT & BitNot(oldInput);
         int season = CurrentSeason();
 
@@ -94,46 +117,92 @@ void SeasonMenuEnemy() {
             SetCurrentSeason(season);
         }
 
+        if (risingEdge & KEY_BOMB) {
+            playSound(10); // menu bwap
+            tokenSetting += 1;
+            tokenSetting %= NUM_TOKEN_SETTINGS;
+            SetCurrentTokenSetting(tokenSetting);
+        }
+
+        unless (menuTime) {
+            shouldEnd = 1;
+        }
         if (risingEdge & KEY_SKIP) {
-            playSound(74); // release PLING!!
             shouldEnd = 1;
         }
 
         // if-else chain to ensure only one anmSwitch per frame.
+        // (if season change occurs on the same frame that menu would exit,
+        //  we wait one more frame before exiting to ensure BG color is fixed)
         if (oldSeason != season) {
             anmSwitch(0, 1 + season); // change background color
             oldSeason = season;
         } else if (shouldEnd) {
-            // Begin special FX
-            anmSetSprite(1, SMENU_FG_ANM_SCRIPT); // create vortex
-            anmSwitch(0, 7); // make background get sucked in
-            playSound(30); // charge sound
-            msgSend(0f, 0f, 0f, 0f, ID); // tell the icons to disappear
-
-            // Enable player capabilities
-            playerAllowShot(true);
-            playerAllowBomb(true);
-            enmCreate("SeasonInputEnemy", 0f, 0f, 1, 0, 0);
-
-            // Wait for anim to play out
-            times(90) {
-                movePos(PLAYER_X, PLAYER_Y);
-                wait(1);
-            }
-
-            // camera KERCHONK
-            playSound(31);
-            delete();
+            break;
         }
-        drawColor(0xFFFFFF00);
-        drawAnchor(0, 0);
-        drawf(0f, 224f-12f, "Act Fast!!");
-        drawf(0f, 224f, "SHOT: Change season");
-        drawf(0f, 224f+12f, "SKIP: Confirm");
-        drawColor(0xFFFFFFFF);
+
+        if (menuTime > 60 || menuTime & 0b10) {
+            drawColor(0xFFFFFF00);
+            drawAnchor(ANCHOR_CENTER, ANCHOR_CENTER);
+            drawf(0f, 192f-12f, "SHOT: Season");
+            drawf(0f, 192f,     "BOMB: Tokens");
+            drawf(0f, 192f+12f, "SKIP: Confirm");
+            if (tokenSetting == 0) {
+                drawColor(0xFFFFFFFF);
+                drawf(0f, 192f-36f, "STANDARD");
+            } else if (tokenSetting == 1) {
+                drawColor(0xFF00FFFF);
+                drawf(0f, 192f-36f, "NO BEAST/HYPER");
+            } else if (tokenSetting == 2) {
+                drawColor(0xFFFF0000);
+                drawf(0f, 192f-36f, "NO TOKENS");
+            }
+            drawReset();
+        }
+        menuTime--;
         oldInput = INPUT;
         wait(1);
     }
+    playSound(8); // release PLING!!
+    playSound(74); // release PLING!!
+
+    // Begin special FX
+    anmSetSprite(1, SMENU_FG_ANM_SCRIPT); // create vortex
+    anmSwitch(0, 7); // make background get sucked in
+    msgSend(0f, 0f, 0f, 0f, ID); // tell the icons to disappear
+
+    // Enable player capabilities
+    playerAllowShot(true);
+    playerAllowBomb(true);
+    enmCreate("SeasonInputEnemy", 0f, 0f, 1, 0, 0);
+
+    // Wait for anim to play out
+    int animTime = 90;
+    while(animTime--) {
+        if (90 - animTime == 5) {
+            playSound(30); // charge sound
+        }
+        // Keep this around for a bit if not default in case the player hit
+        // bomb close to the cutoff and isn't sure what they selected.
+        if ((90 - animTime < 36) && (animTime & 4)) {
+            drawAnchor(ANCHOR_CENTER, ANCHOR_CENTER);
+            if (tokenSetting == 1) {
+                drawColor(0xFF00FFFF);
+                drawf(0f, 192f-36f, "NO BEAST/HYPER");
+            } else if (tokenSetting == 2) {
+                drawColor(0xFFFF0000);
+                drawf(0f, 192f-36f, "NO TOKENS");
+            }
+            drawReset();
+        }
+
+        movePos(PLAYER_X, PLAYER_Y);
+        wait(1);
+    }
+
+    // camera KERCHONK
+    playSound(31);
+    delete();
 }
 
 void SeasonMenuIconEnemy0() { @SeasonMenuIconEnemy(0); }
@@ -228,20 +297,23 @@ void SeasonInputEnemy() {
     flagSet(32); // intangible
 
     int oldInput = $INPUT;
-    int releaseId = 0;
+    int tokenSetting = CurrentTokenSetting();
 
     SetCurrentSeasonPower(500);
     SetActiveReleaseState(0);
 
     while(true) {
         int risingEdge = $INPUT & BitNot(oldInput);
-        if (risingEdge & KEY_SKIP) {
-            if (!ActiveReleaseState()) {
-                printf("New Season Release!!\n");
-                enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
-                releaseId = LAST_ENM_ID;
-            }
+
+        if (tokenSetting == TOKEN_SETTING_SIMPLE) {
+            playerSetHyperTimer(0);
         }
+
+        if (!DIALOG && (risingEdge & KEY_SKIP) && !ActiveReleaseState()) {
+            printf("New Season Release!!\n");
+            enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
+        }
+
         oldInput = $INPUT;
         wait(1);
     }
