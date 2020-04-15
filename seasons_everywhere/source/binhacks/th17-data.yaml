@@ -1,8 +1,9 @@
-
-
-
+# Binhacks that provide other binhacks in the patch with an interface
+# for working with global variables and additional data.
 
 binhacks:
+  # Every time an enemy is allocated, also allocate an instance
+  # of our EnemyEx datatype.
   Allocate season data for enemies:
     addr: "0x41ed32"
     expected: "8b8190000000"
@@ -24,6 +25,7 @@ binhacks:
       - "C7042438ED4100    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
 
+  # Free those EnemyExes with the enemies.
   Free season data for enemies:
     addr: "0x41db7a"
     expected: "8b8690520000"
@@ -90,6 +92,7 @@ codecaves:
     - "8B4508            " # mov    eax, [ebp+0x8]
     - "894710            " # mov    [edi+ex_id], eax
 
+    # Default is as if we called spec0(60, 10, 1).
     - "C747340A000000    " # mov    dword [edi+ex_item_max], 0xa
     - "C7473801000000    " # mov    dword [edi+ex_item_min], 0x1
     - "C747303C000000    " # mov    dword [edi+ex_max_time], 0x3c
@@ -164,6 +167,12 @@ codecaves:
     - "C3                    " # ret
 
   # Wrapper around ECLPlus' IntVarSwitch that preserves the volatile ecx, edx, and xmm registers.
+  #
+  # (this is done because, even though xmm registers are technically volatile,
+  #  it is far easier to reason about them in assembly as if they are mostly
+  #  almost nonvolatile, because rampart compiler optimizations have allowed
+  #  the compiler to avoid saving and restoring them across function calls
+  #  when it knows that the callee doesn't clobber these registers)
   ExpHP.seasons-everywhere.eclplus-int-switch:
     # Prologue that saves volatile registers
     - "55                    " # push   ebp

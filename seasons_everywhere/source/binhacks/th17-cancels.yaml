@@ -1,7 +1,3 @@
-
-
-
-
 binhacks:
   Use season release bullet cancel mode:
     addr: "0x425c9f"
@@ -47,7 +43,6 @@ binhacks:
       - "E800000000        " # <1>  call %%next
       - "C70424AB5C4200    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
-
 
   Implement season bullet cancel modes:
     addr: "0x419c9c"
