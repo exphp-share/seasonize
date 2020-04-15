@@ -2,8 +2,6 @@
 #include "seasons-data.tecl"
 #include "keys.tecl"
 
-anim { "seasons.anm"; }
-
 int ClipInt(int x, int a, int b) {
     if (x < a) { return a; }
     else if (x > b) { return b; }
@@ -23,6 +21,8 @@ void SetCurrentSeason(int season) {
     $GI4 |= season;
     return;
 }
+
+global SEASON_ANM_INDEX = 5; // 4th anm in stage ecl's "anim"
 
 global TOKEN_SETTING_ALL = 0;
 global TOKEN_SETTING_SIMPLE = 1;
@@ -69,18 +69,14 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 //       which can possibly be null for PIV items
 // TODO: Make beast items disappear if disabled
 // TODO: Show "NB" near beast items if No Hyper
-// TODO: Rethink initialization because enemies disappear between stages.
-// TODO: Hunt down where beast items are generated at the end of a hyper
-//       (or as spoils of a secret token) because apparently it doesn't
-//       call the spawn_item function >_>
+// TODO: Fix season level being on above character sprites for some reason
+// TODO: Put season gauge below beast items due to their annoying flames
 
 void SeasonMenuEnemy() {
     flagSet(1); // no hurtbox
     flagSet(2); // no hitbox
     flagSet(128); // not killed by dialogRead or enmKillAll
     flagSet(12); // don't delete beyond screen edges
-
-    enmCreate("SeasonGaugeEnemy", 0f, 0f, 1, 0, 0);
 
     playerAllowShot(false);
     playerAllowBomb(false);
@@ -90,7 +86,7 @@ void SeasonMenuEnemy() {
     SetCurrentSeasonPower(0);
     SetActiveReleaseState(0);
 
-    anmSelect(4);
+    anmSelect(SEASON_ANM_INDEX);
     anmSetSprite(0, SMENU_BG_ANM_SCRIPT);
     anmScale(0, 700f, 700f);
 
@@ -229,7 +225,7 @@ void SeasonMenuIconEnemy(int mySeason) {
     flagSet(128); // not killed by dialogRead or enmKillAll
     flagSet(12); // don't delete beyond screen edges
 
-    anmSelect(4);
+    anmSelect(SEASON_ANM_INDEX);
     anmSetSprite(0, SMENU_ICON_ANM_SCRIPT);
     anmSwitch(0, 100 + mySeason);
 
@@ -304,9 +300,6 @@ void SeasonInputEnemy() {
     int oldInput = $INPUT;
     int tokenSetting = CurrentTokenSetting();
 
-    SetCurrentSeasonPower(500);
-    SetActiveReleaseState(0);
-
     while(true) {
         int risingEdge = $INPUT & BitNot(oldInput);
 
@@ -364,7 +357,9 @@ void SeasonGaugeEnemy() {
     flagSet(2); // no hitbox
     flagSet(128); // not killed by dialogRead or enmKillAll
 
-    anmSelect(4);
+    anmSelect(SEASON_ANM_INDEX);
+
+    movePos(0f, -36f); // offset to not be on top of beast items
 
     int slot = 0;
     times(SG_NUM_ANM_SCRIPTS) {
@@ -386,8 +381,6 @@ void SeasonGaugeEnemy() {
         // to hold off on updating more than one thing. (checking things in decreasing order
         // of urgency)
         if (season != oldSeason) {
-            // set the season, and hold off on events because we can't use anmSwitch more than
-            // once on the same object in a single frame
             SeasonGaugeEnemy__SetSeason(season);
             oldSeason = season;
 
@@ -507,7 +500,7 @@ void SeasonReleaseEnemy() {
 
     SeasonReleaseSound();
 
-    anmSelect(4); // seasons.anm
+    anmSelect(SEASON_ANM_INDEX); // seasons.anm
     anmSetSprite(0, 2*seasonAlpha + 0);
     anmSetSprite(1, 2*seasonAlpha + 1);
 

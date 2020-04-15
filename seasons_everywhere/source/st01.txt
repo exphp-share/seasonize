@@ -1,4 +1,6 @@
-anim { "enemy.anm"; "st01enm.anm"; "seasons.anm"; }
+// (pl00 is a space-filling dummy here. some stages have 3 anms so
+//  we have to put seasons.anm in the 4th slot)
+anim { "enemy.anm"; "st01enm.anm"; "pl00.anm"; "seasons.anm"; }
 ecli { "default.ecl"; "st01bs.ecl"; "st01mbs.ecl"; "seasons.ecl";}
 
 #include "seasons.tecl"
@@ -1395,6 +1397,7 @@ void main()
     wait(1);
 
     @InitSeasons();
+
     //@SoundTest();
     //@SeasonDebugMenu();
     //@DebugAnmMenu();

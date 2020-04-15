@@ -1,6 +1,7 @@
 #include "ECLinclude/ECLplus.tecl"
 
-// Call this immediately at the beginning of each stage, after the main script makes itself intangible.
+// Call this immediately at the beginning of each stage,
+// after the main script makes itself intangible.
 inline void InitSeasons() {
     // The player can exit the game at any time, leaving all of our global state in
     // an unexpected configuration for the next game start.  We would like to reset
@@ -8,16 +9,19 @@ inline void InitSeasons() {
     // a new game, enters stage practice, spell practice, starts a replay, etc...
     // but we don't want to reset anything just because the player cleared a stage
     // and progressed to the next!
-    // 
+    //
     // To differentiate between "new games" and "next stages," we look at the score.
     // Thanks to stage clear bonuses, it is impossible to have a score of 0 after
     // clearing a stage.  (Just to be insanely paranoid, we also check that the
     // player hasn't reset their score by continuing... but I don't think you can
     // time a game over to coincide with stage clear bonus!)
-    if (SCORE | CONTINUES == 0) {
+    if (SCORE | CONTINUES) {
+        enmCreate("SeasonInputEnemy", 0f, 0f, 1, 0, 0);
+    } else {
         msgResetAll();
         enmCreate("SeasonMenuEnemy", 0f, 0f, 1, 0, 0);
     }
+    enmCreate("SeasonGaugeEnemy", 0f, 0f, 1, 0, 0);
 }
 
 inline void SeasonDebugMenu() {

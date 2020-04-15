@@ -5,6 +5,12 @@ all: ecls anms binhacks
 ecls: \
 	th17/seasons.ecl \
 	th17/st01.ecl \
+	th17/st02.ecl \
+	th17/st03.ecl \
+	th17/st04.ecl \
+	th17/st05.ecl \
+	th17/st06.ecl \
+	th17/st07.ecl \
 
 .PHONY: anms
 anms: \
