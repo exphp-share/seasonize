@@ -31,6 +31,8 @@
 %define ITMMGR_SPAWN_ITEM      0x434740
 %define FIND_ENEMY_FULL_BY_ID  0x41ddd0
 %define TIMER_SET_VALUE        0x405bc0
+%define TIMER_INCREMENT        0x405810
+%define TIMER_DECREMENT        0x40dbe0
 
 %define ECLP_GET_VALUE 0
 %define ECLP_GET_PTR   1
@@ -101,8 +103,8 @@ struc EnemyEx
 endstruc
 
 ; workaround for [Rx] being broken  (side-effect-free absolute jump)
-%macro  abs_jmp_hack 1 
-        call %%next 
+%macro  abs_jmp_hack 1
+        call %%next
     %%next:
         mov dword [esp], %1
         ret
@@ -231,7 +233,7 @@ item_flyout:
 
     call    .next
 .next:
-    mov     dword [esp], 0x00433727  
+    mov     dword [esp], 0x00433727
     ret  ; (side-effect free jump to absolute address)
 
 .velocity_nonpositive:
@@ -477,7 +479,7 @@ zunlist_prepend:
     or     eax, [ecx+l_prev]  ; this.prev
     test   eax, eax        ; are any nonnull?
     jnz    .error
-    
+
     mov    [ecx+l_next], edx  ; this.next = head
     mov    [edx+l_prev], ecx  ; head.prev = this
     mov    eax, ecx
@@ -493,7 +495,7 @@ zunlist_insert_after:
     or     eax, [ecx+l_prev]  ; this.prev
     test   eax, eax        ; are any nonnull?
     jnz    .error
-    
+
     mov    eax, [edx+l_next]
     mov    [ecx+l_next], eax  ; this.next = node.next
     test   eax, eax
@@ -572,7 +574,7 @@ codecave_use_release_cancel_mode:
     ; which was checked to generate the season items. Given that the function that
     ; generates the items is used by many different types of objects (not just the
     ; Bullet struct), it seems best to continue this practice.
-    ; 
+    ;
     ; We can't supply a cancel mode from ECL, so instead, releases are scripted
     ; to supply negative radii.
     push    edx
@@ -623,7 +625,7 @@ codecave_use_release_cancel_mode:
     ; ; Compute both (sum of radii)^2 and distance^2, using math copied
     ; ; straight from etCancel.
 
-    ; mov     ecx, 
+    ; mov     ecx,
     ; movss   xmm2, dword [ecx+et_diameter]
     ; mulss   xmm2, dword [FLOAT_ONE_HALF]
     ; movss   xmm1, dword [ecx+et_pos_x]
@@ -911,6 +913,29 @@ codecave_drop_season_items:
     ; original code
     push    0x88
     abs_jmp_hack 0x41da3a
+
+codecave_tick_bonus_timer: ; 00420a1e
+    ; original code (we had to overwrite the line before the spot
+    ; where we want to introduce the behavior, because other paths
+    ; jump to the spot after)
+    mov    eax, TIMER_INCREMENT
+    call   eax
+
+    lea    eax, [esi-efull_enemy]
+    push   dword [eax+efull_id]
+    call   find_enemy_ex_by_id ; FIXUP
+    lea    ecx, [eax+ex_bonus_timer]
+
+    cmp    dword [ecx+time_cur], 0x0
+    jle    .notick
+
+    sub    esp, 0x4 ; method is __thiscall but takes an unused stack arg
+    mov    eax, TIMER_DECREMENT
+    call   eax
+
+.notick:
+    abs_jmp_hack 0x420a23
+
 
 
 

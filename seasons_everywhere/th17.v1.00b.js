@@ -36,6 +36,11 @@
             "expected": "6888000000",
             "code": "E9 [codecave:of(Enemies can drop season items)]"
         },
+        "Tick season item bonus timer": {
+            "addr": "0x420a1e",
+            "expected": "e8 ed4dfeff",
+            "code": "E9 [codecave:of(Tick season item bonus timer)]"
+        },
         "Season item pickup effect": {
             "addr": "0x433b2d",
             "expected": "8d41ff // 83f80d",
@@ -95,6 +100,7 @@
         "of(Use season release bullet cancel mode)": "52 // 51 // 83EC04 // F30F110424 // 8B0C24 // 85C9 // B801000000 // BA04000000 // 0F4CC2 // 81E1FFFFFF7F // 890C24 // F30F100424 // 83C404 // 59 // 5A // 50 // 89F9 // F30F118598FBFFFF // E800000000 // C70424AB5C4200 // C3",
         "of(Implement season bullet cancel modes)": "83FA01 // 740A // 83FA04 // 7412 // E982000000 // E800000000 // C70424A19C4100 // C3 // B968764B00 // B880284000 // FFD0 // D80DF83A4A00 // D95DFC // F30F1045FC // F30F5C05F43B4A00 // 83EC20 // C744241CFFFFFFFF // C7442418ADDE0000 // C744241400000000 // C7442410CDCC0C40 // F30F1144240C // C7442408ADDE0000 // 89742404 // C7042430000000 // 8B0DB8764B00 // B840474300 // FFD0 // C780700C000001000000 // E800000000 // C70424E59C4100 // C3",
         "of(Enemies can drop season items)": "8B4508 // 50 // 8B4DF8 // 8D8970C0FFFF // 8D89F4EDFFFF // E8 [codecave:ExpHP.seasons-everywhere.drop-season-items] // 6888000000 // E800000000 // C704243ADA4100 // C3",
+        "of(Tick season item bonus timer)": "B810584000 // FFD0 // 8D86F4EDFFFF // FFB060570000 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 8D481C // 83790400 // 7E0A // 83EC04 // B8E0DB4000 // FFD0 // E800000000 // C70424230A4200 // C3",
         "of(Season items in Delayed PIV state)": "83F8 30 // 74 13 // C787 580C0000 02000000 // FF34C5 A80D4A00 // EB 15 // C787 580C0000 09000000 // E8 [codecave:ExpHP.seasons-everywhere.get-season] // 05 81000000 // 50 // E8 00000000 // C70424 c4344300 // C3",
         "of(Season item in Flyout state cannot be attracted)": "83F804 // 740C // 83F803 // 7407 // 83F809 // 7402 // EB0D // E800000000 // C7042498404300 // C3 // E800000000 // C70424E93F4300 // C3",
         "of(Season release autocollects items in Falling state)": "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting] // 85C0 // 740D // E8 00000000 // C70424 0A384300 // C3 // E8 00000000 // C70424 A5354300 // C3",

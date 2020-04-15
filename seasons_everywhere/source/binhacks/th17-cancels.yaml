@@ -1,3 +1,5 @@
+# Binhacks that generate season items from bullet cancels.
+
 binhacks:
   Use season release bullet cancel mode:
     addr: "0x425c9f"

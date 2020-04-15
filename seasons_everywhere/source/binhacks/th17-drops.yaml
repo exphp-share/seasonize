@@ -20,6 +20,34 @@ binhacks:
       - "C704243ADA4100    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
 
+  Tick season item bonus timer:
+    addr: "0x420a1e"
+    expected: "e8 ed4dfeff"
+    codecave:
+      # original code (we had to overwrite the line before the spot
+      # where we want to introduce the behavior, because other paths
+      # jump to the spot after)
+      - "B810584000        " # mov    eax, TIMER_INCREMENT
+      - "FFD0              " # call   eax
+
+      - "8D86F4EDFFFF      " # lea    eax, [esi-efull_enemy]
+      - "FFB060570000      " # push   dword [eax+efull_id]
+      - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
+      - "8D481C            " # lea    ecx, [eax+ex_bonus_timer]
+
+      - "83790400          " # cmp    dword [ecx+time_cur], 0x0
+      - "7E0A              " # jle    .notick
+
+      - "83EC04            " # sub    esp, 0x4 ; method is __thiscall but takes an unused stack arg
+      - "B8E0DB4000        " # mov    eax, TIMER_DECREMENT
+      - "FFD0              " # call   eax
+
+      # .notick:
+      # abs_jmp_hack 0x420a23
+      - "E800000000        " # <1>  call %%next
+      - "C70424230A4200    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
 codecaves:
   # void __thiscall EnemyFull::DropSeasonItems(Float3*)
   ExpHP.seasons-everywhere.drop-season-items:
