@@ -691,6 +691,8 @@ codecave_impl_release_cancel_modes:
     mov     ecx, dword [ITEM_MANAGER_PTR]
     mov     eax, ITMMGR_SPAWN_ITEM
     call    eax
+    test    eax, eax  ; we'll get null pointer if we hit PIV item limit
+    jz      .mode_0
     ; Make the item get autocollected once it stops moving.
     ; (this field used to be an argument to spawn_item in TH16)
     ; (this is implemented by another binhack; this field is an unused leftover from TH16)

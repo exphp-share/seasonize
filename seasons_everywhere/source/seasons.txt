@@ -58,19 +58,13 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 // TODO: Better drop values for different enemies and bosses
 // TODO: Season items on damage dealt
 // TODO: Season items from bomb bullet cancels (tricky)
-// TODO: Less distracting menu
-//   - make the 5 icons identical or make the unselected ones invisible
-//     so that the viewer isn't tempted to search for the right symbol
-//     (that takes too long and enemies will start shooting at you)
-// TODO: Fix gauge positioning w.r.t. beast items
 // TODO: Fix positioning of season level
 // TODO: Consume season levels
-// TODO: fix bug where we set a flag on the output of spawn item
-//       which can possibly be null for PIV items
 // TODO: Make beast items disappear if disabled
 // TODO: Show "NB" near beast items if No Hyper
 // TODO: Fix season level being on above character sprites for some reason
 // TODO: Put season gauge below beast items due to their annoying flames
+// TODO: Fix season gauge starting out transparent
 
 void SeasonMenuEnemy() {
     flagSet(1); // no hurtbox
@@ -216,7 +210,7 @@ global DIRECTION_UP = 4.71238898038;
 global TAU_OVER_FIVE = 1.25663706144;
 global SMENU_ICON_RADIUS = 50f;
 global SMENU_ICON_ALPHA_ACTIVE = 255;
-global SMENU_ICON_ALPHA_INACTIVE = 128;
+global SMENU_ICON_ALPHA_INACTIVE = 10;
 global SMENU_ICON_SCALE_ACTIVE = 1f;
 global SMENU_ICON_SCALE_INACTIVE = 0.75f;
 void SeasonMenuIconEnemy(int mySeason) {
@@ -404,11 +398,9 @@ void SeasonGaugeEnemy() {
         anmScale(SG_SLOT__FILL_BG, _f(level > 0), 1f);
 
         drawColor(SeasonLevelNumberColor(level));
-        // TODO: set font to 2
-        // TODO: set alignment to 2, 0
         drawFont(2);
         drawAnchor(2, 0);
-        drawf(-132f, 446f-16f, "%d", _SS level);
+        drawf(-132f, 446f-36f, "%d", _SS level);
         drawReset();
         wait(1);
     }

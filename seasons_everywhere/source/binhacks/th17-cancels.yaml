@@ -54,7 +54,7 @@ binhacks:
       - "740A              " # je      .mode_1
       - "83FA04            " # cmp     edx, 0x4
       - "7412              " # je      .mode_4
-      - "E982000000        " # jmp     .mode_0
+      - "E986000000        " # jmp     .mode_0
 
       # .mode_1:
       # abs_jmp_hack 0x419ca1
@@ -84,6 +84,8 @@ binhacks:
       - "8B0DB8764B00      " # mov     ecx, dword [ITEM_MANAGER_PTR]
       - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
       - "FFD0              " # call    eax
+      - "85C0              " # test    eax, eax  ; we'll get null pointer if we hit PIV item limit
+      - "740A              " # jz      .mode_0
       # Make the item get autocollected once it stops moving.
       # (this field used to be an argument to spawn_item in TH16)
       # (this is implemented by another binhack; this field is an unused leftover from TH16)
