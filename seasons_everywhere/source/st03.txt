@@ -1,0 +1,1666 @@
+anim { "enemy.anm"; "st03enm.anm"; "pl00.anm"; "seasons.anm"; }
+ecli { "default.ecl"; "st03bs.ecl"; "st03mbs.ecl"; "seasons.ecl"; }
+
+#include "seasons.tecl"
+
+void MainBossSpell();
+
+void Cir00()
+{
+    anmSelect(2);
+    anmSetSprite(0, 56);
+    setHurtbox(28.0f, 28.0f);
+    setHitbox(16.0f, 16.0f);
+    dropMain(2);
+    moveVel(2.7488935f + (%RANDF2 * 0.17453292f), 3.0f);
+    moveEllipseRel(%F0, 0.034906585f, 10.0f, 0.0f, %ABS_ANGLE, 0.0f);
+!NHL
+    @Cir00_at() async;
+!*
+    wait(60);
+    goto Cir00_400 @ 0;
+Cir00_380:
+    wait(1000);
+Cir00_400:
+    if (1) goto Cir00_380 @ 0;
+    delete();
+}
+
+void Cir00_at()
+{
+    var A;
+!E
+    10 + ($RAND % 200);
+!N
+    10 + ($RAND % 200);
+!H
+    10 + ($RAND % 10);
+!LO
+    10 + ($RAND % 10);
+!*
+    wait([-1]);
+    etNew(0);
+    etAim(0, 0);
+    etSprite(0, 5, 4);
+    etCountD(0, 1, 1, 1, 1, 1, 1, 1, 2);
+    etAngle(0, 0.0f, 0.0f);
+    etSpeedD(0, 1.0f, 1.0f, 3.0f, 4.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+    etSound(0, 21, -1);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    diffI($A, 1, 1, 2, 3);
+    goto Cir00_at_800 @ 0;
+Cir00_at_760:
+    etOn(0);
+    wait(40);
+Cir00_at_800:
+    if ($A--) goto Cir00_at_760 @ 0;
+    return;
+}
+
+void GirlA01()
+{
+    setHurtbox(24.0f, 24.0f);
+    setHitbox(16.0f, 16.0f);
+    moveVel(1.5707964f, 0.8f);
+    wait(60);
+    moveVelTime(120, 1, 1.3744467f, 1.2f);
+    @GirlA01_at();
+    goto GirlA01_236 @ 0;
+GirlA01_216:
+    wait(1000);
+GirlA01_236:
+    if (1) goto GirlA01_216 @ 0;
+    return;
+}
+
+void GirlA01_at()
+{
+    var A;
+!E
+    60;
+!N
+    60;
+!H
+    3;
+!LO
+    3;
+!*
+    wait([-1]);
+    etNew(0);
+    etAim(0, 0);
+    etSprite(0, 8, 6);
+!E
+    3;
+!N
+    5;
+!H
+    7;
+!LO
+    9;
+!*
+    etCount(0, [-1], 1);
+!E
+    0.523599f;
+!N
+    0.261799f;
+!H
+    0.226893f;
+!LO
+    0.174533f;
+!*
+    etAngle(0, 0.0f, [-1.0f]);
+!E
+    2.0f;
+!N
+    2.0f;
+!H
+    2.0f;
+!LO
+    3.0f;
+!*
+    etSpeed(0, [-1.0f], 1.0f);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    diffI($A, 1, 1, 2, 4);
+    goto GirlA01_at_864 @ 0;
+GirlA01_at_636:
+    unless (($DIFF != 0) || (($RAND % 3) == 0)) goto GirlA01_at_844 @ 0;
+    etOn(0);
+GirlA01_at_844:
+    wait(50);
+GirlA01_at_864:
+    if ($A--) goto GirlA01_at_636 @ 0;
+    return;
+}
+
+void GirlA01_at_l()
+{
+    var A;
+    wait(30);
+    etNew(0);
+    etAim(0, 2);
+    etSprite(0, 7, 4);
+    etCountD(0, 3, 3, 3, 6, 1, 1, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeedD(0, 2.2f, 2.2f, 2.2f, 1.5f, 1.0f, 1.0f, 1.0f, 1.0f);
+    etExSet(0, 0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    $A = 1;
+    goto GirlA01_at_l_412 @ 0;
+GirlA01_at_l_372:
+    etOn(0);
+    wait(30);
+GirlA01_at_l_412:
+    if ($A--) goto GirlA01_at_l_372 @ 0;
+    return;
+}
+
+void GirlA02()
+{
+    setHurtbox(24.0f, 24.0f);
+    setHitbox(16.0f, 16.0f);
+    moveVel(1.5707964f, 0.8f);
+    wait(60);
+    moveVelTime(120, 1, 0.7853982f, 2.2f);
+    @GirlA02_at();
+    goto GirlA02_236 @ 0;
+GirlA02_216:
+    wait(1000);
+GirlA02_236:
+    if (1) goto GirlA02_216 @ 0;
+    return;
+}
+
+void GirlA02_at()
+{
+    var A;
+    wait(60);
+    etNew(0);
+    etAim(0, 1);
+    etSprite(0, 6, 6);
+!E
+    5;
+!N
+    9;
+!H
+    9;
+!LO
+    9;
+!*
+    etCount(0, [-1], 1);
+!E
+    0.872665f;
+!N
+    0.436332f;
+!H
+    0.314159f;
+!LO
+    0.261799f;
+!*
+    etAngle(0, 1.5707964f, [-1.0f]);
+!E
+    1.8f;
+!N
+    1.8f;
+!H
+    2.5f;
+!LO
+    3.2f;
+!*
+    etSpeed(0, [-1.0f], 1.0f);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    $A = 1;
+    goto GirlA02_at_680 @ 0;
+GirlA02_at_560:
+    etOn(0);
+!E
+    60;
+!N
+    60;
+!H
+    40;
+!LO
+    30;
+!*
+    wait([-1]);
+GirlA02_at_680:
+    if ($A--) goto GirlA02_at_560 @ 0;
+    return;
+}
+
+void GirlA02_at_l()
+{
+    var A;
+    wait(30);
+    etNew(0);
+    etAim(0, 2);
+    etSprite(0, 7, 4);
+    etCountD(0, 3, 3, 3, 6, 1, 1, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeedD(0, 2.2f, 2.2f, 2.2f, 1.5f, 1.0f, 1.0f, 1.0f, 1.0f);
+    etExSet(0, 0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    $A = 1;
+    goto GirlA02_at_l_412 @ 0;
+GirlA02_at_l_372:
+    etOn(0);
+    wait(30);
+GirlA02_at_l_412:
+    if ($A--) goto GirlA02_at_l_372 @ 0;
+    return;
+}
+
+void GirlA03()
+{
+    setHurtbox(24.0f, 24.0f);
+    setHitbox(16.0f, 16.0f);
+    moveVel(1.5707964f, 0.8f);
+    wait(60);
+    moveVelTime(120, 1, 0.7853982f, 1.2f);
+    @GirlA03_at();
+    goto GirlA03_236 @ 0;
+GirlA03_216:
+    wait(1000);
+GirlA03_236:
+    if (1) goto GirlA03_216 @ 0;
+    return;
+}
+
+void GirlA03_at()
+{
+    var A;
+    wait(60);
+    etNew(0);
+    etAim(0, 0);
+    etSprite(0, 8, 6);
+!E
+    3;
+!N
+    5;
+!H
+    7;
+!LO
+    9;
+!*
+    etCount(0, [-1], 1);
+!E
+    0.523599f;
+!N
+    0.261799f;
+!H
+    0.261799f;
+!LO
+    0.20944f;
+!*
+    etAngle(0, 0.0f, [-1.0f]);
+!E
+    2.0f;
+!N
+    2.0f;
+!H
+    2.5f;
+!LO
+    3.0f;
+!*
+    etSpeed(0, [-1.0f], 1.0f);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    diffI($A, 1, 1, 2, 3);
+    goto GirlA03_at_864 @ 0;
+GirlA03_at_556:
+    unless (($DIFF != 0) || (($RAND % 3) == 0)) goto GirlA03_at_764 @ 0;
+    etOn(0);
+GirlA03_at_764:
+!E
+    60;
+!N
+    60;
+!H
+    60;
+!LO
+    40;
+!*
+    wait([-1]);
+GirlA03_at_864:
+    if ($A--) goto GirlA03_at_556 @ 0;
+    return;
+}
+
+void GirlA03_at_l()
+{
+    var A;
+    wait(30);
+    etNew(0);
+    etAim(0, 2);
+    etSprite(0, 7, 4);
+    etCountD(0, 3, 3, 3, 6, 1, 1, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeedD(0, 2.2f, 2.2f, 2.2f, 1.5f, 1.0f, 1.0f, 1.0f, 1.0f);
+    etExSet(0, 0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    $A = 1;
+    goto GirlA03_at_l_412 @ 0;
+GirlA03_at_l_372:
+    etOn(0);
+    wait(30);
+GirlA03_at_l_412:
+    if ($A--) goto GirlA03_at_l_372 @ 0;
+    return;
+}
+
+void GirlB01()
+{
+    anmSelect(2);
+    anmSetMain(0, 20);
+    dropExtra(1, 1);
+    dropExtra(2, 1);
+    setHurtbox(32.0f, 32.0f);
+    setHitbox(24.0f, 24.0f);
+    moveVel(-0.17889625f, 2.0f);
+    @GirlB01_at() async;
+    wait(120);
+    moveVelTime(120, 1, 2.9452431f, 1.5f);
+    goto GirlB01_328 @ 0;
+GirlB01_308:
+    wait(1000);
+GirlB01_328:
+    if (1) goto GirlB01_308 @ 0;
+    delete();
+}
+
+void GirlB01_at()
+{
+    var A;
+    wait($RAND % 60);
+    etNew(0);
+    etAim(0, 0);
+    etSprite(0, 6, 6);
+    etCount(0, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeed(0, 2.0f, 1.0f);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 1, 1, -999999, -999999, -999999.0f, -999999.0f);
+    $A = 2;
+    goto GirlB01_at_552 @ 0;
+GirlB01_at_420:
+    etOn(0);
+    wait(40 + ($RAND % 20));
+GirlB01_at_552:
+    if ($A--) goto GirlB01_at_420 @ 0;
+    return;
+}
+
+void GirlB02()
+{
+    anmSelect(2);
+    anmSetMain(0, 35);
+    anmSetSprite(1, 99);
+    setHurtbox(28.0f, 28.0f);
+    setHitbox(16.0f, 16.0f);
+    dropMain(1);
+    dropExtra(1, 1);
+    dropExtra(2, 2);
+    @GirlB02_at() async;
+    moveVel(-0.19634955f, 3.0f);
++10: //10
+    moveVelTime(120, 1, 0.0f, 0.3f);
++140: //150
+    moveVelTime(180, 1, 2.7488935f, 3.0f);
+    wait(60);
+    goto GirlB02_404 @ 150;
+GirlB02_384:
+    wait(1000);
+GirlB02_404:
+    if (1) goto GirlB02_384 @ 150;
+    delete();
+}
+
+void GirlB02_at()
+{
+    var A;
+    etNew(0);
+    etAim(0, 2);
+    etSprite(0, 5, 2);
+    etCountD(0, 3, 5, 20, 13, 1, 1, 1, 2);
+    etAngle(0, 0.0f, 0.13962634f);
+    etSpeedD(0, 0.5f, 0.5f, 1.5f, 2.5f, 1.0f, 1.0f, 1.0f, 1.0f);
+    etSound(0, 21, -1);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 1, 1, -999999, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, -2147483648, 60, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, 4, 60, -999999, 0.016666668f, -999999.0f);
+    wait(60 + ($RAND % 80));
+    etAngle(0, %RANDRAD, 0.0f);
+    etOn(0);
+    $A = 1;
+    goto GirlB02_at_1088 @ 0;
+GirlB02_at_668:
+    diffWait(240 + ($RAND % 40), 120 + ($RAND % 40), 100 + ($RAND % 40), 70 + ($RAND % 40));
+    etOn(0);
+GirlB02_at_1088:
+    if ($A--) goto GirlB02_at_668 @ 0;
+    return;
+}
+
+void GirlB03()
+{
+    anmSelect(2);
+    anmSetMain(0, 20);
+    dropExtra(1, 1);
+    @GirlA01();
+    delete();
+}
+
+void GirlBlueA01()
+{
+    anmSelect(2);
+    anmSetMain(0, 172);
+    @GirlA01();
+    delete();
+}
+
+void GirlBlueA01e()
+{
+    anmSelect(2);
+    anmSetMain(0, 172);
+    dropMain(2);
+!NHL
+    @GirlA01_at() async;
+!*
+    @GirlA01();
+    delete();
+}
+
+void GirlBlueA02()
+{
+    anmSelect(2);
+    anmSetMain(0, 172);
+    @GirlA02();
+    delete();
+}
+
+void GirlBlueA02e()
+{
+    anmSelect(2);
+    anmSetMain(0, 172);
+    dropMain(2);
+!NHL
+    @GirlA02_at() async;
+!*
+    @GirlA02();
+    delete();
+}
+
+void GirlBlueA03()
+{
+    anmSelect(2);
+    anmSetMain(0, 172);
+    @GirlA03();
+    delete();
+}
+
+void GirlBlueA03e()
+{
+    anmSelect(2);
+    anmSetMain(0, 172);
+    dropMain(2);
+!NHL
+    @GirlA03_at() async;
+!*
+    @GirlA03();
+    delete();
+}
+
+void GirlC01()
+{
+    anmSelect(2);
+    anmSetMain(0, 202);
+    anmSetSprite(1, 93);
+    dropExtra(1, 3);
+    dropExtra(2, 3);
+    setHurtbox(32.0f, 32.0f);
+    setHitbox(24.0f, 24.0f);
+    moveVel(1.5707964f, 2.0f);
+    moveVelTime(80, 1, 1.5707964f, 0.0f);
+    @GirlC01_at() async;
+    wait(130);
+    moveVelTime(80, 1, 1.5707964f, 0.2f);
+    wait(300);
+    moveVelTime(80, 1, 1.5707964f, 1.4f);
+    goto GirlC01_436 @ 0;
+GirlC01_416:
+    wait(1000);
+GirlC01_436:
+    if (1) goto GirlC01_416 @ 0;
+    delete();
+}
+
+void GirlC01_at()
+{
+    var A, B;
+    wait(60);
+    etNew(0);
+    etAim(0, 0);
+    etSprite(0, 18, 3);
+!E
+    3;
+!N
+    7;
+!H
+    9;
+!LO
+    11;
+!*
+    etCount(0, [-1], 1);
+!E
+    0.698132f;
+!N
+    0.261799f;
+!H
+    0.20944f;
+!LO
+    0.174533f;
+!*
+    etAngle(0, 0.0f, [-1.0f]);
+    etSpeed(0, 1.5f, 1.5f);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+!E
+    3.5f;
+!N
+    3.5f;
+!H
+    4.0f;
+!LO
+    4.5f;
+!*
+    etEx(0, 0, 2097152, 120, -999999, [-1.0f], -999999.0f);
+    %A = 1.963495f;
+    diffI($B, 10, 10, 14, 20);
+    goto GirlC01_at_760 @ 0;
+GirlC01_at_640:
+    etOn(0);
+!E
+    40;
+!N
+    40;
+!H
+    30;
+!LO
+    20;
+!*
+    wait([-1]);
+GirlC01_at_760:
+    if ($B--) goto GirlC01_at_640 @ 0;
+    return;
+}
+
+void GirlC02()
+{
+    anmSelect(2);
+    anmSetMain(0, 202);
+    anmSetSprite(1, 93);
+    dropExtra(1, 2);
+    dropExtra(2, 2);
+    setHurtbox(32.0f, 32.0f);
+    setHitbox(24.0f, 24.0f);
+    moveVel(1.5707964f, 3.0f);
+    moveVelTime(80, 1, 1.5707964f, 0.0f);
+    @GirlC02_at() async;
+    wait(300);
+    moveVel(-1.5707964f, 0.0f);
+    moveVelTime(80, 1, 1.5707964f, 0.2f);
+    goto GirlC02_408 @ 0;
+GirlC02_388:
+    wait(1000);
+GirlC02_408:
+    if (1) goto GirlC02_388 @ 0;
+    delete();
+}
+
+void GirlC02_at()
+{
+    var A;
+    wait(80);
+    $A = 3;
+    goto GirlC02_at_348 @ 0;
+GirlC02_at_120:
+    enmCreate("Phantom02b", 16.0f, 32.0f, 300, 1000, 0);
+    enmCreate("Phantom02b", -16.0f, 32.0f, 300, 1000, 0);
+    enmCreate("Phantom02b", 48.0f, -32.0f, 300, 1000, 0);
+    enmCreate("Phantom02b", -48.0f, -32.0f, 300, 1000, 0);
+    wait(160);
+GirlC02_at_348:
+    if ($A--) goto GirlC02_at_120 @ 0;
+    return;
+}
+
+void GirlD01()
+{
+    anmSelect(2);
+    anmSetMain(0, 212);
+    anmSetSprite(1, 93);
+    dropExtra(1, 4);
+    dropExtra(2, 4);
+    setHurtbox(32.0f, 32.0f);
+    setHitbox(24.0f, 24.0f);
+    moveVel(1.5707964f, 3.0f);
+    moveVelTime(60, 1, 1.5707964f, 0.0f);
+    @GirlD01_at() async;
+    wait(400);
+    moveSpeedTime(120, 1, 2.0f);
+    wait(60);
+    goto GirlD01_400 @ 0;
+GirlD01_380:
+    wait(1000);
+GirlD01_400:
+    if (1) goto GirlD01_380 @ 0;
+    delete();
+}
+
+void GirlD01_at()
+{
+    var A, B;
+    wait(60);
+    etNew(0);
+    etAim(0, 10);
+    etSprite(0, 6, 2);
+    etCount(0, 5, 3);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeed(0, 1.6f, 1.6f);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, 2097152, 60, -999999, 3.0f, -999999.0f);
+    %A = _f(0);
+    $B = 20;
+    goto GirlD01_at_548 @ 0;
+GirlD01_at_404:
+    etAngle(0, %A, 0.05235988f);
+    %A = %A + %F0;
+    etOn(0);
+    wait(20);
+GirlD01_at_548:
+    if ($B--) goto GirlD01_at_404 @ 0;
+    return;
+}
+
+void GirlD02()
+{
+    anmSelect(2);
+    anmSetMain(0, 40);
+    anmSetSprite(1, 93);
+    dropExtra(1, 4);
+    dropExtra(2, 7);
+    setHurtbox(32.0f, 32.0f);
+    setHitbox(24.0f, 24.0f);
+    moveVel(1.5707964f, 3.0f);
+    moveVelTime(60, 1, 1.5707964f, 0.0f);
+    @GirlD02_at() async;
+    wait(250);
+    moveSpeedTime(120, 1, 0.15f);
+    wait(600);
+    moveSpeedTime(120, 1, -2.3f);
+    wait(60);
+    goto GirlD02_448 @ 0;
+GirlD02_428:
+    wait(1000);
+GirlD02_448:
+    if (1) goto GirlD02_428 @ 0;
+    delete();
+}
+
+void GirlD02_at()
+{
+    var A, B;
+    wait(60);
+    etNew(0);
+    etAim(0, 3);
+    etSprite(0, 18, 6);
+!E
+    2;
+!N
+    4;
+!H
+    6;
+!LO
+    8;
+!*
+    etCount(0, [-1], 1);
+    etAngle(0, 1.5707964f, 0.05235988f);
+    etSpeed(0, 2.0f, 1.5f);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, -2147483648, 10, -999999, -999999.0f, -999999.0f);
+    etEx2(0, 0, 8192, 5, 8, 2, 1, -999999.0f, 3.1415927f, 1.0f, 1.0f);
+    etEx2(0, 0, 16384, 0, 13, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f);
+!E
+    40;
+!N
+    20;
+!H
+    20;
+!LO
+    18;
+!*
+    etEx(0, 0, -2147483648, [-1], -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, 65536, 2, -999999, -999999.0f, -999999.0f);
+    etExSet(0, 8, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    %A = 1.963495f;
+    $B = 10;
+    goto GirlD02_at_1076 @ 0;
+GirlD02_at_820:
+    etAngle(0, %A, 0.05235988f);
+    %A = %A + 0.785398f;
+!L
+    %A = %A + (%RANDF2 * 0.17453292f);
+!*
+    etOn(0);
+    wait(90);
+GirlD02_at_1076:
+    if ($B--) goto GirlD02_at_820 @ 0;
+    return;
+}
+
+void GirlRedA01()
+{
+    anmSelect(2);
+    anmSetMain(0, 177);
+    @GirlA01();
+    delete();
+}
+
+void GirlRedA01e()
+{
+    anmSelect(2);
+    anmSetMain(0, 177);
+    dropMain(1);
+!NHL
+    @GirlA01_at() async;
+!*
+    @GirlA01();
+    delete();
+}
+
+void GirlRedA02()
+{
+    anmSelect(2);
+    anmSetMain(0, 177);
+    @GirlA02();
+    delete();
+}
+
+void GirlRedA02e()
+{
+    anmSelect(2);
+    anmSetMain(0, 177);
+    dropMain(1);
+!NHL
+    @GirlA02_at() async;
+!*
+    @GirlA02();
+    delete();
+}
+
+void GirlRedA03()
+{
+    anmSelect(2);
+    anmSetMain(0, 177);
+    @GirlA03();
+    delete();
+}
+
+void GirlRedA03e()
+{
+    anmSelect(2);
+    anmSetMain(0, 177);
+    dropMain(1);
+!NHL
+    @GirlA03_at() async;
+!*
+    @GirlA03();
+    delete();
+}
+
+void LogoEnemy()
+{
+    wait(480);
+    stageLogo();
+    return;
+}
+
+void MainBoss()
+{
+    setChapter(43);
+    enmCreateA("Boss", 144.0f, -16.0f, 40, 1000, 0);
+    dialogWait();
++1: //1
+    unknown520();
+    setChapter(81);
++60: //61
+    dialogRead(1);
+    dialogWait();
+    return;
+    return;
+}
+
+void MainBossDebug()
+{
+    callSTD(1);
+    setChapter(41);
++10: //10
+    dialogRead(0);
+    @MainBoss();
+    return;
+}
+
+void MainBossDebug2()
+{
+    callSTD(1);
+    setChapter(41);
++10: //10
+    dialogRead(-1);
+    @MainBoss();
+    return;
+}
+
+void MainFront()
+{
+    @MainSub00();
+    wait(250);
+    @MainSub01() async;
+    wait(300);
+    @MainSub02();
+    wait(200);
+    @MainSub03() async;
+    wait(300);
+    @MainSub04();
+    wait(200);
+    debug22(6, "DebugSkipStopFunc");
+    @MainSub05();
+    wait(300);
+    @MainSub06();
+    wait(100);
+    @MainSub07();
+    wait(190);
+    debug22(7, "DebugSkipStopFunc");
+    return;
+}
+
+void MainLatter()
+{
+    wait(1);
+    @MainSub08();
+    wait(260);
+    debug22(8, "DebugSkipStopFunc");
+    @MainSub06c();
+    wait(60);
+    @MainSub07b();
+    wait(140);
+    @MainSub10();
+    wait(60);
+    @MainSub06e();
+    debug22(9, "DebugSkipStopFunc");
+    wait(60);
+    @MainSub09();
+    wait(60);
+    return;
+}
+
+void MainLatterB()
+{
+    unknown520();
+    wait(60);
+    return;
+}
+
+void MainMBossDebug()
+{
+    setChapter(22);
+    enmCreateA("MBoss", 112.0f, -32.0f, 40, 1000, 0);
+    goto MainMBossDebug_148 @ 0;
+MainMBossDebug_128:
+    wait(1000);
+MainMBossDebug_148:
+    if (1) goto MainMBossDebug_128 @ 0;
+    return;
+}
+
+void MainMsgDebug()
+{
+    callSTD(1);
++10: //10
+    dialogRead(0);
+    dialogWait();
++1: //11
+    dialogWait();
++60: //71
+    dialogRead(1);
+    dialogWait();
+    goto MainMsgDebug_184 @ 4071;
+MainMsgDebug_168:
++4000: //4071
+    nop();
+MainMsgDebug_184:
+    if (1) goto MainMsgDebug_168 @ 71;
+    return;
+}
+
+void MainSub00()
+{
+    var A;
+    @MainSub00b() async;
+    $A = 7;
+    goto MainSub00_296 @ 0;
+MainSub00_132:
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 220, 1000, 2);
+    wait(40);
+MainSub00_296:
+    if ($A--) goto MainSub00_132 @ 0;
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 220, 1000, 19);
+    return;
+}
+
+void MainSub00b()
+{
+    var A;
+    $A = 8;
+    goto MainSub00b_264 @ 0;
+MainSub00b_100:
+    enmCreateM("Phantom01", 216.0f, _f(32) + (%RANDF2 * _f(32)), 220, 1000, 2);
+    wait(40);
+MainSub00b_264:
+    if ($A--) goto MainSub00b_100 @ 0;
+    return;
+}
+
+void MainSub01()
+{
+    var A;
+    $A = 6;
+    goto MainSub01_348 @ 0;
+MainSub01_100:
+    enmCreate("GirlBlueA01", -64.0f, -24.0f, 200, 1000, 2);
+    enmCreateM("GirlRedA01", 64.0f, -24.0f, 200, 1000, 1);
+    wait(40);
+    enmCreate("GirlRedA01", -64.0f, -24.0f, 200, 1000, 1);
+    enmCreateM("GirlBlueA01", 64.0f, -24.0f, 200, 1000, 2);
+    wait(40);
+MainSub01_348:
+    if ($A--) goto MainSub01_100 @ 0;
+    return;
+}
+
+void MainSub02()
+{
+    var A;
+    @MainSub02b() async;
+    $A = 7;
+    goto MainSub02_296 @ 0;
+MainSub02_132:
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 1);
+    wait(40);
+MainSub02_296:
+    if ($A--) goto MainSub02_132 @ 0;
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 31);
+    return;
+}
+
+void MainSub02b()
+{
+    var A;
+    $A = 7;
+    goto MainSub02b_264 @ 0;
+MainSub02b_100:
+    enmCreateM("Phantom01", 216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 1);
+    wait(40);
+MainSub02b_264:
+    if ($A--) goto MainSub02b_100 @ 0;
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 30);
+    return;
+}
+
+void MainSub03()
+{
+    var A;
+    $A = 6;
+    goto MainSub03_348 @ 0;
+MainSub03_100:
+    enmCreate("GirlBlueA01", -128.0f, -24.0f, 200, 1000, 2);
+    enmCreateM("GirlRedA01", 128.0f, -24.0f, 200, 1000, 1);
+    wait(40);
+    enmCreate("GirlRedA01", -128.0f, -24.0f, 200, 1000, 1);
+    enmCreateM("GirlBlueA01", 128.0f, -24.0f, 200, 1000, 2);
+    wait(40);
+MainSub03_348:
+    if ($A--) goto MainSub03_100 @ 0;
+    return;
+}
+
+void MainSub04()
+{
+    var A;
+    @MainSub04b() async;
+    $A = 7;
+    goto MainSub04_296 @ 0;
+MainSub04_132:
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 2);
+    wait(40);
+MainSub04_296:
+    if ($A--) goto MainSub04_132 @ 0;
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 22);
+    return;
+}
+
+void MainSub04b()
+{
+    var A;
+    $A = 7;
+    goto MainSub04b_264 @ 0;
+MainSub04b_100:
+    enmCreateM("Phantom01", 216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 2);
+    wait(40);
+MainSub04b_264:
+    if ($A--) goto MainSub04b_100 @ 0;
+    enmCreate("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 21);
+    return;
+}
+
+void MainSub05()
+{
+    enmCreateF("GirlC01", 32.0f, -48.0f, 2800, 1000, 2);
+    enmCreateF("GirlC01", -32.0f, -48.0f, 2800, 1000, 2);
+    wait(300);
+    enmCreateF("GirlC01", 128.0f, -48.0f, 2800, 1000, 30);
+    wait(280);
+    enmCreateF("GirlC01", -128.0f, -48.0f, 2800, 1000, 2);
+    wait(280);
+    enmCreateF("GirlC01", -64.0f, -48.0f, 2800, 1000, 31);
+    wait(280);
+    enmCreateF("GirlC01", -32.0f, -48.0f, 2000, 1000, 2);
+    enmCreateF("GirlC01", 32.0f, -48.0f, 2000, 1000, 2);
+    return;
+}
+
+void MainSub06()
+{
+    var A;
+    @MainSub06b() async;
+    $A = 20;
+    goto MainSub06_296 @ 0;
+MainSub06_132:
+    enmCreateF("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 1);
+    wait(20);
+MainSub06_296:
+    if ($A--) goto MainSub06_132 @ 0;
+    return;
+}
+
+void MainSub06b()
+{
+    var A;
+    $A = 19;
+    goto MainSub06b_264 @ 0;
+MainSub06b_100:
+    enmCreateMF("Phantom01", 216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 1);
+    wait(20);
+MainSub06b_264:
+    if ($A--) goto MainSub06b_100 @ 0;
+    enmCreateF("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 33);
+    return;
+}
+
+void MainSub06c()
+{
+    var A;
+    @MainSub06d() async;
+    $A = 19;
+    goto MainSub06c_296 @ 0;
+MainSub06c_132:
+    enmCreateF("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 1);
+    wait(20);
+MainSub06c_296:
+    if ($A--) goto MainSub06c_132 @ 0;
+    enmCreateF("Phantom01", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 33);
+    wait(20);
+    return;
+}
+
+void MainSub06d()
+{
+    var A;
+    $A = 20;
+    goto MainSub06d_264 @ 0;
+MainSub06d_100:
+    enmCreateMF("Phantom01", 216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 1);
+    wait(20);
+MainSub06d_264:
+    if ($A--) goto MainSub06d_100 @ 0;
+    enmCreateMF("Phantom01", 216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 33);
+    wait(20);
+    return;
+}
+
+void MainSub06e()
+{
+    var A;
+    @MainSub06f() async;
+    $A = 44;
+    goto MainSub06e_296 @ 0;
+MainSub06e_132:
+    enmCreateF("Phantom01d", -216.0f, _f(32) + (%RANDF2 * _f(32)), 90, 1000, 1);
+    wait(15);
+MainSub06e_296:
+    if ($A--) goto MainSub06e_132 @ 0;
+    enmCreateF("Phantom01d", -216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 33);
+    wait(20);
+    return;
+}
+
+void MainSub06f()
+{
+    var A;
+    $A = 44;
+    goto MainSub06f_264 @ 0;
+MainSub06f_100:
+    enmCreateMF("Phantom01d", 216.0f, _f(32) + (%RANDF2 * _f(32)), 90, 1000, 2);
+    wait(15);
+MainSub06f_264:
+    if ($A--) goto MainSub06f_100 @ 0;
+    enmCreateMF("Phantom01d", 216.0f, _f(32) + (%RANDF2 * _f(32)), 120, 1000, 22);
+    wait(20);
+    return;
+}
+
+void MainSub07()
+{
+    var A;
+    $A = 9;
+    goto MainSub07_556 @ 0;
+MainSub07_100:
+    enmCreateF("GirlBlueA02", -50.0f, -24.0f, 140, 1000, 2);
+    enmCreateMF("GirlRedA02", 50.0f, -24.0f, 140, 1000, 1);
+    enmCreateF("GirlBlueA02", -150.0f, -24.0f, 140, 1000, 2);
+    enmCreateMF("GirlRedA02", 150.0f, -24.0f, 140, 1000, 1);
+    wait(40);
+    enmCreateF("GirlRedA02", -64.0f, -24.0f, 140, 1000, 1);
+    enmCreateMF("GirlBlueA02", 64.0f, -24.0f, 140, 1000, 2);
+    enmCreateF("GirlRedA02", -150.0f, -24.0f, 140, 1000, 2);
+    enmCreateMF("GirlBlueA02", 150.0f, -24.0f, 140, 1000, 1);
+    wait(40);
+MainSub07_556:
+    if ($A--) goto MainSub07_100 @ 0;
+    enmCreateF("GirlRedA02", -30.0f, -24.0f, 140, 1000, 31);
+    enmCreateMF("GirlBlueA02", 30.0f, -24.0f, 140, 1000, 30);
+    return;
+}
+
+void MainSub07b()
+{
+    var A;
+    $A = 7;
+    goto MainSub07b_556 @ 0;
+MainSub07b_100:
+    enmCreateF("GirlBlueA02", -50.0f, -24.0f, 140, 1000, 2);
+    enmCreateMF("GirlRedA02", 50.0f, -24.0f, 140, 1000, 1);
+    enmCreateF("GirlBlueA02", -150.0f, -24.0f, 140, 1000, 2);
+    enmCreateMF("GirlRedA02", 150.0f, -24.0f, 140, 1000, 1);
+    wait(40);
+    enmCreateF("GirlRedA02", -64.0f, -24.0f, 140, 1000, 1);
+    enmCreateMF("GirlBlueA02", 64.0f, -24.0f, 140, 1000, 2);
+    enmCreateF("GirlRedA02", -150.0f, -24.0f, 140, 1000, 2);
+    enmCreateMF("GirlBlueA02", 150.0f, -24.0f, 140, 1000, 1);
+    wait(35);
+MainSub07b_556:
+    if ($A--) goto MainSub07b_100 @ 0;
+    return;
+}
+
+void MainSub08()
+{
+    wait(300);
+    enmCreateF("GirlC01", 32.0f, -48.0f, 2800, 1000, 2);
+    enmCreateF("GirlC01", -32.0f, -48.0f, 2800, 1000, 2);
+    wait(200);
+    enmCreateF("GirlC01", 128.0f, -48.0f, 2800, 1000, 2);
+    wait(200);
+    enmCreateF("GirlC01", -128.0f, -48.0f, 2800, 1000, 2);
+    wait(200);
+    enmCreateF("GirlC01", -64.0f, -48.0f, 2800, 1000, 2);
+    wait(200);
+    enmCreateF("GirlC01", 64.0f, -48.0f, 2800, 1000, 2);
+    wait(200);
+    enmCreateF("GirlC01", -32.0f, -48.0f, 2000, 1000, 30);
+    enmCreateF("GirlC01", 32.0f, -48.0f, 2000, 1000, 32);
+    return;
+}
+
+void MainSub09()
+{
+    var A, B;
+    %F0 = 0.261799f;
+    enmCreate("GirlD02", 0.0f, -24.0f, 3000, 1000, 31);
+    wait(100);
+    $A = 3000;
+    $B = 300;
+    goto MainSub09_528 @ 0;
+MainSub09_248:
+    unless ($ENM_CNT == 0) goto MainSub09_508 @ 0;
+    enmCreate("GirlD02", %RANDF2 * _f(64), -24.0f, $A, 1000, 22);
+    $A = $A + 500;
+MainSub09_508:
+    wait(2);
+MainSub09_528:
+    if ($B--) goto MainSub09_248 @ 0;
+    wait(60);
+    return;
+}
+
+void MainSub10()
+{
+    var A;
+    $A = 8;
+    goto MainSub10_556 @ 0;
+MainSub10_100:
+    enmCreate("GirlBlueA03", -64.0f, -24.0f, 120, 1000, 2);
+    enmCreateM("GirlRedA03", 64.0f, -24.0f, 120, 1000, 1);
+    enmCreate("GirlBlueA03", -144.0f, -24.0f, 120, 1000, 2);
+    enmCreateM("GirlRedA03", 144.0f, -24.0f, 120, 1000, 1);
+    wait(40);
+    enmCreate("GirlRedA03", -64.0f, -24.0f, 120, 1000, 1);
+    enmCreateM("GirlBlueA03", 64.0f, -24.0f, 120, 1000, 2);
+    enmCreate("GirlRedA03", -144.0f, -24.0f, 120, 1000, 1);
+    enmCreateM("GirlBlueA03", 144.0f, -24.0f, 120, 1000, 2);
+    wait(40);
+MainSub10_556:
+    if ($A--) goto MainSub10_100 @ 0;
+    return;
+}
+
+void MapleEnemy()
+{
+    var A;
+    flagSet(32);
+    $A = 60;
+    goto MapleEnemy_164 @ 0;
+MapleEnemy_120:
+    anmPlayAbs(1, 102);
+    wait(4);
+MapleEnemy_164:
+    if ($A--) goto MapleEnemy_120 @ 0;
+    goto MapleEnemy_276 @ 0;
+MapleEnemy_232:
+    anmPlayAbs(1, 102);
+    wait(5);
+MapleEnemy_276:
+    if (1) goto MapleEnemy_232 @ 0;
+    delete();
+}
+
+void Phantom01()
+{
+    anmSelect(2);
+    anmSetSprite(0, 79);
+    setHurtbox(28.0f, 28.0f);
+    setHitbox(16.0f, 16.0f);
+    moveVel(0.7853982f, 1.0f);
+    moveVelTime(120, 0, 0.0f, 4.0f);
+    @Phantom01_at() async;
+    wait(180);
+    goto Phantom01_284 @ 0;
+Phantom01_264:
+    wait(1000);
+Phantom01_284:
+    if (1) goto Phantom01_264 @ 0;
+    delete();
+}
+
+void Phantom01_at()
+{
+    var A, B;
+    etNew(0);
+    etAim(0, 1);
+    etSprite(0, 4, 4);
+    etCount(0, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeed(0, 0.2f, 1.0f);
+    etSound(0, 21, -1);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, -2147483648, 60, -999999, -999999.0f, -999999.0f);
+!E
+    2.5f;
+!N
+    4.0f;
+!H
+    5.0f;
+!LO
+    5.0f;
+!*
+    etEx(0, 0, 2097152, 80, -999999, [-1.0f], -999999.0f);
+!E
+    60;
+!N
+    60;
+!H
+    10;
+!LO
+    10;
+!*
+    wait([-1]);
+    diffI($A, 3, 3, 8, 20);
+    goto Phantom01_at_1056 @ 0;
+Phantom01_at_592:
+    unless (($DIFF != 0) || (($RAND % 3) == 0)) goto Phantom01_at_1056 @ 0;
+    $B = 3;
+    goto Phantom01_at_912 @ 0;
+Phantom01_at_844:
+    wait(1);
+    etAngle(0, %ANGLE_PLAYER, 0.17453292f);
+    etOn(0);
+Phantom01_at_912:
+    if ($B--) goto Phantom01_at_844 @ 0;
+!E
+    60;
+!N
+    60;
+!H
+    35;
+!LO
+    20;
+!*
+    wait([-1]);
+Phantom01_at_1056:
+    if ($A--) goto Phantom01_at_592 @ 0;
+    return;
+}
+
+void Phantom01c()
+{
+    anmSelect(2);
+    anmSetSprite(0, 87);
+    playSound(50);
+    setHurtbox(28.0f, 28.0f);
+    setHitbox(16.0f, 16.0f);
+    moveEllipseRel(%RANDRAD, 0.034906585f, 10.0f, 0.0f, %ABS_ANGLE, 0.0f);
+    moveVel(1.5707964f, 0.0f);
+    dropExtra(2, 1);
+    @Phantom01c_at() async;
+    wait(60);
+    moveVelTime(200, 3, 1.5707964f, 0.6f);
+    goto Phantom01c_368 @ 0;
+Phantom01c_348:
+    wait(1000);
+Phantom01c_368:
+    if (1) goto Phantom01c_348 @ 0;
+    delete();
+}
+
+void Phantom01c_at()
+{
+    var A, B;
+    etNew(0);
+    etAim(0, 1);
+    etSprite(0, 4, 4);
+    etCount(0, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeed(0, 0.2f, 1.0f);
+    etSound(0, 21, -1);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, -2147483648, 60, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, 2097152, 80, -999999, 2.0f, -999999.0f);
+    wait(60);
+    $A = 1;
+    goto Phantom01c_at_820 @ 0;
+Phantom01c_at_436:
+    unless (($DIFF != 0) || (($RAND % 3) == 0)) goto Phantom01c_at_800 @ 0;
+    $B = 2;
+    goto Phantom01c_at_756 @ 0;
+Phantom01c_at_688:
+    wait(5);
+    etAngle(0, %ANGLE_PLAYER, 0.17453292f);
+    etOn(0);
+Phantom01c_at_756:
+    if ($B--) goto Phantom01c_at_688 @ 0;
+Phantom01c_at_800:
+    wait(60);
+Phantom01c_at_820:
+    if ($A--) goto Phantom01c_at_436 @ 0;
+    return;
+}
+
+void Phantom01d()
+{
+    anmSelect(2);
+    anmSetSprite(0, 79);
+    setHurtbox(28.0f, 28.0f);
+    setHitbox(16.0f, 16.0f);
+    moveVel(0.7853982f, 1.0f);
+    moveVelTime(120, 0, 0.0f, 4.0f);
+    @Phantom01d_at() async;
+    wait(180);
+    goto Phantom01d_284 @ 0;
+Phantom01d_264:
+    wait(1000);
+Phantom01d_284:
+    if (1) goto Phantom01d_264 @ 0;
+    delete();
+}
+
+void Phantom01d_at()
+{
+    var A, B;
+    etNew(0);
+    etAim(0, 1);
+    etSprite(0, 4, 4);
+    etCount(0, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeed(0, 0.2f, 1.0f);
+    etSound(0, 21, -1);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, -2147483648, 60, -999999, -999999.0f, -999999.0f);
+!E
+    2.5f;
+!N
+    4.0f;
+!H
+    4.0f;
+!LO
+    4.0f;
+!*
+    etEx(0, 0, 2097152, 80, -999999, [-1.0f], -999999.0f);
+    wait(60);
+    $A = 3;
+    goto Phantom01d_at_900 @ 0;
+Phantom01d_at_516:
+    unless (($DIFF != 0) || (($RAND % 3) == 0)) goto Phantom01d_at_880 @ 0;
+    $B = 3;
+    goto Phantom01d_at_836 @ 0;
+Phantom01d_at_768:
+    wait(1);
+    etAngle(0, %ANGLE_PLAYER, 0.17453292f);
+    etOn(0);
+Phantom01d_at_836:
+    if ($B--) goto Phantom01d_at_768 @ 0;
+Phantom01d_at_880:
+    wait(60);
+Phantom01d_at_900:
+    if ($A--) goto Phantom01d_at_516 @ 0;
+    return;
+}
+
+void Phantom02()
+{
+    anmSelect(2);
+    anmSetSprite(0, 79);
+    setHurtbox(28.0f, 28.0f);
+    setHitbox(16.0f, 16.0f);
+    moveVel(0.7853982f, 1.0f);
+    moveVelTime(120, 0, 0.0f, 4.0f);
+    dropExtra(2, 1);
+    @Phantom01_at() async;
+    wait(180);
+    goto Phantom02_308 @ 0;
+Phantom02_288:
+    wait(1000);
+Phantom02_308:
+    if (1) goto Phantom02_288 @ 0;
+    delete();
+}
+
+void Phantom02_at()
+{
+    var A, B;
+    etNew(0);
+    etAim(0, 1);
+    etSprite(0, 4, 4);
+    etCount(0, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeed(0, 0.2f, 1.0f);
+    etSound(0, 21, -1);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, -2147483648, 60, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, 2097152, 80, -999999, 4.0f, -999999.0f);
+    wait(60);
+    $A = 3;
+    goto Phantom02_at_632 @ 0;
+Phantom02_at_436:
+    $B = 3;
+    goto Phantom02_at_568 @ 0;
+Phantom02_at_500:
+    wait(1);
+    etAngle(0, %ANGLE_PLAYER, 0.17453292f);
+    etOn(0);
+Phantom02_at_568:
+    if ($B--) goto Phantom02_at_500 @ 0;
+    wait(60);
+Phantom02_at_632:
+    if ($A--) goto Phantom02_at_436 @ 0;
+    return;
+}
+
+void Phantom02b()
+{
+    anmSelect(2);
+    anmSetSprite(0, 91);
+    playSound(50);
+    setHurtbox(28.0f, 28.0f);
+    setHitbox(16.0f, 16.0f);
+    moveEllipseRel(%RANDRAD, 0.034906585f, 10.0f, 0.0f, %ABS_ANGLE, 0.0f);
+    moveVel(%ANGLE_PLAYER, 0.0f);
+    dropExtra(2, 1);
+    @Phantom02b_at() async;
+    moveVelTime(160, 3, %ANGLE_PLAYER, 1.2f);
+    goto Phantom02b_348 @ 0;
+Phantom02b_328:
+    wait(1000);
+Phantom02b_348:
+    if (1) goto Phantom02b_328 @ 0;
+    delete();
+}
+
+void Phantom02b_at()
+{
+    var A;
+    etNew(0);
+    etAim(0, 1);
+    etSprite(0, 4, 13);
+    etCount(0, 1, 1);
+    etAngle(0, 0.0f, 0.05235988f);
+    etSpeed(0, 0.2f, 1.0f);
+    etSound(0, 21, -1);
+    etEx(0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, -2147483648, 60, -999999, -999999.0f, -999999.0f);
+    etEx(0, 0, 2097152, 80, -999999, 2.0f, -999999.0f);
+    $A = 14;
+    goto Phantom02b_at_484 @ 0;
+Phantom02b_at_416:
+    etAngle(0, %RANDRAD, 0.17453292f);
+    etOn(0);
+    wait(20);
+Phantom02b_at_484:
+    if ($A--) goto Phantom02b_at_416 @ 0;
+    return;
+}
+
+void SeaGoast()
+{
+    flagSet(32);
+    goto SeaGoast_120 @ 0;
+SeaGoast_80:
+    anm334(4);
+    wait(60);
+SeaGoast_120:
+    if (1) goto SeaGoast_80 @ 0;
+    delete();
+}
+
+void main()
+{
+    flagSet(32);
+    wait(1);
+
+    @InitSeasons();
+
+    setChapter(0);
+    unless ($SPELL_ID >= 0) goto main_300 @ 0;
+    @MainBossSpell();
+    goto main_256 @ 0;
+main_236:
+    wait(1000);
+main_256:
+    if (1) goto main_236 @ 0;
+main_300:
+    enmCreateA("MapleEnemy", 0.0f, 0.0f, 100, 100, 0);
+    debug22(1, "MainMBossDebug");
+    debug22(2, "MainBossDebug");
+    debug22(3, "MainBossDebug2");
+    debug22(4, "MainMsgDebug");
+    debug22(5, "MainLatter");
+    debug22(10, "MainBossDebug2");
+    debug22(11, "MainBossDebug2");
+    debug22(12, "MainBossDebug2");
+    debug22(13, "MainBossDebug2");
+    debug22(14, "MainBossDebug2");
+    debug22(15, "MainBossDebug2");
+    debug22(16, "MainBossDebug2");
+    debug22(17, "MainBossDebug2");
+    debug22(18, "MainBossDebug2");
+    debug22(19, "MainBossDebug2");
+    @LogoEnemy() async;
+    debug22(6, "DebugSkipFunc");
+    debug22(7, "DebugSkipFunc");
+    debug22(8, "DebugSkipFunc");
+    debug22(9, "DebugSkipFunc");
++60: //60
+    nop();
+    @MainFront();
+    enmKillAll();
+    etClear(640.0f);
+    dialogRead(2);
+    wait(2);
+    enmCreateA("MBoss", -192.0f, -32.0f, 40, 1000, 1);
+    wait(160);
+    @MainLatter();
+    enmKillAll();
+    etClear(640.0f);
+    wait(120);
+    setChapter(41);
+    dialogRead(0);
+    @MainBoss();
+    goto main_1536 @ 60;
+main_1516:
+    wait(1000);
+main_1536:
+    if (1) goto main_1516 @ 60;
+    delete();
+}
+
+void testFunc()
+{
+    etNew(0);
+    etAim(0, 2);
+    etSprite(0, 8, 2);
+    etCountD(0, 32, 32, 3, 5, 1, 1, 1, 1);
+    etAngle(0, 0.0f, 0.032724924f);
+    etSpeedD(0, 2.0f, 0.6f, 3.0f, 5.5f, 1.0f, 1.0f, 1.0f, 2.0f);
+    etExSet(0, 0, 0, 2, 1, -999999, -999999.0f, -999999.0f);
+    etExSet(0, 1, 1, 1, -999999, -999999, -999999.0f, -999999.0f);
+    goto testFunc_400 @ 0;
+testFunc_360:
+    etOn(0);
+    wait(60);
+testFunc_400:
+    if (1) goto testFunc_360 @ 0;
+    return;
+}
