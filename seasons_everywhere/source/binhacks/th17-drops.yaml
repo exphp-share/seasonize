@@ -48,6 +48,30 @@ binhacks:
       - "C70424230A4200    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
 
+  Implement season ECL instructions in etEx:
+    addr: "0x424b0a"
+    expected: "68 dc154a00"
+    codecave:
+      # codecave_et_ex:
+      - "81F9C1BDF0FF      " # cmp    ecx, -999999
+      - "7412              " # je     .spec
+
+      # original code
+      - "68DC154A00        " # push    0x4a15dc
+      # abs_jmp_hack 0x424b0f
+      - "E800000000        " # <1>  call %%next
+      - "C704240F4B4200    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+      # .spec:
+      - "FFB588FBFFFF      " # push    dword [ebp-0x478]  ; instruction header
+      - "89F9              " # mov     ecx, edi  ; Enemy
+      - "E8 [codecave:ExpHP.seasons-everywhere.impl-et-ex-neg]"  # call
+      # abs_jmp_hack 0x4265f2
+      - "E800000000        " # <1>  call %%next
+      - "C70424F2654200    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
 codecaves:
   # void __thiscall EnemyFull::DropSeasonItems(Float3*)
   ExpHP.seasons-everywhere.drop-season-items:
@@ -156,3 +180,78 @@ codecaves:
     - "89EC              " # mov    esp, ebp
     - "5D                " # pop    ebp
     - "C20400            " # ret    0x4
+
+  # void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
+  ExpHP.seasons-everywhere.impl-et-ex-neg:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "89CE              " # mov    esi, ecx
+    - "8B7D08            " # mov    edi, [ebp+0x8]  ; instruction header
+
+    # # variables aren't supported (we don't need em)
+    # - "8B4708            " # mov    eax, [edi+eclins_variable_mask]
+    # - "85C0              " # test   eax, eax
+    # - "751D              " # jnz    .error
+
+    # The instruction is an EtEx instruction whose first arg is NEG.
+    # Second arg is an opcode for us:
+    - "8B4714            " # mov    eax, [edi+eclins_args+0x4] ; opcode
+    - "83F801            " # cmp    eax, 0x1 ; max opcode
+    - "7715              " # ja     .error
+
+    # Calltable
+    - "B9 <codecave:ExpHP.seasons-everywhere.et-ex-calltable>"  # mov    ecx, et_ex_calltable
+    - "8B0481            " # mov    eax, [ecx+4*eax] ; index calltable
+
+    # invoke method of signature
+    #     void __thiscall Enemy::OpX(RawInstructionHeader*)
+    - "89F1              " # mov    ecx, esi
+    - "57                " # push   edi
+    - "FFD0              " # call   eax
+
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret    4
+    # .error:
+    - "0F0B              " # ud2
+
+  ExpHP.seasons-everywhere.et-ex-calltable:
+    - "<codecave:ExpHP.seasons-everywhere.ecl-spec-0>"  # dd ecl_spec_0
+    - "<codecave:ExpHP.seasons-everywhere.ecl-spec-1>"  # dd ecl_spec_1
+
+  # void __thiscall Enemy::Spec0(RawInstructionHeader*)
+  ExpHP.seasons-everywhere.ecl-spec-0:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "89CE              " # mov    esi, ecx  ; enemy
+    - "8B7D08            " # mov    edi, [ebp+0x8]  ; ins header
+
+    # args for ex_set_season_bonus
+    - "FF7720            " # push   dword [edi+eclins_args+0x10]
+    - "FF771C            " # push   dword [edi+eclins_args+0x0c]
+    - "FF7718            " # push   dword [edi+eclins_args+0x08]
+
+    - "8D86F4EDFFFF      " # lea    eax, [esi-efull_enemy]
+    - "FFB060570000      " # push   dword [eax+efull_id]
+    - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
+    - "89C1              " # mov    ecx, eax
+    - "E8 [codecave:ExpHP.seasons-everywhere.ex-set-season-bonus]" # call
+
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret    4
+
+  # void __thiscall Enemy::Spec1(RawInstructionHeader*)
+  ExpHP.seasons-everywhere.ecl-spec-1:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "89CE              " # mov    esi, ecx  ; enemy
+    - "8B7D08            " # mov    edi, [ebp+0x8]  ; ins header
+
+    - "8D86F4EDFFFF      " # lea    eax, [esi-efull_enemy]
+    - "FFB060570000      " # push   dword [eax+efull_id]
+    - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
+    - "89C1              " # mov    ecx, eax
+
+    - "8B86883F0000      " # mov    eax, [esi+en_life+elife_total_damage]
+    - "894118            " # mov    [ecx+ex_damage_accounted_for], eax
+    - "8B4718            " # mov    eax, [edi+eclins_args+0x08]
+    - "894114            " # mov    [ecx+ex_damage_per_season_item], eax
+
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret    4

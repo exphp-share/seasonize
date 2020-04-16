@@ -61,6 +61,7 @@ Cir00_at_800:
 
 void GirlA01()
 {
+    dropSeason(600, 400, 1);
     setHurtbox(24.0f, 24.0f);
     setHitbox(16.0f, 16.0f);
     moveVel(1.5707964f, 1.0f);

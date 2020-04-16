@@ -61,6 +61,9 @@
 %define en_var_f2             0x2a4
 %define en_force_autocollect  0xc70
 %define en_drop               0x3f90
+%define en_life               0x3f74
+
+%define elife_total_damage  0x14
 
 %define et_diameter  0x64c
 %define et_pos_x     0x62c
@@ -71,6 +74,20 @@
 
 %define efull_enemy  0x120c
 %define efull_id     0x5760
+
+%macro prologue_sd 0
+    push ebp
+    mov  ebp, esp
+    push esi
+    push edi
+%endmacro
+
+%macro epilogue_sd 0
+    pop  edi
+    pop  esi
+    mov  esp, ebp
+    pop  ebp
+%endmacro
 
 segment .data
 struc ZunList
@@ -90,6 +107,18 @@ struc ZunTime
     time_curf    resd 1
     time_fld_c   resd 1
     time_control resd 1
+endstruc
+
+struc EclRawInstructionHeader
+    eclins_time resd 1
+    eclins_opcode resw 1
+    eclins_size resw 1
+    eclins_variable_mask resw 1
+    eclins_rank_mask resb 1
+    eclins_parameter_count resb 1
+    eclins_stack_adjust resb 1
+    resb 3
+    eclins_args resd 8
 endstruc
 
 struc EnemyEx
@@ -394,18 +423,15 @@ effect_codecave:
     ret
 
 
-; NewEnemyEx(id)
+; EnemyEx* __stdcall NewEnemyEx(id)
 new_enemy_ex:
-    push   ebp
-    mov    ebp, esp
-    push   esi
-    push   edi
+    prologue_sd
 
     push   EnemyEx_size
     call   calloc  ; FIXUP
     mov    edi, eax
 
-    mov    esi, 0x55555555  ; REPLACE WITH <codecave for globals>
+    mov    esi, 0x55555555  ; FIXUP <codecave for globals>
 
     lea    ecx, [esi+g_enemy_ex_head]
     push   ecx
@@ -415,22 +441,37 @@ new_enemy_ex:
     mov    eax, [ebp+0x8]
     mov    [edi+ex_id], eax
 
-    mov    dword [edi+ex_item_max], 0xa
-    mov    dword [edi+ex_item_min], 0x1
-    mov    dword [edi+ex_max_time], 0x3c
-    lea    ecx, [edi+ex_bonus_timer]
-    push   0x3c ; 60
-    mov    eax, TIMER_SET_VALUE
-    call   eax
+    push   1   ; arg 3: min
+    push   10  ; arg 2: max
+    push   60  ; arg 1: time
+    mov    ecx, edi
+    call   ex_set_season_bonus ; FIXUP
 
     ; return the EnemyEx
     mov    eax, edi
-    pop    edi
-    pop    esi
 
-    mov    esp, ebp
-    pop    ebp
+    epilogue_sd
     ret    0x4
+
+; void __thiscall EnemyEx::SetSeasonBonus(int time, int max, int min)
+ex_set_season_bonus:
+    prologue_sd
+    mov    esi, ecx
+
+    mov    eax, [ebp+0x08]
+    mov    [esi+ex_max_time], eax
+    push   eax
+    lea    ecx, [esi+ex_bonus_timer]
+    mov    eax, TIMER_SET_VALUE
+    call   eax
+
+    mov    eax, [ebp+0x0c]
+    mov    [esi+ex_item_max], eax
+    mov    eax, [ebp+0x10]
+    mov    [esi+ex_item_min], eax
+
+    epilogue_sd
+    ret    0xc
 
 ; FreeEnemyExById(id)
 free_enemy_ex_by_id:
@@ -969,7 +1010,96 @@ codecave_disable_token:
 .notoken:
     abs_jmp_hack 0x410396
 
+et_ex_calltable:
+    dd ecl_spec_0 ; FIXUP
+    dd ecl_spec_1 ; FIXUP
 
+; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
+impl_et_ex_neg:
+    prologue_sd
+
+    mov    esi, ecx
+    mov    edi, [ebp+0x8]  ; instruction header
+
+    ; variables aren't supported (we don't need em)
+    mov    eax, [edi+eclins_variable_mask]
+    test   eax, eax
+    jnz    .error
+
+    ; The instruction is an EtEx instruction whose first arg is NEG.
+    ; Second arg is an opcode for us:
+    mov    eax, [edi+eclins_args+0x4] ; opcode
+    cmp    eax, 0x1 ; max opcode
+    ja     .error
+
+    ; Calltable
+    mov    ecx, et_ex_calltable ; FIXUP
+    mov    eax, [ecx+4*eax] ; index calltable
+
+    ; invoke method of signature
+    ;     void __thiscall Enemy::OpX(RawInstructionHeader*)
+    mov    ecx, esi
+    push   edi
+    call   eax
+
+    epilogue_sd
+    ret    4
+.error:
+    ud2
+
+; void __thiscall Enemy::Spec0(RawInstructionHeader*)
+ecl_spec_0:
+    prologue_sd
+    mov    esi, ecx  ; enemy
+    mov    edi, [ebp+0x8]  ; ins header
+
+    ; args for ex_set_season_bonus
+    push   dword [edi+eclins_args+0x10]
+    push   dword [edi+eclins_args+0x0c]
+    push   dword [edi+eclins_args+0x08]
+
+    lea    eax, [esi-efull_enemy]
+    push   dword [eax+efull_id]
+    call   find_enemy_ex_by_id  ; FIXUP
+    mov    ecx, eax
+    call   ex_set_season_bonus  ; FIXUP
+
+    epilogue_sd
+    ret    4
+
+; void __thiscall Enemy::Spec1(RawInstructionHeader*)
+ecl_spec_1:
+    prologue_sd
+    mov    esi, ecx  ; enemy
+    mov    edi, [ebp+0x8]  ; ins header
+
+    lea    eax, [esi-efull_enemy]
+    push   dword [eax+efull_id]
+    call   find_enemy_ex_by_id  ; FIXUP
+    mov    ecx, eax
+
+    mov    eax, [esi+en_life+elife_total_damage]
+    mov    [ecx+ex_damage_accounted_for], eax
+    mov    eax, [edi+eclins_args+0x08]
+    mov    [ecx+ex_damage_per_season_item], eax
+
+    epilogue_sd
+    ret    4
+
+codecave_et_ex:
+    cmp    ecx, -999999
+    je     .spec
+
+    ; original code
+    push    0x4a15dc
+    abs_jmp_hack 0x424b0f
+.spec:
+    push    dword [ebp-0x478]  ; instruction header
+    mov     ecx, edi  ; Enemy
+    call impl_et_ex_neg  ; FIXUP
+    abs_jmp_hack 0x4265f2
+
+; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
 ; calloc(size)
 calloc:
     push   ebp

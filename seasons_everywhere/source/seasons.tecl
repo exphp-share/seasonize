@@ -1,5 +1,8 @@
 #include "ECLinclude/ECLplus.tecl"
 
+global NEG = -999999;
+global NEGF = -999999.0f;
+
 // Call this immediately at the beginning of each stage,
 // after the main script makes itself intangible.
 inline void InitSeasons() {
@@ -43,4 +46,12 @@ inline void SoundTest() {
     while(true) {
         wait(1);
     }
+}
+
+inline void dropSeason(int time, int max, int min) {
+    etEx(NEG, 0, time, max, min, NEGF, NEGF);
+}
+
+inline void seasonDamage(int damage) {
+    etEx(NEG, 1, damage, NEG, NEG, NEGF, NEGF);
 }

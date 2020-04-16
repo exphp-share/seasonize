@@ -2,6 +2,9 @@
 #include "seasons-data.tecl"
 #include "keys.tecl"
 
+global PI = 3.141592653589793f;
+global TAU = 2f*PI;
+
 int ClipInt(int x, int a, int b) {
     if (x < a) { return a; }
     else if (x > b) { return b; }

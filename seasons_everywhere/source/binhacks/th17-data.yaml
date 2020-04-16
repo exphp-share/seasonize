@@ -71,12 +71,9 @@ codecaves:
   #   int item_min;
   # }
 
-  # stdcall EnemyEx* NewEnemyEx(id)
+  # EnemyEx* __stdcall NewEnemyEx(id)
   ExpHP.seasons-everywhere.new-enemy-ex:
-    - "55                " # push   ebp
-    - "89E5              " # mov    ebp, esp
-    - "56                " # push   esi
-    - "57                " # push   edi
+    - "55 89E5 56 57     " # prologue w/ esi edi
 
     - "6A3C              " # push   EnemyEx_size
     - "E8 [codecave:ExpHP.seasons-everywhere.calloc]" # call
@@ -92,22 +89,16 @@ codecaves:
     - "8B4508            " # mov    eax, [ebp+0x8]
     - "894710            " # mov    [edi+ex_id], eax
 
-    # Default is as if we called spec0(60, 10, 1).
-    - "C747340A000000    " # mov    dword [edi+ex_item_max], 0xa
-    - "C7473801000000    " # mov    dword [edi+ex_item_min], 0x1
-    - "C747303C000000    " # mov    dword [edi+ex_max_time], 0x3c
-    - "8D4F1C            " # lea    ecx, [edi+ex_bonus_timer]
-    - "6A3C              " # push   0x3c ; 60
-    - "B8C05B4000        " # mov    eax, TIMER_SET_VALUE
-    - "FFD0              " # call   eax
+    - "6A01              " # push   1   ; arg 3: min
+    - "6A0A              " # push   10  ; arg 2: max
+    - "6A3C              " # push   60  ; arg 1: time
+    - "89F9              " # mov    ecx, edi
+    - "E8 [codecave:ExpHP.seasons-everywhere.ex-set-season-bonus]" # call
 
     # return the EnemyEx
     - "89F8              " # mov    eax, edi
-    - "5F                " # pop    edi
-    - "5E                " # pop    esi
 
-    - "89EC              " # mov    esp, ebp
-    - "5D                " # pop    ebp
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
     - "C20400            " # ret    0x4
 
   # stdcall void FreeEnemyExById(id)
@@ -147,6 +138,26 @@ codecaves:
     - "C20400                    " # ret 4
     # .notfound:
     - "0F0B                      " # ud2
+
+  # void __thiscall EnemyEx::SetSeasonBonus(int time, int max, int min)
+  ExpHP.seasons-everywhere.ex-set-season-bonus:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "89CE              " # mov    esi, ecx
+
+    - "8B4508            " # mov    eax, [ebp+0x08]
+    - "894630            " # mov    [esi+ex_max_time], eax
+    - "50                " # push   eax
+    - "8D4E1C            " # lea    ecx, [esi+ex_bonus_timer]
+    - "B8C05B4000        " # mov    eax, TIMER_SET_VALUE
+    - "FFD0              " # call   eax
+
+    - "8B450C            " # mov    eax, [ebp+0x0c]
+    - "894634            " # mov    [esi+ex_item_max], eax
+    - "8B4510            " # mov    eax, [ebp+0x10]
+    - "894638            " # mov    [esi+ex_item_min], eax
+
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20C00            " # ret    0xc
 
   # extern __stdcall int GetSeason(void);
   ExpHP.seasons-everywhere.get-season:
