@@ -46,6 +46,11 @@
             "expected": "68 dc154a00",
             "code": "E9 [codecave:of(Implement season ECL instructions in etEx)]"
         },
+        "codecave_items_on_damage": {
+            "addr": "0x41fbc3",
+            "expected": "8b83 78400000",
+            "code": "E9 [codecave:of(codecave_items_on_damage)] // CC"
+        },
         "Disable tokens based on season menu selection": {
             "addr": "0x410390",
             "expected": "837b1028 // 7c0c",
@@ -103,6 +108,7 @@
         "ExpHP.seasons-everywhere.et-ex-calltable": "<codecave:ExpHP.seasons-everywhere.ecl-spec-0> // <codecave:ExpHP.seasons-everywhere.ecl-spec-1>",
         "ExpHP.seasons-everywhere.ecl-spec-0": "55 89E5 56 57 // 89CE // 8B7D08 // FF7720 // FF771C // FF7718 // 8D86F4EDFFFF // FFB060570000 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 89C1 // E8 [codecave:ExpHP.seasons-everywhere.ex-set-season-bonus] // 5F 5E 89EC 5D // C20400",
         "ExpHP.seasons-everywhere.ecl-spec-1": "55 89E5 56 57 // 89CE // 8B7D08 // 8D86F4EDFFFF // FFB060570000 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 89C1 // 8B86883F0000 // 894118 // 8B4718 // 894114 // 5F 5E 89EC 5D // C20400",
+        "ExpHP.seasons-everywhere.spawn-items-from-damage": "55 89E5 56 57 // 89CF // FFB754450000 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 89C6 // 837E1400 // 7E73 // 8B4618 // 3B87883F0000 // 7D68 // 034614 // 894618 // 83EC20 // C744241CFFFFFFFF // C7442418ADDE0000 // C744241400000000 // B968764B00 // B840284000 // FFD0 // D805D03B4A00 // D95C2410 // B968764B00 // E8 [codecave:ExpHP.seasons-everywhere.randf-minus-pi-to-pi] // D95C240C // C7442408ADDE0000 // 8D5744 // 89542404 // C7042430000000 // 8B0DB8764B00 // B840474300 // FFD0 // 5F 5E 89EC 5D // C3",
         "ExpHP.seasons-everywhere.item-pickup-effect": "83F930 // 7413 // 8D41FF // 83F80D // E800000000 // C70424333B4300 // C3 // E8 [codecave:ExpHP.seasons-everywhere.increment-season-power] // 85C0 // 7422 // 6840FFFFFF // 6AFF // 8DB7100C0000 // 56 // B8 700b4500 // FFD0 // F30F1016 // 6A3F // B8 F0544600 // FFD0 // 8B35D0774B00 // 8974240C // E800000000 // C70424863F4300 // C3",
         "ExpHP.seasons-everywhere.increment-season-power": "51 // 52 // 6A 01 // 68 CBE0FFFF // 6A 00 // E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch] // 8138 74040000 // 7D 33 // FF00 // 8B00 // 83F8 64 // 74 27 // 3D E6000000 // 74 20 // 3D 86010000 // 74 19 // 3D 4E020000 // 74 12 // 3D 48030000 // 74 0B // 3D 74040000 // 74 04 // 31C0 // EB 05 // B8 01000000 // 5A // 59 // C3",
         "ExpHP.seasons-everywhere.delayed-piv-state": "83F8 30 // 74 13 // C787 580C0000 02000000 // FF34C5 A80D4A00 // EB 15 // C787 580C0000 09000000 // E8 [codecave:ExpHP.seasons-everywhere.get-season] // 05 81000000 // 50 // E8 00000000 // C70424 B8344300 // C3",
@@ -118,6 +124,7 @@
         "of(Enemies can drop season items)": "8B4508 // 50 // 8B4DF8 // 8D8970C0FFFF // 8D89F4EDFFFF // E8 [codecave:ExpHP.seasons-everywhere.drop-season-items] // 6888000000 // E800000000 // C704243ADA4100 // C3",
         "of(Tick season item bonus timer)": "B810584000 // FFD0 // 8D86F4EDFFFF // FFB060570000 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 8D481C // 83790400 // 7E0A // 83EC04 // B8E0DB4000 // FFD0 // E800000000 // C70424230A4200 // C3",
         "of(Implement season ECL instructions in etEx)": "81F9C1BDF0FF // 7412 // 68DC154A00 // E800000000 // C704240F4B4200 // C3 // FFB588FBFFFF // 89F9 // E8 [codecave:ExpHP.seasons-everywhere.impl-et-ex-neg] // E800000000 // C70424F2654200 // C3",
+        "of(codecave_items_on_damage)": "89D9 // E8 [codecave:ExpHP.seasons-everywhere.spawn-items-from-damage] // 8B8378400000 // E800000000 // C70424 C9FB4100 // C3",
         "of(Disable tokens based on season menu selection)": "E8 [codecave:ExpHP.seasons-everywhere.get-token-setting] // 83F800 // 741A // 83F801 // 7407 // 83F802 // 7425 // 0F0B // 837D0C02 // 7E1D // 837D0C0E // 7D17 // EB00 // 837B1028 // 7C02 // EB0D // E800000000 // C70424A2034100 // C3 // E800000000 // C7042496034100 // C3",
         "of(Season items in Delayed PIV state)": "83F8 30 // 74 13 // C787 580C0000 02000000 // FF34C5 A80D4A00 // EB 15 // C787 580C0000 09000000 // E8 [codecave:ExpHP.seasons-everywhere.get-season] // 05 81000000 // 50 // E8 00000000 // C70424 c4344300 // C3",
         "of(Season item in Flyout state cannot be attracted)": "83F804 // 740C // 83F803 // 7407 // 83F809 // 7402 // EB0D // E800000000 // C7042498404300 // C3 // E800000000 // C70424E93F4300 // C3",

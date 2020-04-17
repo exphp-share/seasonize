@@ -68,6 +68,7 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 // TODO: Fix season level being on above character sprites for some reason
 // TODO: Put season gauge below beast items due to their annoying flames
 // TODO: Fix season gauge starting out transparent
+// TODO: Fix level never reaching 6
 
 void SeasonMenuEnemy() {
     flagSet(1); // no hurtbox

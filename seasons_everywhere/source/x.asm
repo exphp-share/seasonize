@@ -51,6 +51,7 @@
 %define FLOAT_PI_OVER_18  0x4a3af8
 %define FLOAT_PI_OVER_2   0x4a3bf4
 %define FLOAT_0_POINT_2   0x4a3b04
+%define FLOAT_1_POINT_2   0x4a3bd0
 
 %define PLAYER_PTR        0x4b77d0
 %define SHOTTYPE_PTR      0x4b7688
@@ -1098,6 +1099,61 @@ codecave_et_ex:
     mov     ecx, edi  ; Enemy
     call impl_et_ex_neg  ; FIXUP
     abs_jmp_hack 0x4265f2
+
+
+codecave_items_on_damage: ; 0041fbc3
+    mov     ecx, ebx
+    call    spawn_items_from_damage  ; FIXUP
+    ; original code
+    mov     eax, dword [ebx+0x4078]
+    abs_jmp_hack 0x41c7a6
+
+
+; void __thiscall Enemy::SpawnItemsFromDamage())
+spawn_items_from_damage:
+    prologue_sd
+    mov     edi, ecx  ; Enemy
+
+    push    dword [edi-efull_enemy+efull_id]
+    call    find_enemy_ex_by_id ; FIXUP
+    mov     esi, eax  ; EnemyEx
+
+    ; prevent an infinite loop if damage_per_season_drop is 0
+    cmp     dword [esi+ex_damage_per_season_item], 0x0
+    jle     .loopend
+
+.loop:
+    mov     eax, dword [esi+ex_damage_accounted_for]
+    cmp     eax, dword [edi+en_life+elife_total_damage]
+    jge     .loopend
+    add     eax, dword [esi+ex_damage_per_season_item]
+    mov     dword [esi+ex_damage_accounted_for], eax
+
+    sub     esp, 0x20
+    mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
+    mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
+    mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
+
+    mov     ecx, SAFE_RNG
+    mov     eax, RANDF_0_TO_1
+    call    eax
+    fadd    dword [FLOAT_1_POINT_2]
+    fstp    dword [esp+0x10]              ; stack arg 14: vel_norm
+
+    mov     ecx, SAFE_RNG
+    call    randf_minus_pi_to_pi  ; FIXUP
+    fstp    dword [esp+0x0c]              ; stack arg 10: vel_angle
+    mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
+    lea     edx, [edi+en_final_pos]
+    mov     dword [esp+0x04], edx         ; stack arg  8: pos
+    mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
+    mov     ecx, dword [ITEM_MANAGER_PTR]
+    mov     eax, ITMMGR_SPAWN_ITEM
+    call    eax
+
+.loopend:
+    epilogue_sd
+    ret
 
 ; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
 ; calloc(size)

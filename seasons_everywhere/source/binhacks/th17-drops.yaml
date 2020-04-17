@@ -72,6 +72,22 @@ binhacks:
       - "C70424F2654200    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
 
+
+  codecave_items_on_damage:
+    addr: "0x41fbc3"
+    expected: "8b83 78400000"
+    codecave:
+      - "89D9              " # mov     ecx, ebx
+      - "E8 [codecave:ExpHP.seasons-everywhere.spawn-items-from-damage]" # call
+
+      # original code
+      - "8B8378400000      " # mov     eax, dword [ebx+0x4078]
+      # abs_jmp_hack 0x41fbc9
+      - "E800000000        " # <1>  call %%next
+      - "C70424 C9FB4100   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+
 codecaves:
   # void __thiscall EnemyFull::DropSeasonItems(Float3*)
   ExpHP.seasons-everywhere.drop-season-items:
@@ -255,3 +271,49 @@ codecaves:
 
     - "5F 5E 89EC 5D     " # epilogue w/ esi edi
     - "C20400            " # ret    4
+
+  # void __thiscall Enemy::SpawnItemsFromDamage())
+  ExpHP.seasons-everywhere.spawn-items-from-damage:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "89CF              " # mov     edi, ecx  ; Enemy
+
+    - "FFB754450000      " # push    dword [edi-efull_enemy+efull_id]
+    - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
+    - "89C6              " # mov     esi, eax  ; EnemyEx
+
+    # prevent an infinite loop if damage_per_season_drop is 0
+    - "837E1400          " # cmp     dword [esi+ex_damage_per_season_item], 0x0
+    - "7E73              " # jle     .loopend
+
+    # .loop:
+    - "8B4618            " # mov     eax, dword [esi+ex_damage_accounted_for]
+    - "3B87883F0000      " # cmp     eax, dword [edi+en_life+elife_total_damage]
+    - "7D68              " # jge     .loopend
+    - "034614            " # add     eax, dword [esi+ex_damage_per_season_item]
+    - "894618            " # mov     dword [esi+ex_damage_accounted_for], eax
+
+    - "83EC20            " # sub     esp, 0x20
+    - "C744241CFFFFFFFF  " # mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
+    - "C7442418ADDE0000  " # mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
+    - "C744241400000000  " # mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
+
+    - "B968764B00        " # mov     ecx, SAFE_RNG
+    - "B840284000        " # mov     eax, RANDF_0_TO_1
+    - "FFD0              " # call    eax
+    - "D805D03B4A00      " # fadd    dword [FLOAT_1_POINT_2]
+    - "D95C2410          " # fstp    dword [esp+0x10]              ; stack arg 14: vel_norm
+
+    - "B968764B00        " # mov     ecx, SAFE_RNG
+    - "E8 [codecave:ExpHP.seasons-everywhere.randf-minus-pi-to-pi]" # call
+    - "D95C240C          " # fstp    dword [esp+0x0c]              ; stack arg 10: vel_angle
+    - "C7442408ADDE0000  " # mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
+    - "8D5744            " # lea     edx, [edi+en_final_pos]
+    - "89542404          " # mov     dword [esp+0x04], edx         ; stack arg  8: pos
+    - "C7042430000000    " # mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
+    - "8B0DB8764B00      " # mov     ecx, dword [ITEM_MANAGER_PTR]
+    - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
+    - "FFD0              " # call    eax
+
+    # .loopend:
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C3                " # ret
