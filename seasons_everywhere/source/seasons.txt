@@ -58,17 +58,16 @@ global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
 
 // TODO: Correct damage amounts
 //    - compare scaling of HP in HSiFS vs WBaWC
-// TODO: Better drop values for different enemies and bosses
-// TODO: Season items on damage dealt
+// TODO: Better drop values for different enemies
 // TODO: Season items from bomb bullet cancels (tricky)
-// TODO: Fix positioning of season level
 // TODO: Consume season levels
-// TODO: Make beast items disappear if disabled
+// TODO: Make beast item inventory disappear if disabled
 // TODO: Show "NB" near beast items if No Hyper
-// TODO: Fix season level being on above character sprites for some reason
+// TODO: Fix season level being above character dialogue sprites for some reason
 // TODO: Put season gauge below beast items due to their annoying flames
 // TODO: Fix season gauge starting out transparent
 // TODO: Fix level never reaching 6
+// TODO: PLAY THE DAMN GAME :D :D :D :D
 
 void SeasonMenuEnemy() {
     flagSet(1); // no hurtbox
@@ -350,6 +349,14 @@ void SeasonGaugeEnemy__SetSeason(int season) {
     return;
 }
 
+int ColorMultiplyAlpha(int rgba, int alpha) {
+    int rgb = rgba % 0x01000000;
+    float alphaF = _f(alpha) / 255f;
+    float alphaF2 = _f(rgba / 0x01000000) / 255f;
+    float alphaProd = (alphaF * alphaF2) * 255f;
+    return _S(alphaProd) * 0x01000000 + rgb;
+}
+
 void SeasonGaugeEnemy() {
     flagSet(1); // no hurtbox
     flagSet(2); // no hitbox
@@ -370,6 +377,9 @@ void SeasonGaugeEnemy() {
     int oldLevel = -1;
     int oldPower = CurrentSeasonPower();
 
+    // for simulating alphaTime on the text label
+    F0 = 255;
+
     while(true) {
         int season = CurrentSeason();
         int power = CurrentSeasonPower();
@@ -388,9 +398,11 @@ void SeasonGaugeEnemy() {
 
         } else if (!wasPlayerNear && ((%PLAYER_X < SG_PLAYER_NEAR_X) && (%PLAYER_Y > SG_PLAYER_NEAR_Y))) {
             SeasonGaugeEnemy__Event(SG_EVENT__PLAYER_NEAR);
+            floatTime(0, %F0, 5, 0, F0, 64f);
             wasPlayerNear = true;
         } else if (wasPlayerNear && !((%PLAYER_X < SG_PLAYER_FAR_X) && (%PLAYER_Y > SG_PLAYER_FAR_Y))) {
             SeasonGaugeEnemy__Event(SG_EVENT__PLAYER_FAR);
+            floatTime(0, %F0, 5, 0, F0, 255f);
             wasPlayerNear = false;
         }
 
@@ -401,10 +413,14 @@ void SeasonGaugeEnemy() {
         anmScale(SG_SLOT__FILL_FG, ratio, 1f);
         anmScale(SG_SLOT__FILL_BG, _f(level > 0), 1f);
 
-        drawColor(SeasonLevelNumberColor(level));
+        // FIXME: this doesn't seem to work quite correctly.
+        int color = ColorMultiplyAlpha(SeasonLevelNumberColor(level), _S(F0));
+        drawColor(color);
         drawFont(2);
-        drawAnchor(2, 0);
-        drawf(-132f, 446f-36f, "%d", _SS level);
+        drawAnchor(ANCHOR_CENTER, ANCHOR_BOTTOM);
+
+        // not sure why the magic number here is 18 but it is
+        drawf(-132f, 446f-18f, "%d", _SS level);
         drawReset();
         wait(1);
     }
