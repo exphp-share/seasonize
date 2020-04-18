@@ -1106,7 +1106,7 @@ codecave_items_on_damage: ; 0041fbc3
     call    spawn_items_from_damage  ; FIXUP
     ; original code
     mov     eax, dword [ebx+0x4078]
-    abs_jmp_hack 0x41c7a6
+    abs_jmp_hack 0x41fbc9
 
 
 ; void __thiscall Enemy::SpawnItemsFromDamage())
