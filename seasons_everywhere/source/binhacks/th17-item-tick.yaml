@@ -176,7 +176,7 @@ codecaves:
 
     # Stop now if already max season
     - "8138 74040000         " # cmp    DWORD [eax], 1140
-    - "7D 33                 " # jnl    .bad
+    - "7D 2C                 " # jnl    .bad
 
     # increment and find out if we hit a requirement
     - "FF00                  " # inc    DWORD [eax]
