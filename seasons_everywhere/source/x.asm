@@ -1023,8 +1023,8 @@ impl_et_ex_neg:
     mov    edi, [ebp+0x8]  ; instruction header
 
     ; variables aren't supported (we don't need em)
-    mov    eax, [edi+eclins_variable_mask]
-    test   eax, eax
+    mov    ax, [edi+eclins_variable_mask]
+    test   ax, ax
     jnz    .error
 
     ; The instruction is an EtEx instruction whose first arg is NEG.

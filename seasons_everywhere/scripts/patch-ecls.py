@@ -105,7 +105,7 @@ def insert_season_damage_ops(files):
         lines = files[id].splitlines()
         for i in reversed(range(len(lines))):
             if lines[i].strip().startswith('setBoss('):
-                lines.insert(i, '    seasonDamage(200);')
+                lines.insert(i, '    defaultSeasonDamage();')
         files[id] = joinlines(lines)
 
 def insert_boss_season_drops(files):

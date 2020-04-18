@@ -72,8 +72,7 @@ binhacks:
       - "C70424F2654200    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
 
-
-  codecave_items_on_damage:
+  Bosses drop season items as they receive damage:
     addr: "0x41fbc3"
     expected: "8b83 78400000"
     codecave:
@@ -204,9 +203,9 @@ codecaves:
     - "8B7D08            " # mov    edi, [ebp+0x8]  ; instruction header
 
     # # variables aren't supported (we don't need em)
-    # - "8B4708            " # mov    eax, [edi+eclins_variable_mask]
-    # - "85C0              " # test   eax, eax
-    # - "751D              " # jnz    .error
+    - "668B4708          " # mov    ax, [edi+eclins_variable_mask]
+    - "6685C0            " # test   ax, ax
+    - "751D              " # jnz    .error
 
     # The instruction is an EtEx instruction whose first arg is NEG.
     # Second arg is an opcode for us:

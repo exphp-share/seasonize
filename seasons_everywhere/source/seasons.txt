@@ -1,6 +1,6 @@
 #include "ECLinclude/ECLplus.tecl"
 #include "seasons-data.tecl"
-#include "keys.tecl"
+#include "game-constants.tecl"
 
 global PI = 3.141592653589793f;
 global TAU = 2f*PI;
@@ -15,6 +15,24 @@ int BitNot(int x) {
     return 0xFFFFFFFF - x;
 }
 
+// TODO: Enemies with no hurtbox initially should have timer start once hurtbox appears
+// TODO: Better drop values for different enemies
+// TODO: Season items from bomb bullet cancels (tricky)
+// TODO: Make beast item inventory disappear if disabled
+// TODO: Show "NB" near beast items if No Hyper
+// TODO: Fix season level being above character dialogue sprites for some reason
+// TODO: Put season gauge below beast items due to their annoying flames
+// TODO: Fix season gauge starting out transparent
+// TODO: PLAY THE DAMN GAME :D :D :D :D
+
+// TODO: change demos
+
+// TODO: Check for ECLplus
+// TODO: Comply with ECLplus license
+
+//=========================================
+// Global vars
+
 // GI4:
 // - 00: 3 bits for season
 // - 03: 3 bits for beast item setting
@@ -24,8 +42,6 @@ void SetCurrentSeason(int season) {
     $GI4 |= season;
     return;
 }
-
-global SEASON_ANM_INDEX = 5; // 4th anm in stage ecl's "anim"
 
 global TOKEN_SETTING_ALL = 0;
 global TOKEN_SETTING_SIMPLE = 1;
@@ -51,22 +67,31 @@ void SetActiveReleaseState(int value) { $GI6 = value; return; }
 int DebuggerGlobal() { return $GI7; }
 void SetDebuggerGlobal(int value) { $GI7 = value; return; }
 
+//=========================================
+// Global constants
+
+// DPS in TH17 is about 1.4 times DPS in TH16.
+//
+// It's hard to really give a precise value to this, because different things
+// may be scaled differently and there are factors to consider like how easy
+// or difficult each shot type is to use (or their other strengths besides DPS),
+// or what season level you are in TH16.
+//
+// This value of 1.4 is based on timing kill speeds of the first spell for all shot
+// types in both games. (this was done in spell practice, so TH16 was at season
+// level 3). Many shot types in both games took around 12s (give or take 0.5s),
+// but the spell has 1700 HP in TH16 and 2400 HP in TH17.  Hence, 1.4.
+//
+// Data at: https://gist.github.com/ExpHP/4bb43790a03011c3774c4926ff27f6a7
+global GAME_DPS_SCALE = 1.4f;
+
+// Using default value for all bosses.
+global SEASON_ANM_INDEX = 5; // 4th anm in stage ecl's "anim"
+
 global SMENU_BG_ANM_SCRIPT = 2 * NUM_SEASONS;  // season menu
 global SMENU_FG_ANM_SCRIPT = 2 * NUM_SEASONS + 1;  // season menu boom
 global SMENU_ICON_ANM_SCRIPT = 2 * NUM_SEASONS + 2;  // season menu icon
 global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
-
-// TODO: Correct damage amounts
-//    - compare scaling of HP in HSiFS vs WBaWC
-// TODO: Better drop values for different enemies
-// TODO: Season items from bomb bullet cancels (tricky)
-// TODO: Consume season levels
-// TODO: Make beast item inventory disappear if disabled
-// TODO: Show "NB" near beast items if No Hyper
-// TODO: Fix season level being above character dialogue sprites for some reason
-// TODO: Put season gauge below beast items due to their annoying flames
-// TODO: Fix season gauge starting out transparent
-// TODO: PLAY THE DAMN GAME :D :D :D :D
 
 void SeasonMenuEnemy() {
     flagSet(1); // no hurtbox
@@ -81,7 +106,11 @@ void SeasonMenuEnemy() {
     SetCurrentTokenSetting(TOKEN_SETTING_ALL);
     SetCurrentSeasonPower(0);
     SetActiveReleaseState(0);
+    if (SPELL_ID >= 0) {
+        SetCurrentSeasonPower(LEVEL_3_REQ);
+    }
 
+    enmCreate("SeasonDebugGlobalsEnemy", 0f, 0f, 1, 0, 0);
     anmSelect(SEASON_ANM_INDEX);
     anmSetSprite(0, SMENU_BG_ANM_SCRIPT);
     anmScale(0, 700f, 700f);
@@ -192,7 +221,7 @@ void SeasonMenuEnemy() {
             }
             drawReset();
         }
-
+        drawf(0f, 0f, "%d", _SS SPELL_ID);
         movePos(PLAYER_X, PLAYER_Y);
         wait(1);
     }
@@ -303,9 +332,25 @@ void SeasonInputEnemy() {
             playerSetHyperTimer(0);
         }
 
-        if (!DIALOG && (risingEdge & KEY_SKIP) && !ActiveReleaseState()) {
+        int doRelease = (risingEdge & KEY_SKIP);
+        doRelease = doRelease && SeasonLevel(CurrentSeasonPower()) > 0;
+        doRelease = doRelease && !DIALOG;
+        doRelease = doRelease && !ActiveReleaseState();
+        if (doRelease) {
             printf("New Season Release!!\n");
-            enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
+            int power = CurrentSeasonPower();
+            int level = SeasonLevel(power);
+            int levelUsed;
+            if (SeasonUsesOneLevel(CurrentSeason())) {
+                power -= SeasonPowerOneLevelCost(level);
+                levelUsed = 1;
+            } else {
+                power = 0;
+                levelUsed = level;
+            }
+            SetCurrentSeasonPower(power);
+            // communicate level used in HP
+            enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, levelUsed, 0, 0);
         }
 
         oldInput = $INPUT;
@@ -383,6 +428,10 @@ void SeasonGaugeEnemy() {
         int season = CurrentSeason();
         int power = CurrentSeasonPower();
         int level = SeasonLevel(power);
+
+        unless (0 <= power && power <= MAX_SEASON_POWER) {
+            msgf("ERROR: season power out of range: %d", _SS power);
+        }
 
         // check for events.  We can only send one event per frame, so we use an if-else chain
         // to hold off on updating more than one thing. (checking things in decreasing order
@@ -490,11 +539,7 @@ void SeasonReleaseEnemy() {
     int season = CurrentSeason();
     int seasonAlpha = SeasonAlphabeticalOrder(season);
 
-    // (have to duplicate this logic here since enemies can't take args...)
-    int level = SeasonLevel(CurrentSeasonPower());
-    if (SeasonUsesOneLevel(season)) {
-        level = 1;
-    }
+    int level = LIFE;
 
     int seasonIframes = SeasonIframes(season);
     if (IFRAMES < seasonIframes) {
@@ -552,6 +597,7 @@ void SeasonReleaseEnemy() {
     }
 
     int damage = SeasonDamage(season);
+    damage = _S(_f(damage) * GAME_DPS_SCALE);
 
     // Most of the anm scripts have been preserved up to the first time label,
     // but Doyou's downward motion had to be moved to ECL for the sake of our hitbox.
