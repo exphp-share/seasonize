@@ -26,7 +26,6 @@ int BitNot(int x) {
 // TODO: (after dust settles) change demos
 
 // TODO: Check for ECLplus
-// TODO: Comply with ECLplus license
 
 // TODO: (after release?) add butt shot as a 6th season ("doyou doyou")
 
