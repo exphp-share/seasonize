@@ -63,8 +63,8 @@ game-files/orig/%.txt: game-files/ecl/%.ecl
 	mkdir -p game-files/orig
 	$(THECL.d) $< $@
 
-$(GAME_ECL_NAMES:%.ecl=game-files/patched/%.txt) &: scripts/patch-ecls.py $(GAME_ECL_NAMES:%.ecl=game-files/orig/%.txt)
-	python3 $< game-files/orig -o game-files/patched
+$(GAME_ECL_NAMES:%.ecl=game-files/patched/%.txt) &: scripts/patch-ecls.py source/th17-season-drops.yaml $(GAME_ECL_NAMES:%.ecl=game-files/orig/%.txt)
+	python3 $< game-files/orig -o game-files/patched --enemy-drops source/th17-season-drops.yaml
 
 th17/seasons.ecl: source/seasons.txt $(TECL_FILES)
 	$(THECL.c) $< $@

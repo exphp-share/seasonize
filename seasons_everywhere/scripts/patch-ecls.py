@@ -2,6 +2,8 @@
 import os
 import sys
 import itertools
+from ruamel.yaml import YAML
+yaml = YAML(typ='safe')
 
 STAGES = range(1, 7+1)
 SUFFIXES = ['', 'bs', 'mbs']
@@ -15,6 +17,7 @@ def main():
         epilog="Requires thtk binaries (thdat, thecl) to be available in PATH.",
     )
     parser.add_argument("INPUTDIR", help="Input directory, containing decompiled ecl files.")
+    parser.add_argument("--enemy-drops", required=True, help="Enemy drops config.")
     parser.add_argument("--output", '-o', required=True, help="Output directory.")
     args = parser.parse_args()
 
@@ -25,12 +28,17 @@ def main():
         with open(os.path.join(args.INPUTDIR, txt_filename(id)), 'rb') as f:
             files[id] = f.read().decode('shift-jis')
 
+    with open(args.enemy_drops) as f:
+        enemy_drop_configs = yaml.load(f)
+
     insert_anim(files, 4, 'seasons.anm')
     insert_ecli(files, 'seasons.ecl')
     insert_include(files, 'seasons.tecl')
     insert_init_season_calls(files)
     insert_season_damage_ops(files)
     insert_boss_season_drops(files)
+    insert_enemy_season_drops(files, enemy_drop_configs)
+
 
     for id in FILE_IDS:
         with open(os.path.join(args.output, txt_filename(id)), 'wb') as f:
@@ -108,6 +116,33 @@ def insert_season_damage_ops(files):
                 lines.insert(i, '    defaultSeasonDamage();')
         files[id] = joinlines(lines)
 
+def insert_enemy_season_drops(files, drops_config):
+    """ Insert seasonDamage calls for every boss and midboss. """
+
+    for id in files:
+        filename = txt_filename(id)
+        if filename in drops_config:
+            enemies_todo = dict(drops_config[filename])
+            funcs = parse_funcs(files[id])
+
+            for func, lines in funcs:
+                if func in enemies_todo:
+                    config = enemies_todo.pop(func)
+                    time, item_max, item_min = config['value']
+                    line_number = int(config['line'])
+
+                    # let index 0 refer to the line after the opening brace
+                    assert lines[1] == '{'
+                    line_number += 2
+
+                    lines.insert(line_number, f'    dropSeason({time}, {item_max}, {item_min});')
+
+            if enemies_todo:
+                func = next(iter(enemies_todo))
+                die(f'{txt_filename(id)}: No function found named {func}')
+
+            files[id] = format_funcs(funcs)
+
 def insert_boss_season_drops(files):
     """ Insert dropSeason calls for every boss nonspell and spell. """
 
@@ -116,7 +151,7 @@ def insert_boss_season_drops(files):
     s56_nonspells_found = 0  # 4 7
 
     for id in FILE_IDS:
-        stage, _ = id
+        stage, suffix = id
         funcs = parse_funcs(files[id])
         for func, lines in funcs:
             for i in reversed(range(len(lines))):
@@ -126,8 +161,9 @@ def insert_boss_season_drops(files):
                 line = lines[i]
                 if line.strip().startswith('setNext(') and ', -1,' not in line:
 
-
                     args = '(1200, 200, 10)'
+                    if stage < 3 and suffix == 'mbs':
+                        args = '(900, 200, 10)'
                     if stage == 7:
                         args = '(2400, 200, 80)'
                     if stage in [5, 6]:

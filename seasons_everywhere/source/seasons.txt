@@ -15,8 +15,6 @@ int BitNot(int x) {
     return 0xFFFFFFFF - x;
 }
 
-// TODO: Enemies with no hurtbox initially should have timer start once hurtbox appears
-// TODO: Better drop values for different enemies
 // TODO: Season items from bomb bullet cancels (tricky)
 // TODO: Make beast item inventory disappear if disabled
 // TODO: Show "NB" near beast items if No Hyper
