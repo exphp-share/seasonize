@@ -546,10 +546,6 @@ void SeasonReleaseEnemy() {
         playerSetIframes(seasonIframes);
     }
 
-    if (season == FALL) {
-        playerSetSpeedMult(1.5f);
-    }
-
     if (season == WINTER) {
         playerSetDamageMult(1.5f);
     }
@@ -704,6 +700,10 @@ void ReleaseWait(int frames, int season, int damage) {
         // Synchronize the anm scales with our computed scales.
         anmScale(0, %F1, %F1);
         anmScale(1, %F2, %F2);
+
+        if (season == FALL) {
+            playerSetSpeedMult(1.5f);
+        }
 
         // TH16 does this in the second method in the ShotType vtable for fall subseason.
         // (It actually sets the vector at offset a8 on the ANM, and I'm not sure what that is
