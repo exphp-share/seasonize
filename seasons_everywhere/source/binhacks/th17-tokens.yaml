@@ -5,7 +5,7 @@ binhacks:
     addr: "0x410390"
     expected: "837b1028 // 7c0c"
     codecave:
-      # at this point, [ebp + c] holds the item type - 16
+      # at this point, [ebp + c] holds the item type - 15
       - "E8 [codecave:ExpHP.seasons-everywhere.get-token-setting]" # call
       - "83F800            " # cmp    eax, 0    ; all tokens
       - "741A              " # je     .originalcode
@@ -16,10 +16,10 @@ binhacks:
       - "0F0B              " # ud2
 
       # .nobeast:
-      - "837D0C02          " # cmp    dword [ebp + 0xc], 2
-      - "7E1D              " # jle    .notoken  ; [0, 1, 2] are static beast items
-      - "837D0C0E          " # cmp    dword [ebp + 0xc], 14
-      - "7D17              " # jge    .notoken  ; [14, 15, 16] are changing beast items
+      - "837D0C03          " # cmp    dword [ebp + 0xc], 3
+      - "7E1D              " # jle    .notoken  ; [1, 2, 3] are static beast items
+      - "837D0C0F          " # cmp    dword [ebp + 0xc], 15
+      - "7D17              " # jge    .notoken  ; [15, 16, 17] are changing beast items
       - "EB00              " # jmp    .originalcode
 
       # .originalcode:

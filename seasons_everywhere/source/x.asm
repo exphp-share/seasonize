@@ -983,7 +983,7 @@ codecave_tick_bonus_timer: ; 00420a1e
 
 get_token_setting:
 codecave_disable_token:
-    ; at this point, [ebp + c] holds the item type - 16
+    ; at this point, [ebp + c] holds the item type - 15
     call   get_token_setting  ; FIXUP
     cmp    eax, 0    ; all tokens
     je     .originalcode
@@ -994,10 +994,10 @@ codecave_disable_token:
     ud2
 
 .nobeast:
-    cmp    dword [ebp + 0xc], 2
-    jle    .notoken  ; [0, 1, 2] are static beast items
-    cmp    dword [ebp + 0xc], 14
-    jge    .notoken  ; [14, 15, 16] are changing beast items
+    cmp    dword [ebp + 0xc], 3
+    jle    .notoken  ; [1, 2, 3] are static beast items
+    cmp    dword [ebp + 0xc], 15
+    jge    .notoken  ; [15, 16, 17] are changing beast items
     jmp    .originalcode
 
 .originalcode:

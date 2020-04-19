@@ -21,12 +21,15 @@ int BitNot(int x) {
 // TODO: Fix season level being above character dialogue sprites for some reason
 // TODO: Put season gauge below beast items due to their annoying flames
 // TODO: Fix season gauge starting out transparent
+
 // TODO: PLAY THE DAMN GAME :D :D :D :D
 
-// TODO: change demos
+// TODO: (after dust settles) change demos
 
 // TODO: Check for ECLplus
 // TODO: Comply with ECLplus license
+
+// TODO: (after release?) add butt shot as a 6th season ("doyou doyou")
 
 //=========================================
 // Global vars
@@ -334,6 +337,7 @@ void SeasonInputEnemy() {
         doRelease = doRelease && SeasonLevel(CurrentSeasonPower()) > 0;
         doRelease = doRelease && !DIALOG;
         doRelease = doRelease && !ActiveReleaseState();
+        doRelease = doRelease && (PLSTATE == PL_NORMAL);
         if (doRelease) {
             printf("New Season Release!!\n");
             int power = CurrentSeasonPower();
