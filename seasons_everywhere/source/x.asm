@@ -100,6 +100,7 @@ endstruc
 
 struc Globals
     g_enemy_ex_head resd 4
+    g_bomb_cancel_count resd 1
 endstruc
 
 struc ZunTime
@@ -701,52 +702,6 @@ codecave_use_release_cancel_mode:
     ; test    eax, eax
     ; je      .not_release
 
-codecave_impl_release_cancel_modes:
-    cmp     edx, 0x1
-    je      .mode_1
-    cmp     edx, 0x4
-    je      .mode_4
-    jmp     .mode_0
-
-.mode_1:
-    abs_jmp_hack 0x419ca1
-
-.mode_4:
-    ; Random direction +/- 10 degrees from straight up
-    mov     ecx, SAFE_RNG
-    mov     eax, RANDF_NEG_1_TO_1
-    call    eax
-    fmul    dword [FLOAT_PI_OVER_18]
-    fstp    dword [ebp-0x4]
-    movss   xmm0, dword [ebp-0x4]
-    subss   xmm0, dword [FLOAT_PI_OVER_2]
-
-    sub     esp, 0x20
-    mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
-    mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
-    mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
-    mov     dword [esp+0x10], 0x400ccccd  ; stack arg 14: vel_norm
-    movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
-    mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
-    mov     dword [esp+0x04], esi         ; stack arg  8: pos
-    mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
-    mov     ecx, dword [ITEM_MANAGER_PTR]
-    mov     eax, ITMMGR_SPAWN_ITEM
-    call    eax
-    test    eax, eax  ; we'll get null pointer if we hit PIV item limit
-    jz      .mode_0
-    ; Make the item get autocollected once it stops moving.
-    ; (this field used to be an argument to spawn_item in TH16)
-    ; (this is implemented by another binhack; this field is an unused leftover from TH16)
-    ;
-    ; Given that all season items are already autocollected (or this flag is set) on any frame
-    ; that a release is active, this may seem unnecessary. AFAIK its only impact is during the
-    ; few frames that a season item has not had its ANM initialized yet.
-    mov     dword [eax+en_force_autocollect], 1
-
-.mode_0:
-    abs_jmp_hack 0x419ce5
-
 codecave_autocollect_state_1: ; 0x433590
     call    codecave_is_bomb_or_release_autocollecting
     test    eax, eax
@@ -1154,6 +1109,102 @@ spawn_items_from_damage:
 .loopend:
     epilogue_sd
     ret
+
+codecave_reset_bomb_bullet_cancels:
+    mov    eax, 0x55555555  ; FIXUP <codecave for globals>
+    mov    dword [eax+g_bomb_cancel_count], 0x0
+
+    ; original code
+    push    0x4a1450
+    abs_jmp_hack 0x41484f
+
+
+codecave_impl_release_cancel_modes:
+    cmp     edx, 0x1
+    je      .mode_1
+    cmp     edx, 0x4
+    je      .mode_4
+    cmp     edx, 0x5
+    je      .mode_5
+    jmp     .mode_0
+
+.mode_1:
+    abs_jmp_hack 0x419ca1
+
+.mode_4:  ; Mode 4:  Canceled by release
+    push    esi
+    call    spawn_season_from_cancel ; FIXUP
+    jmp     .mode_0
+
+.mode_5:  ; Mode 5:  Canceled by bomb
+    push    esi
+    call    bomb_bullet_cancel_mode_impl ; FIXUP
+
+.mode_0:
+    abs_jmp_hack 0x419ce5
+
+; void __stdcall DoBombBulletCancelMode(Float3* pos);
+bomb_bullet_cancel_mode_impl:
+    prologue_sd
+    mov     esi, 0x55555555 ; FIXUP globals
+
+    ; Bombs only generate season items for one in every 3 bullets canceled.
+    ; (beginning with the first bullet)
+    mov     eax, dword [esi+g_bomb_cancel_count]
+    mov     edi, 0x3
+    cdq
+    idiv    edi
+    test    edx, edx
+    jne     .noitem
+
+    push    dword [ebp+0x8]
+    call    spawn_season_from_cancel ; FIXUP
+
+.noitem:
+    inc     dword [esi+g_bomb_cancel_count]
+    epilogue_sd
+    ret     0x4
+
+; void __stdcall SpawnSeasonItemFromCancel(Float3* pos);
+spawn_season_from_cancel:
+    prologue_sd
+    mov     esi, [ebp+0x8]
+    sub     esp, 0x20
+
+    ; Random direction +/- 10 degrees from straight up
+    mov     ecx, SAFE_RNG
+    mov     eax, RANDF_NEG_1_TO_1
+    call    eax
+    fmul    dword [FLOAT_PI_OVER_18]
+    fstp    dword [esp+0x0c]
+    movss   xmm0, dword [esp+0x0c]
+    subss   xmm0, dword [FLOAT_PI_OVER_2]
+
+    mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
+    mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
+    mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
+    mov     dword [esp+0x10], 0x400ccccd  ; stack arg 14: vel_norm
+    movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
+    mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
+    mov     dword [esp+0x04], esi         ; stack arg  8: pos
+    mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
+    mov     ecx, dword [ITEM_MANAGER_PTR]
+    mov     eax, ITMMGR_SPAWN_ITEM
+    call    eax
+    test    eax, eax  ; we'll get null pointer if we hit PIV item limit
+    jz      .end
+    ; Make the item get autocollected once it stops moving.
+    ; (this field used to be an argument to spawn_item in TH16)
+    ; (this is implemented by another binhack; this field is an unused leftover from TH16)
+    ;
+    ; Since releases already do this to all season items on every frame, it only really has
+    ; an effect on items that are still in the "uninitialized PIV" state at release end.
+    ; For bombs, this makes a much bigger difference, since those normally only autocollect
+    ; items during the first 60 frames.
+    mov    dword [eax+en_force_autocollect], 0x1
+.end:
+    epilogue_sd
+    ret     0x4
 
 ; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
 ; calloc(size)

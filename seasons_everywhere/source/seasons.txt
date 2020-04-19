@@ -15,7 +15,6 @@ int BitNot(int x) {
     return 0xFFFFFFFF - x;
 }
 
-// TODO: Season items from bomb bullet cancels (tricky)
 // TODO: Make beast item inventory disappear if disabled
 // TODO: Show "NB" near beast items if No Hyper
 // TODO: Fix season level being above character dialogue sprites for some reason

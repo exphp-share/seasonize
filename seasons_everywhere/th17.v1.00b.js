@@ -26,6 +26,41 @@
             "expected": "6a01 // 8bcf // f30f1185 98fbffff",
             "code": "E9 [codecave:of(Use season release bullet cancel mode)] // CCCCCCCCCCCCCC"
         },
+        "Adjust bomb cancel mode for seasons - Reimu 1": {
+            "addr": "0x412dbd",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Reimu 2": {
+            "addr": "0x413775",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Reimu 3": {
+            "addr": "0x4139ca",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Reimu 4": {
+            "addr": "0x413aac",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Marisa": {
+            "addr": "0x41260c",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Youmu": {
+            "addr": "0x4143cc",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Reset bomb cancel counter for seasons": {
+            "addr": "0x41484a",
+            "expected": "68 50144a00",
+            "code": "E9 [codecave:of(Reset bomb cancel counter for seasons)]"
+        },
         "Implement season bullet cancel modes": {
             "addr": "0x419c9c",
             "expected": "83fa01 // 7544",
@@ -93,7 +128,7 @@
         "ExpHP.seasons-everywhere.calloc": "55 // 89E5 // 57 // 8B4508 // 50 // B850B24700 // FFD0 // 89C7 // 8B4508 // 50 // 6A00 // 57 // B860CE4700 // FFD0 // 89F8 // 5F // 89EC // 5D // C20400",
         "ExpHP.seasons-everywhere.randf-minus-pi-to-pi": "55 // 89E5 // 51 // 9B // DBE3 // B8B0274000 // FFD0 // 660F6EC0 // C745FC83F9224E // F30FE6C0 // C1E81F // F20F5804C5303F4A00 // 660F5AC0 // F30F5E45FC // F30F5C0588454900 // F30F1145FC // D945FC // 89EC // 5D // C3",
         "protection": 64,
-        "ExpHP.seasons-everywhere.global-var-store": "00000000 // 00000000 // 00000000 // 00000000 // ",
+        "ExpHP.seasons-everywhere.global-var-store": "00000000 // 00000000 // 00000000 // 00000000 // 00000000 // ",
         "ExpHP.seasons-everywhere.new-enemy-ex": "55 89E5 56 57 // 6A3C // E8 [codecave:ExpHP.seasons-everywhere.calloc] // 89C7 // BE <codecave:ExpHP.seasons-everywhere.global-var-store> // 8D0E // 51 // 89F9 // E8 [codecave:ExpHP.seasons-everywhere.zunlist-insert-after] // 8B4508 // 894710 // 6A01 // 6A0A // 6A3C // 89F9 // E8 [codecave:ExpHP.seasons-everywhere.ex-set-season-bonus] // 89F8 // 5F 5E 89EC 5D // C20400",
         "ExpHP.seasons-everywhere.free-enemy-ex-by-id": "55 // 89E5 // 8B4508 // 50 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 89C1 // E8 [codecave:ExpHP.seasons-everywhere.zunlist-remove-node] // 6A3C // 50 // B880B24700 // FFD0 // 89EC // 5D // C20400",
         "ExpHP.seasons-everywhere.find-enemy-ex-by-id": "B9 <codecave:ExpHP.seasons-everywhere.global-var-store> // 8D09 // 8B542404 // 8B4104 // 85C0 // 740D // 3B5010 // 7405 // 8B4004 // EBF2 // C20400 // 0F0B",
@@ -101,6 +136,8 @@
         "ExpHP.seasons-everywhere.get-season": "6A 00 // 68 CAE0FFFF // 6A 00 // E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch] // 83E0 07 // C3",
         "ExpHP.seasons-everywhere.get-token-setting": "6A 00 // 68 CAE0FFFF // 6A 00 // E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch] // C1E8 03 // 83E0 07 // C3",
         "ExpHP.seasons-everywhere.get-active-release": "6A 00 // 68 CCE0FFFF // 6A 00 // E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch] // C3",
+        "ExpHP.seasons-everywhere.bomb-bullet-cancel-mode-impl": "55 89E5 56 57 // BE <codecave:ExpHP.seasons-everywhere.global-var-store> // 8B4610 // BF03000000 // 99 // F7FF // 85D2 // 7508 // FF7508 // E8 [codecave:ExpHP.seasons-everywhere.spawn-season-from-cancel] // FF4610 // 5F 5E 89EC 5D // C20400",
+        "ExpHP.seasons-everywhere.spawn-season-from-cancel": "55 89E5 56 57 // 8B7508 // 83EC20 // B968764B00 // B880284000 // FFD0 // D80DF83A4A00 // D95C240C // F30F1044240C // F30F5C05F43B4A00 // C744241CFFFFFFFF // C7442418ADDE0000 // C744241400000000 // C7442410CDCC0C40 // F30F1144240C // C7442408ADDE0000 // 89742404 // C7042430000000 // 8B0DB8764B00 // B840474300 // FFD0 // 85C0 // 740A // C780700C000001000000 // 5F 5E 89EC 5D // C20400",
         "ExpHP.seasons-everywhere.drop-season-items": "55 // 89E5 // 57 // 56 // 8B8160570000 // 50 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 89C7 // 89F9 // E8 [codecave:ExpHP.seasons-everywhere.ex-get-season-bonus] // 89C6 // 85F6 // 7E0C // 8B4508 // 50 // E8 [codecave:ExpHP.seasons-everywhere.drop-one-item] // 4E // 7FF4 // C7473400000000 // C7473800000000 // 5E // 5F // 89EC // 5D // C20400",
         "ExpHP.seasons-everywhere.ex-get-season-bonus": "8B4120 // 85C0 // 7F04 // 8B4138 // C3 // 8B4134 // 2B4138 // 0FAF4120 // 99 // F77930 // 034138 // C3",
         "ExpHP.seasons-everywhere.drop-one-item": "55 // 89E5 // 83EC24 // C7442420FFFFFFFF // C744241C0DF00000 // C744241800000000 // B968764B00 // B840284000 // FFD0 // C704243333F33F // D80C24 // D805043B4A00 // D95C2414 // B968764B00 // E8 [codecave:ExpHP.seasons-everywhere.randf-minus-pi-to-pi] // D95C2410 // C744240C0DF00000 // 8B4D08 // 894C2408 // C744240430000000 // 83C404 // 8B0DB8764B00 // B840474300 // FFD0 // 89EC // 5D // C20400",
@@ -120,7 +157,8 @@
         "of(Allocate season data for enemies)": "51 // 52 // 50 // E8 [codecave:ExpHP.seasons-everywhere.new-enemy-ex] // 5A // 59 // 8B8190000000 // E800000000 // C7042438ED4100 // C3",
         "of(Free season data for enemies)": "51 // 52 // FFB660570000 // E8 [codecave:ExpHP.seasons-everywhere.free-enemy-ex-by-id] // 5A // 59 // 8B8690520000 // E800000000 // C7042480DB4100 // C3",
         "of(Use season release bullet cancel mode)": "52 // 51 // 83EC04 // F30F110424 // 8B0C24 // 85C9 // B801000000 // BA04000000 // 0F4CC2 // 81E1FFFFFF7F // 890C24 // F30F100424 // 83C404 // 59 // 5A // 50 // 89F9 // F30F118598FBFFFF // E800000000 // C70424AB5C4200 // C3",
-        "of(Implement season bullet cancel modes)": "83FA01 // 740A // 83FA04 // 7412 // E986000000 // E800000000 // C70424A19C4100 // C3 // B968764B00 // B880284000 // FFD0 // D80DF83A4A00 // D95DFC // F30F1045FC // F30F5C05F43B4A00 // 83EC20 // C744241CFFFFFFFF // C7442418ADDE0000 // C744241400000000 // C7442410CDCC0C40 // F30F1144240C // C7442408ADDE0000 // 89742404 // C7042430000000 // 8B0DB8764B00 // B840474300 // FFD0 // 85C0 // 740A // C780700C000001000000 // E800000000 // C70424E59C4100 // C3",
+        "of(Reset bomb cancel counter for seasons)": "B8 <codecave:ExpHP.seasons-everywhere.global-var-store> // C7401000000000 // 6850144A00 // E800000000 // C704244F484100 // C3",
+        "of(Implement season bullet cancel modes)": "83FA01 // 740C // 83FA04 // 7414 // 83FA05 // 7417 // EB1B // E800000000 // C70424A19C4100 // C3 // 56 // E8 [codecave:ExpHP.seasons-everywhere.spawn-season-from-cancel] // EB06 // 56 // E8 [codecave:ExpHP.seasons-everywhere.bomb-bullet-cancel-mode-impl] // E800000000 // C70424E59C4100 // C3",
         "of(Enemies can drop season items)": "8B4508 // 50 // 8B4DF8 // 8D8970C0FFFF // 8D89F4EDFFFF // E8 [codecave:ExpHP.seasons-everywhere.drop-season-items] // 6888000000 // E800000000 // C704243ADA4100 // C3",
         "of(Tick season item bonus timer)": "B810584000 // FFD0 // 8D86F4EDFFFF // FFB060570000 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 8D481C // 83790400 // 7E0A // 83EC04 // B8E0DB4000 // FFD0 // E800000000 // C70424230A4200 // C3",
         "of(Implement season ECL instructions in etEx)": "81F9C1BDF0FF // 7412 // 68DC154A00 // E800000000 // C704240F4B4200 // C3 // FFB588FBFFFF // 89F9 // E8 [codecave:ExpHP.seasons-everywhere.impl-et-ex-neg] // E800000000 // C70424F2654200 // C3",

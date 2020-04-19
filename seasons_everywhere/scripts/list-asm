@@ -6,9 +6,9 @@ TEMPFILE=$(mktemp)
 nasm -f WIN32 "$1" -l "$TEMPFILE" || { rm -f "$TEMPFILE"; exit 1; }
 
 cat "$TEMPFILE" |
-    sed -E 's@^(.+FIXUP)$@!!\1@' |   # prevent lines with the word FIXUP from matching other
-                                     # regexes so that they stand out in the genrated output.
-                                     # (these are lines that need manual fixes)
+    sed -E 's@^(.+FIXUP)@!!\1@' |   # prevent lines with the word FIXUP from matching other
+                                    # regexes so that they stand out in the genrated output.
+                                    # (these are lines that need manual fixes)
     sed -E 's@^( *[0-9]+ [0-9A-F]{8} [0-9A-Z]{18})-@\1@' |    # kill continuation dashes
     sed -E 's@^ *[0-9]+ [0-9A-F]{8} ([0-9A-Z].{17}) *@    - "\1" # @' |    # format as sequence items
     sed -E 's@^ *[0-9]+ +;@    #@' |    # Turn whole-line ; comments to # comments
