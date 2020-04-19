@@ -22,6 +22,8 @@
 ; Same with that horrifying "call .next" stuff. (that's an absolute jump)
 ; ...you'll see.
 
+%define ECLPLUS_TESTED_COMMIT  db "eb805a0e"
+
 %define MALLOC            0x47b250
 %define MEMSET            0x47ce60
 %define FREE_SIZED        0x47b280
@@ -33,6 +35,10 @@
 %define TIMER_SET_VALUE        0x405bc0
 %define TIMER_INCREMENT        0x405810
 %define TIMER_DECREMENT        0x40dbe0
+
+%define IAT_MessageBoxA  0x49a214
+
+%define ECLP_PTR_TO_GETVARINT 0x499FE4
 
 %define ECLP_GET_VALUE 0
 %define ECLP_GET_PTR   1
@@ -59,6 +65,7 @@
 %define SAFE_RNG          0x4b7668
 
 %define en_final_pos          0x44
+%define en_var_i3             0x298
 %define en_var_f2             0x2a4
 %define en_force_autocollect  0xc70
 %define en_drop               0x3f90
@@ -969,6 +976,7 @@ codecave_disable_token:
 et_ex_calltable:
     dd ecl_spec_0 ; FIXUP
     dd ecl_spec_1 ; FIXUP
+    dd ecl_spec_2 ; FIXUP
 
 ; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
 impl_et_ex_neg:
@@ -985,7 +993,7 @@ impl_et_ex_neg:
     ; The instruction is an EtEx instruction whose first arg is NEG.
     ; Second arg is an opcode for us:
     mov    eax, [edi+eclins_args+0x4] ; opcode
-    cmp    eax, 0x1 ; max opcode
+    cmp    eax, 0x2 ; max opcode
     ja     .error
 
     ; Calltable
@@ -1041,6 +1049,12 @@ ecl_spec_1:
 
     epilogue_sd
     ret    4
+
+; void __thiscall Enemy::Spec2(RawInstructionHeader*)
+ecl_spec_2:
+    call   check_for_eclplus  ; FIXUP
+    ret    4
+
 
 codecave_et_ex:
     cmp    ecx, -999999
@@ -1205,6 +1219,44 @@ spawn_season_from_cancel:
 .end:
     epilogue_sd
     ret     0x4
+
+
+; int __stdcall CheckForEclPlus();
+check_for_eclplus:
+    prologue_sd
+    mov    eax, [ECLP_PTR_TO_GETVARINT]
+    test   eax, eax
+    jnz    .success
+.failure:
+    push   0x00000030 ; MB_OK | MB_ICONWARNING
+    push   eclplus_missing_window_title  ; lpCaption FIXUP
+    push   eclplus_missing_err_msg  ; lpText FIXUP
+    push   0x0  ; hWnd
+    call   [IAT_MessageBoxA]
+    xor    eax, eax
+    epilogue_sd
+    ret
+
+.success:
+    mov    eax, 0x1
+    epilogue_sd
+    ret
+
+eclplus_missing_window_title:
+    db "Seasons patch error"
+    db 0
+
+eclplus_missing_err_msg:
+    db "The seasons patch requires installation of ECLplus: (tested on commit "
+    ECLPLUS_TESTED_COMMIT
+    db ")", 13, 10
+    db 13, 10
+    db "https://github.com/Priw8/ECLplus", 13, 10
+    db 13, 10
+    db "Be sure to edit thcrap's config/games.js to point th17 to ECLplusLoader.exe.", 13, 10
+    db 13, 10
+    db "(alternatively, hotpatch the game by running ECLplusLoader.exe while on the main menu)"
+    db 0
 
 ; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
 ; calloc(size)

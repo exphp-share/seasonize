@@ -210,7 +210,7 @@ codecaves:
     # The instruction is an EtEx instruction whose first arg is NEG.
     # Second arg is an opcode for us:
     - "8B4714            " # mov    eax, [edi+eclins_args+0x4] ; opcode
-    - "83F801            " # cmp    eax, 0x1 ; max opcode
+    - "83F802            " # cmp    eax, 0x2 ; max opcode
     - "7715              " # ja     .error
 
     # Calltable
@@ -231,6 +231,7 @@ codecaves:
   ExpHP.seasons-everywhere.et-ex-calltable:
     - "<codecave:ExpHP.seasons-everywhere.ecl-spec-0>"  # dd ecl_spec_0
     - "<codecave:ExpHP.seasons-everywhere.ecl-spec-1>"  # dd ecl_spec_1
+    - "<codecave:ExpHP.seasons-everywhere.ecl-spec-2>"  # dd ecl_spec_2
 
   # void __thiscall Enemy::Spec0(RawInstructionHeader*)
   ExpHP.seasons-everywhere.ecl-spec-0:
@@ -269,6 +270,11 @@ codecaves:
     - "894114            " # mov    [ecx+ex_damage_per_season_item], eax
 
     - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret    4
+
+  # void __thiscall Enemy::Spec2(RawInstructionHeader*)
+  ExpHP.seasons-everywhere.ecl-spec-2:
+    - "E8 [codecave:ExpHP.seasons-everywhere.check-for-ecl-plus]" # call
     - "C20400            " # ret    4
 
   # void __thiscall Enemy::SpawnItemsFromDamage())

@@ -190,6 +190,62 @@ codecaves:
     - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
     - "C3                    " # ret
 
+  # 0 on failure
+  # int __stdcall CheckForEclPlus();
+  ExpHP.seasons-everywhere.check-for-ecl-plus:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "A1E49F4900        " # mov    eax, [ECLP_PTR_TO_GETVARINT]
+    - "85C0              " # test   eax, eax
+    - "751C              " # jnz    .success
+
+    # .failure:
+    - "6A30              " # push   0x00000030 ; MB_OK | MB_ICONWARNING
+    - "68<codecave:ExpHP.seasons-everywhere.error-message-window-title>" # push
+    - "68<codecave:ExpHP.seasons-everywhere.eclplus-missing-error-message>" # push
+    - "6A00              " # push   0x0  ; hWnd
+    - "FF1514A24900      " # call   [IAT_MessageBoxA]
+
+    - "31C0              " # xor    eax, eax
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C3                " # ret
+
+    # .success:
+    - "B801000000        " # mov    eax, 0x1
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C3                " # ret
+
+  ExpHP.seasons-everywhere.error-message-window-title:
+    # db "Seasons patch error"
+    - "536561736F6E73207061746368206572726F72"
+    - "00                " # db 0
+
+  ExpHP.seasons-everywhere.eclplus-missing-error-message:
+    # db "The seasons patch requires installation of ECLplus: (tested on commit "
+    - "54686520736561736F6E7320706174636820726571756972657320696E7374616C6C6174"
+    - "696F6E206F662045434C706C75733A2028746573746564206F6E20636F6D6D697420    "
+
+    - "6562383035613065  " # ECLPLUS_TESTED_COMMIT
+
+    - "290D0A            " # db ")", 13, 10
+    - "0D0A              " # db 13, 10
+
+    # db "https://github.com/Priw8/ECLplus", 13, 10
+    - "68747470733A2F2F6769746875622E636F6D" #
+    - "2F50726977382F45434C706C75730D0A    " #
+    - "0D0A              " # db 13, 10
+
+    # db "Be sure to edit thcrap's config/games.js to point th17 to ECLplusLoader.exe.", 13, 10
+    - "4265207375726520746F206564697420746863726170277320636F6E6669672F67616D65" #
+    - "732E6A7320746F20706F696E74207468313720746F2045434C706C75734C6F616465722E" #
+    - "6578652E0D0A      " #
+    - "0D0A              " # db 13, 10
+
+    # db "(alternatively, hotpatch the game by running ECLplusLoader.exe while on the main menu)"
+    - "28616C7465726E61746976656C792C20686F747061746368207468652067616D65206279" #
+    - "2072756E6E696E672045434C706C75734C6F616465722E657865207768696C65206F6E20" #
+    - "746865206D61696E206D656E7529        " #
+    - "00                " # db 0
+
   # Wrapper around ECLPlus' IntVarSwitch that preserves the volatile ecx, edx, and xmm registers.
   #
   # (this is done because, even though xmm registers are technically volatile,
