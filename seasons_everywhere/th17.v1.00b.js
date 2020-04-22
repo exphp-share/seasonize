@@ -26,23 +26,43 @@
             "expected": "6a01 // 8bcf // f30f1185 98fbffff",
             "code": "E9 [codecave:of(Use season release bullet cancel mode)] // CCCCCCCCCCCCCC"
         },
-        "Adjust bomb cancel mode for seasons - Reimu 1": {
+        "Adjust bomb cancel mode for seasons - Reimu call 1": {
             "addr": "0x412dbd",
             "expected": "6a 00",
             "code": "6a 05"
         },
-        "Adjust bomb cancel mode for seasons - Reimu 2": {
+        "Adjust bomb cancel mode for seasons - Reimu call 1 (lasers)": {
+            "addr": "0x412df4",
+            "expected": "6a 01",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Reimu call 2": {
             "addr": "0x413775",
             "expected": "6a 00",
             "code": "6a 05"
         },
-        "Adjust bomb cancel mode for seasons - Reimu 3": {
+        "Adjust bomb cancel mode for seasons - Reimu call 2 (lasers)": {
+            "addr": "0x4137ae",
+            "expected": "6a 01",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Reimu call 3": {
             "addr": "0x4139ca",
             "expected": "6a 00",
             "code": "6a 05"
         },
-        "Adjust bomb cancel mode for seasons - Reimu 4": {
+        "Adjust bomb cancel mode for seasons - Reimu call 3 (lasers)": {
+            "addr": "0x413a01",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Reimu call 4": {
             "addr": "0x413aac",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Reimu call 4 (lasers)": {
+            "addr": "0x413ae3",
             "expected": "6a 00",
             "code": "6a 05"
         },
@@ -51,8 +71,18 @@
             "expected": "6a 00",
             "code": "6a 05"
         },
+        "Adjust bomb cancel mode for seasons - Marisa (lasers)": {
+            "addr": "0x412674",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
         "Adjust bomb cancel mode for seasons - Youmu": {
             "addr": "0x4143cc",
+            "expected": "6a 00",
+            "code": "6a 05"
+        },
+        "Adjust bomb cancel mode for seasons - Youmu (lasers)": {
+            "addr": "0x435a13",
             "expected": "6a 00",
             "code": "6a 05"
         },
@@ -65,6 +95,16 @@
             "addr": "0x419c9c",
             "expected": "83fa01 // 7544",
             "code": "E9 [codecave:of(Implement season bullet cancel modes)]"
+        },
+        "Uninline gen_items_from_cancel - Callsite 1": {
+            "addr": "0x43b429",
+            "expected": "85f6 // 0f84d5000000",
+            "code": "E9 [codecave:of(Uninline gen_items_from_cancel - Callsite 1)] // CCCCCC"
+        },
+        "Uninline gen_items_from_cancel - Callsite 2": {
+            "addr": "0x438d77",
+            "expected": "85c9 // 0f84be000000",
+            "code": "E9 [codecave:of(Uninline gen_items_from_cancel - Callsite 2)] // CCCCCC"
         },
         "Enemies can drop season items": {
             "addr": "0x41da35",
@@ -160,9 +200,11 @@
         "ExpHP.seasons-everywhere.zunlist-remove-node": "8B4104 // 8B5108 // 85C0 // 7403 // 895008 // 85D2 // 7403 // 894204 // C7410400000000 // C7410800000000 // 89C8 // C3",
         "of(Allocate season data for enemies)": "51 // 52 // 50 // E8 [codecave:ExpHP.seasons-everywhere.new-enemy-ex] // 5A // 59 // 8B8190000000 // E800000000 // C7042438ED4100 // C3",
         "of(Free season data for enemies)": "51 // 52 // FFB660570000 // E8 [codecave:ExpHP.seasons-everywhere.free-enemy-ex-by-id] // 5A // 59 // 8B8690520000 // E800000000 // C7042480DB4100 // C3",
-        "of(Use season release bullet cancel mode)": "52 // 51 // 83EC04 // F30F110424 // 8B0C24 // 85C9 // B801000000 // BA04000000 // 0F4CC2 // 81E1FFFFFF7F // 890C24 // F30F100424 // 83C404 // 59 // 5A // 50 // 89F9 // F30F118598FBFFFF // E800000000 // C70424AB5C4200 // C3",
+        "of(Use season release bullet cancel mode)": "52 // 51 // 83EC04 // F30F110424 // 8B0C24 // 85C9 // B801000000 // BA04000000 // 0F4CC2 // 81E1FFFFFF7F // 890C24 // F30F100424 // 83C404 // 59 // 5A // 50 // 50 // 89F9 // F30F118598FBFFFF // 8D4144 // F30F109598FBFFFF // 8B0D8C764B00 // 50 // B8F09D4100 // FFD0 // 58 // 6A01 // 50 // E800000000 // C70424CF5B4200 // C3",
         "of(Reset bomb cancel counter for seasons)": "B8 <codecave:ExpHP.seasons-everywhere.global-var-store> // C7401000000000 // 6850144A00 // E800000000 // C704244F484100 // C3",
         "of(Implement season bullet cancel modes)": "83FA01 // 740C // 83FA04 // 7414 // 83FA05 // 7417 // EB1B // E800000000 // C70424A19C4100 // C3 // 56 // E8 [codecave:ExpHP.seasons-everywhere.spawn-season-from-cancel] // EB06 // 56 // E8 [codecave:ExpHP.seasons-everywhere.bomb-bullet-cancel-mode-impl] // E800000000 // C70424E59C4100 // C3",
+        "of(Uninline gen_items_from_cancel - Callsite 1)": "52 51 // 89F2 // 8D4C2444 // B8309C4100 // FFD0 // 59 5A // E800000000 // C7042406B54300 // C3",
+        "of(Uninline gen_items_from_cancel - Callsite 2)": "52 51 // 89CA // 8D4C2440 // B8309C4100 // FFD0 // 59 5A // E800000000 // C704243D8E4300 // C3",
         "of(Enemies can drop season items)": "8B4508 // 50 // 8B4DF8 // 8D8970C0FFFF // 8D89F4EDFFFF // E8 [codecave:ExpHP.seasons-everywhere.drop-season-items] // 6888000000 // E800000000 // C704243ADA4100 // C3",
         "of(Tick season item bonus timer)": "B810584000 // FFD0 // 8D86F4EDFFFF // FFB060570000 // E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id] // 8D481C // 83790400 // 7E0A // 83EC04 // B8E0DB4000 // FFD0 // E800000000 // C70424230A4200 // C3",
         "of(Implement season ECL instructions in etEx)": "81F9C1BDF0FF // 7412 // 68DC154A00 // E800000000 // C704240F4B4200 // C3 // FFB588FBFFFF // 89F9 // E8 [codecave:ExpHP.seasons-everywhere.impl-et-ex-neg] // E800000000 // C70424F2654200 // C3",

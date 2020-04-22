@@ -25,8 +25,6 @@ int BitNot(int x) {
 
 // TODO: (after dust settles) change demos
 
-// TODO: Check for ECLplus
-
 // TODO: (after release?) add butt shot as a 6th season ("doyou doyou")
 
 //=========================================
@@ -98,6 +96,8 @@ void SeasonMenuEnemy() {
     flagSet(128); // not killed by dialogRead or enmKillAll
     flagSet(12); // don't delete beyond screen edges
 
+    int stageNum = LIFE;
+
     playerAllowShot(false);
     playerAllowBomb(false);
 
@@ -107,6 +107,9 @@ void SeasonMenuEnemy() {
     SetActiveReleaseState(0);
     if (SPELL_ID >= 0) {
         SetCurrentSeasonPower(LEVEL_3_REQ);
+    } else if (stageNum != 1 && stageNum != 7 && SCORE == 0 && CONTINUES == 0) {
+        // Stage practice in stage 2 onwards
+        SetCurrentSeasonPower(LEVEL_4_REQ);
     }
 
     enmCreate("SeasonDebugGlobalsEnemy", 0f, 0f, 1, 0, 0);

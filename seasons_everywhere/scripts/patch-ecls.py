@@ -193,13 +193,14 @@ def insert_init_season_calls(files):
     """ Add InitSeason calls to every stage. """
 
     def transform_file(files, id):
+        stage, _ = id
         funcs = parse_funcs(files[id])
         for func, lines in funcs:
             if func != 'main':
                 continue
             for i in range(len(lines)):
                 if lines[i].strip() == 'wait(1);':
-                    lines.insert(i + 1, '    @InitSeasons();')
+                    lines.insert(i + 1, f'    @InitSeasons({stage});')
                     files[id] = format_funcs(funcs)
                     return
             else:

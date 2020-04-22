@@ -35,6 +35,8 @@
 %define TIMER_SET_VALUE        0x405bc0
 %define TIMER_INCREMENT        0x405810
 %define TIMER_DECREMENT        0x40dbe0
+%define GEN_ITEMS_FROM_CANCEL  0x419c30
+%define CANCEL_RADIUS_AS_BOMB  0x419df0
 
 %define IAT_MessageBoxA  0x49a214
 
@@ -63,6 +65,7 @@
 %define SHOTTYPE_PTR      0x4b7688
 %define ITEM_MANAGER_PTR  0x4b76b8
 %define SAFE_RNG          0x4b7668
+%define ET_OBJECT_PTR     0x4b768c
 
 %define en_final_pos          0x44
 %define en_var_i3             0x298
@@ -648,12 +651,24 @@ codecave_use_release_cancel_mode:
     pop     ecx
     pop     edx
 
+    push    eax  ; save an extra copy
     push    eax  ; supply as stack arg to cancel_bullets_in_radius function
 
-    ; original code
+    ; original code.  We have to copy a fair bit, because there's two places that
+    ; the cancel mode needs to be used
     mov     ecx, edi
     movss   dword [ebp-0x468], xmm0
-    abs_jmp_hack  0x425cab
+    lea     eax, [ecx+en_final_pos]
+    movss   xmm2, dword [ebp-0x468]
+    mov     ecx, dword [ET_OBJECT_PTR]
+    push    eax
+    mov     eax, CANCEL_RADIUS_AS_BOMB
+    call    eax
+
+    pop     eax  ; recover extra copy
+    push    0x1  ; second stack arg to cancel_lasers_in_radius
+    push    eax  ; 'cancel mode' arg to cancel_lasers_in_radius
+    abs_jmp_hack  0x425bcf
 
 
 ;     call    codecave_get_active_release
@@ -1257,6 +1272,40 @@ eclplus_missing_err_msg:
     db 13, 10
     db "(alternatively, hotpatch the game by running ECLplusLoader.exe while on the main menu)"
     db 0
+
+; This is pretty annoying; gen_items_from_cancel got inlined into the two special types of
+; things that can be canceled (e.g. lasers).  Lots of conditional checks and registers got
+; shuffled around during optimization, and some instructions in the function were even reordered
+; around code outside the function.
+;
+; e.g. the stuff at 0x43b41d seems to be new, so 0x43b429 is the earliest we can do this:
+
+codecave_et_special_2_noinline: ; 0x43b429
+    push    edx
+    push    ecx
+
+    mov     edx, esi           ; edx arg:  cancel mode
+    lea     ecx, [esp+0x3c+8]  ; ecx arg:  position
+    mov     eax, GEN_ITEMS_FROM_CANCEL
+    call    eax
+
+    pop     ecx
+    pop     edx
+    abs_jmp_hack 0x43b506
+
+codecave_et_special_3_noinline: ; 0x438d77
+    push    edx
+    push    ecx
+
+    mov     edx, ecx           ; edx arg:  cancel mode
+    lea     ecx, [esp+0x38+8]  ; ecx arg:  position
+    mov     eax, GEN_ITEMS_FROM_CANCEL
+    call    eax
+
+    pop     ecx
+    pop     edx
+    abs_jmp_hack 0x438e3d
+
 
 ; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
 ; calloc(size)

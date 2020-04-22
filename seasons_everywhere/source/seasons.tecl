@@ -24,7 +24,7 @@ inline void seasonsPatchCheckForEclPlus() {
 
 // Call this immediately at the beginning of each stage,
 // after the main script makes itself intangible.
-inline void InitSeasons() {
+inline void InitSeasons(int stageNum) {
     seasonsPatchCheckForEclPlus();
 
     // The player can exit the game at any time, leaving all of our global state in
@@ -43,7 +43,7 @@ inline void InitSeasons() {
         enmCreate("SeasonInputEnemy", 0f, 0f, 1, 0, 0);
     } else {
         msgResetAll();
-        enmCreate("SeasonMenuEnemy", 0f, 0f, 1, 0, 0);
+        enmCreate("SeasonMenuEnemy", 0f, 0f, stageNum, 0, 0);
     }
     enmCreate("SeasonGaugeEnemy", 0f, 0f, 1, 0, 0);
 }

@@ -36,34 +36,66 @@ binhacks:
       - "59                " # pop     ecx
       - "5A                " # pop     edx
 
+      - "50                " # push    eax  ; save an extra copy
       - "50                " # push    eax  ; supply as stack arg to cancel_bullets_in_radius function
 
-      # original code
+      # original code.  We have to copy a fair bit, because there's two places that
+      # the cancel mode needs to be used
       - "89F9              " # mov     ecx, edi
       - "F30F118598FBFFFF  " # movss   dword [ebp-0x468], xmm0
-      # abs_jmp_hack  0x425cab
+      - "8D4144            " # lea     eax, [ecx+en_final_pos]
+      - "F30F109598FBFFFF  " # movss   xmm2, dword [ebp-0x468]
+      - "8B0D8C764B00      " # mov     ecx, dword [ET_OBJECT_PTR]
+      - "50                " # push    eax
+      - "B8F09D4100        " # mov     eax, CANCEL_RADIUS_AS_BOMB
+      - "FFD0              " # call    eax
+
+      - "58                " # pop     eax  ; recover extra copy
+      - "6A01              " # push    0x1  ; second stack arg to cancel_lasers_in_radius
+      - "50                " # push    eax  ; 'cancel mode' arg to cancel_lasers_in_radius
+      # abs_jmp_hack  0x425bcf
       - "E800000000        " # <1>  call %%next
-      - "C70424AB5C4200    " # <1>  mov dword [esp], %1
+      - "C70424CF5B4200    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
 
   # Bombs get cancel mode 5
-  Adjust bomb cancel mode for seasons - Reimu 1:
+  Adjust bomb cancel mode for seasons - Reimu call 1:
     addr: "0x412dbd"
     expected: "6a 00"
     code: "6a 05"
 
-  Adjust bomb cancel mode for seasons - Reimu 2:
+  Adjust bomb cancel mode for seasons - Reimu call 1 (lasers):
+    addr: "0x412df4"
+    expected: "6a 01"  # vanilla bug, this callsite generates PIV
+    code: "6a 05"
+
+  Adjust bomb cancel mode for seasons - Reimu call 2:
     addr: "0x413775"
     expected: "6a 00"
     code: "6a 05"
 
-  Adjust bomb cancel mode for seasons - Reimu 3:
+  Adjust bomb cancel mode for seasons - Reimu call 2 (lasers):
+    addr: "0x4137ae"
+    expected: "6a 01"  # vanilla bug, this callsite generates PIV
+    code: "6a 05"
+
+  Adjust bomb cancel mode for seasons - Reimu call 3:
     addr: "0x4139ca"
     expected: "6a 00"
     code: "6a 05"
 
-  Adjust bomb cancel mode for seasons - Reimu 4:
+  Adjust bomb cancel mode for seasons - Reimu call 3 (lasers):
+    addr: "0x413a01"
+    expected: "6a 00"
+    code: "6a 05"
+
+  Adjust bomb cancel mode for seasons - Reimu call 4:
     addr: "0x413aac"
+    expected: "6a 00"
+    code: "6a 05"
+
+  Adjust bomb cancel mode for seasons - Reimu call 4 (lasers):
+    addr: "0x413ae3"
     expected: "6a 00"
     code: "6a 05"
 
@@ -72,8 +104,18 @@ binhacks:
     expected: "6a 00"
     code: "6a 05"
 
+  Adjust bomb cancel mode for seasons - Marisa (lasers):
+    addr: "0x412674"
+    expected: "6a 00"
+    code: "6a 05"
+
   Adjust bomb cancel mode for seasons - Youmu:
     addr: "0x4143cc"
+    expected: "6a 00"
+    code: "6a 05"
+
+  Adjust bomb cancel mode for seasons - Youmu (lasers):
+    addr: "0x435a13"
     expected: "6a 00"
     code: "6a 05"
 
@@ -128,6 +170,45 @@ binhacks:
       # abs_jmp_hack 0x419ce5
       - "E800000000        " # <1>  call %%next
       - "C70424E59C4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+  # This is pretty annoying; gen_items_from_cancel got inlined into all places that cancel lasers.
+  # Lots of conditional checks and registers got shuffled around during optimization, and some
+  # instructions in the function were even reordered around code outside the function.
+  #
+  # e.g. the stuff at 0x43b41d seems to be new, so 0x43b429 is the earliest we can do this:
+  Uninline gen_items_from_cancel - Callsite 1:
+    addr: "0x43b429"
+    expected: "85f6 // 0f84d5000000"
+    codecave:
+      - "52 51             " # push edx & ecx
+
+      - "89F2              " # mov     edx, esi           ; edx arg:  cancel mode
+      - "8D4C2444          " # lea     ecx, [esp+0x3c+8]  ; ecx arg:  position
+      - "B8309C4100        " # mov     eax, GEN_ITEMS_FROM_CANCEL
+      - "FFD0              " # call    eax
+
+      - "59 5A             " # pop ecx & edx
+      # abs_jmp_hack 0x43b506
+      - "E800000000        " # <1>  call %%next
+      - "C7042406B54300    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+  Uninline gen_items_from_cancel - Callsite 2:
+    addr: "0x438d77"
+    expected: "85c9 // 0f84be000000"
+    codecave:
+      - "52 51             " # push edx & ecx
+
+      - "89CA              " # mov     edx, ecx           ; edx arg:  cancel mode
+      - "8D4C2440          " # lea     ecx, [esp+0x38+8]  ; ecx arg:  position
+      - "B8309C4100        " # mov     eax, GEN_ITEMS_FROM_CANCEL
+      - "FFD0              " # call    eax
+
+      - "59 5A             " # pop ecx & edx
+      # abs_jmp_hack 0x438e3d
+      - "E800000000        " # <1>  call %%next
+      - "C704243D8E4300    " # <1>  mov dword [esp], %1
       - "C3                " # <1>  ret
 
 codecaves:
