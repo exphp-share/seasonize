@@ -10,18 +10,6 @@ global WINTER = 3;
 global DOYOU = 4;
 global NUM_SEASONS = 5;
 
-// alphabetical order is relevant when selecting our own anm scripts
-int SeasonAlphabeticalOrder(int season) {
-    if (season == DOYOU) { return 0; }
-    if (season == FALL) { return 1; } // unless we call it autumn...
-    if (season == SPRING) { return 2; }
-    if (season == SUMMER) { return 3; }
-    if (season == WINTER) { return 4; }
-
-    msgf("ERROR: SeasonAlphabeticalOrder(%d)", _SS season);
-    return 0;
-}
-
 //-----------------------------------------------------
 // Power requirements and related data
 

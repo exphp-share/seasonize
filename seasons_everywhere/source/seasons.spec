@@ -17,7 +17,31 @@ entry entry0 {
     }
 }
 
-script doyou1 {
+script release_spring_inner {
+    sprite(-1);
+    layer(13);
+    drawStar(1.0f, 32);
+    blendMode(2);
+    color(128, 128, 128);
+    color2(0, 128, 0);
+    alpha(255);
+    alpha2(255);
+    stop();
+}
+
+script release_spring_outer {
+    sprite(-1);
+    layer(12);
+    drawStar(1.0f, 32);
+    blendMode(1);
+    color(255, 128, 128);
+    color2(255, 0, 0);
+    alpha(255);
+    alpha2(255);
+    stop();
+}
+
+script release_summer_inner {
     sprite(-1);
     layer(13);
     drawStar(1.0f, 32);
@@ -30,7 +54,7 @@ script doyou1 {
     stop();
 }
 
-script doyou2 {
+script release_summer_outer {
     sprite(-1);
     layer(12);
     drawStar(1.0f, 12);
@@ -43,7 +67,7 @@ script doyou2 {
     stop();
 }
 
-script fall1 {
+script release_fall_inner {
     sprite(-1);
     layer(13);
     drawStar(1.0f, 32);
@@ -56,7 +80,7 @@ script fall1 {
     stop();
 }
 
-script fall2 {
+script release_fall_outer {
     sprite(-1);
     layer(12);
     drawStar(1.0f, 12);
@@ -69,31 +93,7 @@ script fall2 {
     stop();
 }
 
-script spring1 {
-    sprite(-1);
-    layer(13);
-    drawStar(1.0f, 32);
-    blendMode(2);
-    color(128, 128, 128);
-    color2(0, 128, 0);
-    alpha(255);
-    alpha2(255);
-    stop();
-}
-
-script spring2 {
-    sprite(-1);
-    layer(12);
-    drawStar(1.0f, 32);
-    blendMode(1);
-    color(255, 128, 128);
-    color2(255, 0, 0);
-    alpha(255);
-    alpha2(255);
-    stop();
-}
-
-script summer1 {
+script release_winter_inner {
     sprite(-1);
     layer(13);
     drawStar(1.0f, 32);
@@ -106,7 +106,7 @@ script summer1 {
     stop();
 }
 
-script summer2 {
+script release_winter_outer {
     sprite(-1);
     layer(12);
     drawStar(1.0f, 12);
@@ -119,7 +119,7 @@ script summer2 {
     stop();
 }
 
-script winter1 {
+script release_doyou_inner {
     sprite(-1);
     layer(13);
     drawStar(1.0f, 32);
@@ -132,7 +132,7 @@ script winter1 {
     stop();
 }
 
-script winter2 {
+script release_doyou_outer {
     sprite(-1);
     layer(12);
     drawStar(1.0f, 12);
@@ -145,7 +145,7 @@ script winter2 {
     stop();
 }
 
-script menu_bg {
+script menu_vignette {
     sprite(-1);
     layer(12);
     drawStar(1.0f, 32);
@@ -166,17 +166,17 @@ script menu_bg {
     alphaTime(5, 0, 10);
     color2Time(5, 0, 0, 0xb0, 255);
     stop();
-    
+
     case(3); // fall
     alphaTime(5, 0, 10);
     color2Time(5, 0, 255, 192, 128);
     stop();
-    
+
     case(4); // winter
     alphaTime(5, 0, 10);
     color2Time(5, 0, 0x8a, 0x2b, 0xe2);
     stop();
-    
+
     case(5);
     alphaTime(5, 0, 50);
     color2Time(5, 0, 192, 192, 192);
@@ -252,7 +252,7 @@ entry entry1 {
 }
 
 // Box
-script zfront0 {
+script gauge_border {
     sprite(-1);
     layer(20);
     type(1);
@@ -277,8 +277,8 @@ script zfront0 {
     end();
 }
 
-// FG Fill
-script zfront1 {
+// This is the partially-filled portion of the gauge for the next level.
+script gauge_fill_fg {
     sprite(-1);
     layer(20);
     type(1);
@@ -321,8 +321,9 @@ script zfront1 {
     end();
 }
 
-// BG Fill
-script zfront2 {
+// This represents the 100% full bar from the previous level
+// underneath the current level.
+script gauge_fill_bg {
     sprite(-1);
     layer(20);
     type(1);
@@ -365,8 +366,7 @@ script zfront2 {
     end();
 }
 
-// Season name
-script zfront3 {
+script gauge_season_icon {
     layer(21);
     sprite(spring);
     ins_307(1);
@@ -398,8 +398,7 @@ script zfront3 {
     ins_7();
 }
 
-// Releasable
-script zfront4 {
+script gauge_releasable_icon {
     layer(21);
     sprite(releasable);
     ins_307(1);

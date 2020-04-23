@@ -28,7 +28,6 @@ int BitNot(int x) {
 // TODO: It looks like a season release enemy can get instakilled by the end of a stage,
 //       causing cooldown to be locked forever?
 // TODO: PIV items in No Hyper
-// TODO: Get rid of alphabetical ordering
 
 // TODO: PLAY THE DAMN GAME :D :D :D :D
 
@@ -496,7 +495,6 @@ void SeasonReleaseEnemy() {
     SetActiveReleaseState(ID);
 
     int season = CurrentSeason();
-    int seasonAlpha = SeasonAlphabeticalOrder(season);
 
     // All releases have stats that grow with the level you are at when you perform
     // the release, *even if only one level is spent* (i.e. Summer and Doyou).
@@ -514,8 +512,8 @@ void SeasonReleaseEnemy() {
     SeasonReleaseSound();
 
     anmSelect(SEASON_ANM_INDEX); // seasons.anm
-    anmSetSprite(0, 2*seasonAlpha + 0);
-    anmSetSprite(1, 2*seasonAlpha + 1);
+    anmSetSprite(0, 2*season + 0);
+    anmSetSprite(1, 2*season + 1);
 
     // Originally in TH16, the following things are all controlled by the ANM:
     //
