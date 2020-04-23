@@ -340,7 +340,6 @@ void SeasonInputEnemy() {
         doRelease = doRelease && !ActiveReleaseState();
         doRelease = doRelease && (PLSTATE == PL_NORMAL);
         if (doRelease) {
-            printf("New Season Release!!\n");
             int power = CurrentSeasonPower();
             int level = SeasonLevel(power);
             int levelUsed;

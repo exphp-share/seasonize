@@ -26,64 +26,28 @@
             "expected": "6a01 // 8bcf // f30f1185 98fbffff",
             "code": "E9 [codecave:of(Use season release bullet cancel mode)] // CCCCCCCCCCCCCC"
         },
-        "Adjust bomb cancel mode for seasons - Reimu call 1": {
-            "addr": "0x412dbd",
+        "Adjust bomb cancel mode for seasons": {
             "expected": "6a 00",
+            "addr": [
+                "0x412dbd",
+                "0x413775",
+                "0x4139ca",
+                "0x413a01",
+                "0x413aac",
+                "0x413ae3",
+                "0x41260c",
+                "0x412674",
+                "0x4143cc",
+                "0x435a13"
+            ],
             "code": "6a 05"
         },
-        "Adjust bomb cancel mode for seasons - Reimu call 1 (lasers)": {
-            "addr": "0x412df4",
+        "Adjust bomb cancel mode for seasons - Bugged callsites": {
             "expected": "6a 01",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Reimu call 2": {
-            "addr": "0x413775",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Reimu call 2 (lasers)": {
-            "addr": "0x4137ae",
-            "expected": "6a 01",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Reimu call 3": {
-            "addr": "0x4139ca",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Reimu call 3 (lasers)": {
-            "addr": "0x413a01",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Reimu call 4": {
-            "addr": "0x413aac",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Reimu call 4 (lasers)": {
-            "addr": "0x413ae3",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Marisa": {
-            "addr": "0x41260c",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Marisa (lasers)": {
-            "addr": "0x412674",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Youmu": {
-            "addr": "0x4143cc",
-            "expected": "6a 00",
-            "code": "6a 05"
-        },
-        "Adjust bomb cancel mode for seasons - Youmu (lasers)": {
-            "addr": "0x435a13",
-            "expected": "6a 00",
+            "addr": [
+                "0x412df4",
+                "0x4137ae"
+            ],
             "code": "6a 05"
         },
         "Reset bomb cancel counter for seasons": {

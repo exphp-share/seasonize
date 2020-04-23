@@ -59,64 +59,26 @@ binhacks:
       - "C3                " # <1>  ret
 
   # Bombs get cancel mode 5
-  Adjust bomb cancel mode for seasons - Reimu call 1:
-    addr: "0x412dbd"
+  Adjust bomb cancel mode for seasons:
     expected: "6a 00"
+    addr:
+      - "0x412dbd" # Reimu call 1 (bullets)
+      - "0x413775" # Reimu call 2 (bullets)
+      - "0x4139ca" # Reimu call 3 (bullets)
+      - "0x413a01" # Reimu call 3 (lasers)
+      - "0x413aac" # Reimu call 4 (bullets)
+      - "0x413ae3" # Reimu call 4 (lasers)
+      - "0x41260c" # Marisa (bullets)
+      - "0x412674" # Marisa (lasers)
+      - "0x4143cc" # Youmu (bullets)
+      - "0x435a13" # Youmu (lasers)
     code: "6a 05"
 
-  Adjust bomb cancel mode for seasons - Reimu call 1 (lasers):
-    addr: "0x412df4"
-    expected: "6a 01"  # vanilla bug, this callsite generates PIV
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Reimu call 2:
-    addr: "0x413775"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Reimu call 2 (lasers):
-    addr: "0x4137ae"
-    expected: "6a 01"  # vanilla bug, this callsite generates PIV
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Reimu call 3:
-    addr: "0x4139ca"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Reimu call 3 (lasers):
-    addr: "0x413a01"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Reimu call 4:
-    addr: "0x413aac"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Reimu call 4 (lasers):
-    addr: "0x413ae3"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Marisa:
-    addr: "0x41260c"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Marisa (lasers):
-    addr: "0x412674"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Youmu:
-    addr: "0x4143cc"
-    expected: "6a 00"
-    code: "6a 05"
-
-  Adjust bomb cancel mode for seasons - Youmu (lasers):
-    addr: "0x435a13"
-    expected: "6a 00"
+  Adjust bomb cancel mode for seasons - Bugged callsites:
+    expected: "6a 01"  # vanilla bug, these callsites generate PIV
+    addr:
+      - "0x412df4" # Reimu call 1 (lasers)
+      - "0x4137ae" # Reimu call 2 (lasers)
     code: "6a 05"
 
   # Reset bomb cancel count whenever Bullet manager is reinitialized.
