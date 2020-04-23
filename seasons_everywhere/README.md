@@ -1,0 +1,25 @@
+# Wily Beast and Weakest Season
+
+> How to write an EPIC MEME PATCH:
+>
+> 1. spend several months reverse engineering every possible facet of a game
+> 2. write over a thousand lines of assembly to make the experience as authentic as possible
+> 3. ~~cry~~
+> 4. add BIG, JUICY CANCELS and now see everything is better, there's no more badness okay
+
+This adds season items and releases to WBaWC.  Doyou's butt shot is on the todo list, but other than that, subseason options are neither implemented nor planned.
+
+A menu is presented at game start.  Act fast!!  Press the shot and bomb buttons a number of times corresponding to the season and settings you want, then press C (or wait a few seconds).
+
+## No Beast/No Hyper mode
+
+**This is the recommended way to play.**  To activate this mode, press the Bomb key once on the season menu.  This mode adjusts the balance of the game to account for having season releases:
+
+* **Hypers end immediately:** Hypers end immediately so that they cannot be used defensively.
+* **Beast tokens are suppressed (others remain):** You can still get extra lives from life tokens. However, there are significantly fewer "filler" tokens to help you reach 5 tokens, so be careful!
+* **TH16 scoring strats:** Without hypers, how shall we get PIV?  Fear not; enabling this mode will cause releases to generate PIV items, just like in TH16!
+
+## How?
+
+* The releases and GUI are implemented almost entirely in ECL using [ECLplus](https://github.com/Priw8/ECLplus).
+* The season items are actually implemented as items!!  Just like in TH16, season items live in the same array as PIV items.  Their special behaviors (such as flyout and delayed autocollection), and the methods of generating them (grazing, shooting bosses, bombs, releases...) are all implemented to be as close as possible to TH16, through a terrifyingly large number of binhacks.
