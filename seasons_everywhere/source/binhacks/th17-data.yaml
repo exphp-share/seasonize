@@ -181,9 +181,9 @@ codecaves:
     - "83E0 07               " # and    eax, 0x7
     - "C3                    " # ret
 
-  # returns enemy id if there is a release, -1 if in cooldown, 0 otherwise.
+  # returns level of release if there is a release, -1 if in cooldown, 0 otherwise.
   # extern __stdcall int GetActiveRelease(void);
-  ExpHP.seasons-everywhere.get-active-release:
+  ExpHP.seasons-everywhere.get-active-release-level:
     - "6A 00                 " # push    0                   ; arg 3: mode    (0 = get value)
     - "68 CCE0FFFF           " # push    VAR_ACTIVE_RELEASE  ; arg 2: var ID
     - "6A 00                 " # push    0                   ; arg 1: enemy   (null)

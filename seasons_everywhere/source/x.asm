@@ -15,9 +15,8 @@
 ; consts can be useful).
 
 ; -----
-; If you're wondering why I keep writing "mov _, eax; call eax" it's because
-; thcrap's syntax for generating relative addresses is giving nonsense errors
-; in TH17, so that's a workaround to call absolute addresses.
+; If you're wondering why I keep writing "mov _, eax; call eax" it's a hack
+; to call absolute addresses.
 ;
 ; Same with that horrifying "call .next" stuff. (that's an absolute jump)
 ; ...you'll see.
@@ -49,10 +48,6 @@
 %define VAR_GI5 -7989
 %define VAR_GI6 -7988
 %define VAR_GI7 -7987
-
-%define VAR_SEASON          VAR_GI4
-%define VAR_SEASON_POWER    VAR_GI5
-%define VAR_ACTIVE_RELEASE  VAR_GI6
 
 %define FLOAT_PI          0x494588
 %define FLOAT_ONE_HALF    0x4a3b48
@@ -587,10 +582,10 @@ zunlist_remove_node:
 
 codecave_eclplus_int_switch:
 
-; returns enemy id if there is a release, -1 if in cooldown, 0 otherwise.
-codecave_get_active_release:
+; returns level of release if there is a release, -1 if in cooldown, 0 otherwise.
+get_active_release_level:
     push    ECLP_GET_VALUE      ; arg 3: mode
-    push    VAR_ACTIVE_RELEASE  ; arg 2: var ID
+    push    VAR_GI6             ; arg 2: var ID
     push    0                   ; arg 1: enemy ptr
     call    codecave_eclplus_int_switch
     ret
@@ -608,7 +603,7 @@ codecave_is_bomb_or_release_autocollecting:
     jge     .nobomb
     jmp     .success
 .nobomb:
-    call    codecave_get_active_release
+    call    get_active_release_level ; FIXUP
     test    eax, eax
     jng     .norelease    ; positive (active)
     jmp     .success
@@ -1162,18 +1157,46 @@ codecave_impl_release_cancel_modes:
 
 .mode_4:  ; Mode 4:  Canceled by release
     push    esi
-    call    spawn_season_from_cancel ; FIXUP
+    call    release_cancel_mode_impl ; FIXUP
     jmp     .mode_0
 
 .mode_5:  ; Mode 5:  Canceled by bomb
     push    esi
-    call    bomb_bullet_cancel_mode_impl ; FIXUP
+    call    bomb_cancel_mode_impl ; FIXUP
 
 .mode_0:
     abs_jmp_hack 0x419ce5
 
-; void __stdcall DoBombBulletCancelMode(Float3* pos);
-bomb_bullet_cancel_mode_impl:
+; void __stdcall DoReleaseCancelMode(Float3* pos);
+release_cancel_mode_impl:
+    prologue_sd
+    mov     esi, [ebp+0x8]
+
+    ; Cancels from releases always produce a season item
+    push    esi
+    call    spawn_season_item_from_cancel ; FIXUP
+
+    ; In the No Hyper setting, they additionally produce a PIV item
+    ; that scales with season level, like they do in TH16.
+    call    get_token_setting ; FIXUP
+    cmp     eax, 1
+    jne     .nopiv
+
+    call    get_active_release_level ; FIXUP
+    test    eax, eax
+    jle     .nopiv    ; only continue if positive
+
+    add     eax, 0x8  ; level 1 makes item type 9, 2 makes 0xa, etc.
+    push    esi
+    push    eax
+    call    spawn_item_like_cancel_piv ; FIXUP
+
+.nopiv:
+    epilogue_sd
+    ret     0x4
+
+; void __stdcall DoBombCancelMode(Float3* pos);
+bomb_cancel_mode_impl:
     prologue_sd
     mov     esi, 0x55555555 ; FIXUP globals
 
@@ -1187,7 +1210,7 @@ bomb_bullet_cancel_mode_impl:
     jne     .noitem
 
     push    dword [ebp+0x8]
-    call    spawn_season_from_cancel ; FIXUP
+    call    spawn_season_item_from_cancel ; FIXUP
 
 .noitem:
     inc     dword [esi+g_bomb_cancel_count]
@@ -1195,9 +1218,39 @@ bomb_bullet_cancel_mode_impl:
     ret     0x4
 
 ; void __stdcall SpawnSeasonItemFromCancel(Float3* pos);
-spawn_season_from_cancel:
+;
+; To be used for spawning season items from cancels.  These behave very
+; similarly to PIV items.
+spawn_season_item_from_cancel:
     prologue_sd
-    mov     esi, [ebp+0x8]
+
+    push    dword [ebp+0x8]
+    push    0x30
+    call    spawn_item_like_cancel_piv ; FIXUP
+
+    test    eax, eax  ; we'll get null pointer if we hit PIV item limit
+    jz      .end
+    ; Make the item get autocollected once it stops moving.
+    ; (this field used to be an argument to spawn_item in TH16)
+    ; (this is implemented by another binhack; this field is an unused leftover from TH16)
+    ;
+    ; Since releases already do this to all season items on every frame, it only really has
+    ; an effect on items that are still in the "uninitialized PIV" state at release end.
+    ; For bombs, this makes a much bigger difference, since those normally only autocollect
+    ; items during the first 60 frames.
+    mov    dword [eax+en_force_autocollect], 0x1
+.end:
+    epilogue_sd
+    ret     0x4
+
+; Item* __stdcall SpawnItemLikeCancelPiv(int itemType, Float3* pos);
+;
+; Spawns an item with a randomized upwards angle and velocity suitable for a PIV item.
+; (it doesn't HAVE to be a PIV item, though; season items from cancels also use this)
+spawn_item_like_cancel_piv:
+    prologue_sd
+    mov     edi, [ebp+0x8]  ; item type
+    mov     esi, [ebp+0xc]  ; pos
     sub     esp, 0x20
 
     ; Random direction +/- 10 degrees from straight up
@@ -1216,25 +1269,13 @@ spawn_season_from_cancel:
     movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
     mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
     mov     dword [esp+0x04], esi         ; stack arg  8: pos
-    mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
+    mov     dword [esp+0x00], edi         ; stack arg  4: item type
     mov     ecx, dword [ITEM_MANAGER_PTR]
     mov     eax, ITMMGR_SPAWN_ITEM
     call    eax
-    test    eax, eax  ; we'll get null pointer if we hit PIV item limit
-    jz      .end
-    ; Make the item get autocollected once it stops moving.
-    ; (this field used to be an argument to spawn_item in TH16)
-    ; (this is implemented by another binhack; this field is an unused leftover from TH16)
-    ;
-    ; Since releases already do this to all season items on every frame, it only really has
-    ; an effect on items that are still in the "uninitialized PIV" state at release end.
-    ; For bombs, this makes a much bigger difference, since those normally only autocollect
-    ; items during the first 60 frames.
-    mov    dword [eax+en_force_autocollect], 0x1
-.end:
-    epilogue_sd
-    ret     0x4
 
+    epilogue_sd
+    ret     0x8
 
 ; int __stdcall CheckForEclPlus();
 check_for_eclplus:

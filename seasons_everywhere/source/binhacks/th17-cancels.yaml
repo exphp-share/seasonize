@@ -121,12 +121,12 @@ binhacks:
 
       # .mode_4:  ; Mode 4:  Canceled by release
       - "56                " # push    esi
-      - "E8 [codecave:ExpHP.seasons-everywhere.spawn-season-from-cancel]" # call
+      - "E8 [codecave:ExpHP.seasons-everywhere.impl-release-cancel-mode]" # call
       - "EB06              " # jmp     .mode_0
 
       # .mode_5:  ; Mode 5:  Canceled by bomb
       - "56                " # push    esi
-      - "E8 [codecave:ExpHP.seasons-everywhere.bomb-bullet-cancel-mode-impl]" # call
+      - "E8 [codecave:ExpHP.seasons-everywhere.impl-bomb-cancel-mode]" # call
 
       # .mode_0:
       # abs_jmp_hack 0x419ce5
@@ -174,8 +174,8 @@ binhacks:
       - "C3                " # <1>  ret
 
 codecaves:
-  # void __stdcall DoBombBulletCancelMode(Float3* pos);
-  ExpHP.seasons-everywhere.bomb-bullet-cancel-mode-impl:
+  # void __stdcall DoBombCancelMode(Float3* pos);
+  ExpHP.seasons-everywhere.impl-bomb-cancel-mode:
     - "55 89E5 56 57     " # prologue w/ esi edi
     - "BE <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov esi, GLOBALS
 
@@ -196,10 +196,67 @@ codecaves:
     - "5F 5E 89EC 5D     " # epilogue w/ esi edi
     - "C20400            " # ret     0x4
 
+  # void __stdcall DoReleaseCancelMode(Float3* pos);
+  ExpHP.seasons-everywhere.impl-release-cancel-mode:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "8B7508            " # mov     esi, [ebp+0x8]  ; pos
+
+    # Cancels from releases always produce a season item
+    - "56                " # push    esi
+    - "E8 [codecave:ExpHP.seasons-everywhere.spawn-season-from-cancel]" # call
+
+    # In the No Hyper setting, they additionally produce a PIV item
+    # that scales with season level, like they do in TH16.
+    - "E8 [codecave:ExpHP.seasons-everywhere.get-token-setting]" # call
+    - "83F801            " # cmp     eax, 1
+    - "7513              " # jne     .nopiv
+
+    - "E8 [codecave:ExpHP.seasons-everywhere.get-active-release-level]" # call
+    - "85C0              " # test    eax, eax
+    - "7E0A              " # jle     .nopiv    ; only continue if positive
+
+    - "83C008            " # add     eax, 0x8  ; level 1 makes item type 9, 2 makes 0xa, etc.
+    - "56                " # push    esi
+    - "50                " # push    eax
+    - "E8 [codecave:ExpHP.seasons-everywhere.spawn-item-like-cancel-piv]" # call
+
+    # .nopiv:
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret     0x4
+
   # void __stdcall SpawnSeasonItemFromCancel(Float3* pos);
+  #
+  # To be used for spawning season items from cancels.  These behave very
+  # similarly to PIV items.
   ExpHP.seasons-everywhere.spawn-season-from-cancel:
     - "55 89E5 56 57     " # prologue w/ esi edi
-    - "8B7508            " # mov     esi, [ebp+0x8]
+    - "FF7508            " # push    dword [ebp+0x8]
+    - "6A30              " # push    0x30
+    - "E8 [codecave:ExpHP.seasons-everywhere.spawn-item-like-cancel-piv]" # call
+
+    - "85C0              " # test    eax, eax  ; we'll get null pointer if we hit PIV item limit
+    - "740A              " # jz      .end
+    # Make the item get autocollected once it stops moving.
+    # (this field used to be an argument to spawn_item in TH16)
+    # (this is implemented by another binhack; this field is an unused leftover from TH16)
+    #
+    # Since releases already do this to all season items on every frame, it only really has
+    # an effect on items that are still in the "uninitialized PIV" state at release end.
+    # For bombs, this makes a much bigger difference, since those normally only autocollect
+    # items during the first 60 frames.
+    - "C780700C000001000000" # mov    dword [eax+en_force_autocollect], 0x1
+    # .end:
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret     0x4
+
+  # Item* __stdcall SpawnItemLikeCancelPiv(int itemType, Float3* pos);
+  #
+  # Spawns an item with a randomized upwards angle and velocity suitable for a PIV item.
+  # (it doesn't HAVE to be a PIV item, though; season items from cancels also use this)
+  ExpHP.seasons-everywhere.spawn-item-like-cancel-piv:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "8B7D08            " # mov     edi, [ebp+0x8]  ; item type
+    - "8B750C            " # mov     esi, [ebp+0xc]  ; pos
     - "83EC20            " # sub     esp, 0x20
 
     # Random direction +/- 10 degrees from straight up
@@ -218,21 +275,10 @@ codecaves:
     - "F30F1144240C      " # movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
     - "C7442408ADDE0000  " # mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
     - "89742404          " # mov     dword [esp+0x04], esi         ; stack arg  8: pos
-    - "C7042430000000    " # mov     dword [esp+0x00], 0x30        ; stack arg  4: item type
+    - "893C24            " # mov     dword [esp+0x00], edi         ; stack arg  4: item type
     - "8B0DB8764B00      " # mov     ecx, dword [ITEM_MANAGER_PTR]
     - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
     - "FFD0              " # call    eax
-    - "85C0              " # test    eax, eax  ; we'll get null pointer if we hit PIV item limit
-    - "740A              " # jz      .end
-    # Make the item get autocollected once it stops moving.
-    # (this field used to be an argument to spawn_item in TH16)
-    # (this is implemented by another binhack; this field is an unused leftover from TH16)
-    #
-    # Since releases already do this to all season items on every frame, it only really has
-    # an effect on items that are still in the "uninitialized PIV" state at release end.
-    # For bombs, this makes a much bigger difference, since those normally only autocollect
-    # items during the first 60 frames.
-    - "C780700C000001000000" # mov    dword [eax+en_force_autocollect], 0x1
-    # .end:
+
     - "5F 5E 89EC 5D     " # epilogue w/ esi edi
-    - "C20400            " # ret     0x4
+    - "C20800            " # ret     0x8

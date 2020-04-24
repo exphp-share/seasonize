@@ -6,6 +6,7 @@ TEMPFILE=$(mktemp)
 nasm -f WIN32 "$1" -l "$TEMPFILE" || { rm -f "$TEMPFILE"; exit 1; }
 
 cat "$TEMPFILE" |
+    # These make *almost* everything into yaml
     sed -E 's@^(.+FIXUP)@!!\1@' |   # prevent lines with the word FIXUP from matching other
                                     # regexes so that they stand out in the genrated output.
                                     # (these are lines that need manual fixes)
@@ -13,6 +14,11 @@ cat "$TEMPFILE" |
     sed -E 's@^ *[0-9]+ [0-9A-F]{8} ([0-9A-Z].{17}) *@    - "\1" # @' |    # format as sequence items
     sed -E 's@^ *[0-9]+ +;@    #@' |    # Turn whole-line ; comments to # comments
     sed -E 's@^ *[0-9]+ *$@@' |    # strip line numbers from empty lines
-    sed -E 's@^ *[0-9]+     +@    # @'    # turn lines without hex code into comments
+    sed -E 's@^ *[0-9]+     +@    # @' |   # turn lines without hex code into comments
+
+    # These further postprocess the YAML to compress common patterns like expanded macros
+    sed -E '/# (pro|epi)logue_sd$/{n;N;N;N;d}' | # delete 4 lines following prologue_sd or epilogue_sd
+    sed -e 's@# prologue_sd$@- "55 89E5 56 57     " # prologue w/ esi edi@' |
+    sed -e 's@# epilogue_sd$@- "5F 5E 89EC 5D     " # epilogue w/ esi edi@'
 
 rm -f "$TEMPFILE"

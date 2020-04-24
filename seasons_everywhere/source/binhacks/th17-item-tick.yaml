@@ -343,7 +343,7 @@ codecaves:
     - "7D02              " # jge     .nobomb
     - "EB0E              " # jmp     .success
     # .nobomb:
-    - "E8 [codecave:ExpHP.seasons-everywhere.get-active-release]" # call    codecave_get_active_release
+    - "E8 [codecave:ExpHP.seasons-everywhere.get-active-release-level]" # call    codecave_get_active_release
     - "85C0              " # test    eax, eax
     - "7E02              " # jng     .norelease    ; positive (active)
     - "EB03              " # jmp     .success

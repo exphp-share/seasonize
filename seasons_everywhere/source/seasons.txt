@@ -27,7 +27,6 @@ int BitNot(int x) {
 
 // TODO: It looks like a season release enemy can get instakilled by the end of a stage,
 //       causing cooldown to be locked forever?
-// TODO: PIV items in No Hyper
 
 // TODO: PLAY THE DAMN GAME :D :D :D :D
 
@@ -64,7 +63,7 @@ void SetCurrentSeasonPower(int power) { $GI5 = ClipInt(power, 0, MAX_SEASON_POWE
 
 // 0: no release, no cooldown
 // -1: in cooldown
-// positive: enemy id of release
+// positive: season level of current release
 global RELEASE_IN_COOLDOWN = -1;
 int ActiveReleaseState() { return $GI6; }
 void SetActiveReleaseState(int value) { $GI6 = value; return; }
@@ -492,13 +491,16 @@ void SeasonReleaseEnemy() {
 
     movePos(PLAYER_X, PLAYER_Y);
 
-    SetActiveReleaseState(ID);
-
     int season = CurrentSeason();
 
     // All releases have stats that grow with the level you are at when you perform
     // the release, *even if only one level is spent* (i.e. Summer and Doyou).
     int level = SeasonLevel(CurrentSeasonPower());
+    if (level == 0) {
+        return;
+    }
+
+    SetActiveReleaseState(level);
 
     int seasonIframes = SeasonIframes(season);
     if (IFRAMES < seasonIframes) {
