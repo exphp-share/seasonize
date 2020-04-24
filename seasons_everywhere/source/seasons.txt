@@ -25,9 +25,7 @@ int BitNot(int x) {
 //       maybe abort the release and sneakily give back used power so that it
 //       feels less unfair if the player dies in 1 frame.
 
-// TODO: It looks like a season release enemy can get instakilled by the end of a stage,
-//       causing cooldown to be locked forever?
-
+// TODO: Get rid of No Token mode. (not worth supporting 3 modes)
 // TODO: PLAY THE DAMN GAME :D :D :D :D
 
 // TODO: (after dust settles) change demos
@@ -330,6 +328,10 @@ void SeasonMenuIconEnemy(int mySeason) {
 
 void SeasonInputEnemy() {
     flagSet(32); // intangible
+
+    // (in case e.g. the player did a release at the end of a stage and the release
+    //  enemy was instakilled before it could reset this)
+    SetActiveReleaseState(0);
 
     int oldInput = $INPUT;
     int tokenSetting = CurrentTokenSetting();
