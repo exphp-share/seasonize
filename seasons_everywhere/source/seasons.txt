@@ -155,7 +155,7 @@ void SeasonMenuEnemy() {
         unless (menuTime) {
             shouldEnd = 1;
         }
-        if (risingEdge & KEY_SKIP) {
+        if (risingEdge & KEY_THREE) {
             shouldEnd = 1;
         }
 
@@ -339,7 +339,7 @@ void SeasonInputEnemy() {
             playerSetHyperTimer(0);
         }
 
-        int doRelease = (risingEdge & KEY_SKIP);
+        int doRelease = (risingEdge & KEY_THREE);
         doRelease = doRelease && SeasonLevel(CurrentSeasonPower()) > 0;
         doRelease = doRelease && !DIALOG;
         doRelease = doRelease && !ActiveReleaseState();

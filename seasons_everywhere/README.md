@@ -9,6 +9,8 @@
 
 This adds season items and releases to WBaWC.  Doyou's butt shot is on the todo list, but other than that, subseason options are neither implemented nor planned.
 
+This patch uses a separate scorefile.  If you want it to start with your existing progress, you can copy `scoreth17.dat` to `scoreth17_season.dat`.
+
 A menu is presented at game start.  Act fast!!  Press the shot and bomb buttons a number of times corresponding to the season and settings you want, then press C (or wait a few seconds).
 
 ## No Beast/No Hyper mode

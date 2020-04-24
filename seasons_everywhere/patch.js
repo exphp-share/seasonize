@@ -1,6 +1,8 @@
 {
 	"dependencies": [
-		"nmlgc/base_tsa"
+		"nmlgc/base_tsa",
+		"ExpHP/c_key",
+		"32th/score_uncap"
 	],
 	"id": "seasons_everywhere",
 	"servers": [

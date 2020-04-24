@@ -3,7 +3,7 @@ global NEGF = -999999.0f;
 
 global KEY_SHOT = 0x1;
 global KEY_BOMB = 0x2;
-global KEY_THREE = 0x200; // damn you wbawc
+global KEY_THREE = 0x4; // c_key patch
 global KEY_SLOW = 0x8;
 global KEY_UP = 0x10;
 global KEY_DOWN = 0x20;
