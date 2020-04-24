@@ -21,11 +21,6 @@ int BitNot(int x) {
 // TODO: Put season gauge below beast items due to their annoying flames
 // TODO: Fix season gauge starting out transparent
 
-// TODO: Find out if same-frame cancel-and-die releases were possible in TH16;
-//       maybe abort the release and sneakily give back used power so that it
-//       feels less unfair if the player dies in 1 frame.
-
-// TODO: Get rid of No Token mode. (not worth supporting 3 modes)
 // TODO: PLAY THE DAMN GAME :D :D :D :D
 
 // TODO: (after dust settles) change demos
@@ -48,7 +43,8 @@ void SetCurrentSeason(int season) {
 global TOKEN_SETTING_ALL = 0;
 global TOKEN_SETTING_SIMPLE = 1;
 global TOKEN_SETTING_NONE = 2;
-global NUM_TOKEN_SETTINGS = 3;
+ // Make 'None' inaccessible.  I just don't want to support it or playtest it.
+global NUM_TOKEN_SETTINGS = 2;
 int CurrentTokenSetting() { return ($GI4 / 8) & 0b111; }
 void SetCurrentTokenSetting(int setting) {
     $GI4 &= BitNot(0b111 * 8);
@@ -660,11 +656,6 @@ CASE_1:
 void ReleaseWait(int frames, int season, int damage) {
     // This simulates wait(n) or a time label from the original anm.
     times(frames) {
-        drawf(-196f, 30f + 0f*12f, "x %.6f", _ff FINAL_X);
-        drawf(-196f, 30f + 1f*12f, "y %.6f", _ff FINAL_Y);
-        drawf(-196f, 30f + 2f*12f, "r1 %.6f", _ff %F1);
-        drawf(-196f, 30f + 3f*12f, "r2 %.6f", _ff %F2);
-
         // Synchronize the anm scales with our computed scales.
         anmScale(0, %F1, %F1);
         anmScale(1, %F2, %F2);
