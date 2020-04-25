@@ -1,79 +1,43 @@
 # (line number is zero for every enemy here because
 #  TH17 has no enemies that start out with no hurtbox)
 
+
 st01.txt:
-  Phantom01:
-    value: [120, 10, 1]
-    line: 0
-  GirlC01:
-    value: [150, 30, 4] # 1000 Life
-    line: 0
-  GirlD01:
-    value: [180, 30, 5] # 2000 Life, singular
-    line: 0
-  GirlC02:
-    value: [300, 30, 4] # 2000 Life, group of 3
-    line: 0
-  GirlB01:
-    value: [120, 10, 1] # 300 Life
-    line: 0
-  GirlD02:
-    value: [300, 30, 4] # 2400 Life, group of 3, 2 seconds to kill
-    line: 0
+  Phantom01:  [120, 10, 1]
+  GirlC01: [150, 30, 4] # 1000 Life
+  GirlD01: [180, 30, 5] # 2000 Life, singular
+  GirlC02: [300, 30, 4] # 2000 Life, group of 3
+  GirlB01: [120, 10, 1] # 300 Life
+  GirlD02: [300, 30, 4] # 2400 Life, group of 3, 2 seconds to kill
 st02.txt:
-  GirlC01:
-    value: [180, 22, 1] # 2000 Life
-    line: 0
-  GirlD01:
-    value: [200, 22, 7] # 3000 Life, then 4000 Life
-    line: 0
-  GirlC02:
-    value: [160, 20, 1] # 2000 Life, pair
-    line: 0
-  GirlD02:
-    value: [180, 20, 4] # 9000 Life (!!!!), 1x.  Then later as 2200+1800+1800 triplet.
-    line: 0
+  GirlC01: [180, 22, 1] # 2000 Life
+  GirlD01: [200, 22, 7] # 3000 Life, then 4000 Life
+  GirlC02: [160, 20, 1] # 2000 Life, pair
+  GirlD02: [180, 20, 4] # 9000 Life (!!!!), 1x.  Then later as 2200+1800+1800 triplet.
 st03.txt:
-  GirlA01:
-    value: [60, 8, 1] # 200 Life
-    line: 0
-  Phantom01:
-    value: [60, 8, 1] # 120 Life, MANY MANY
-    line: 0
-  GirlC01:
-    value: [230, 25, 1] # 2800x5, 2000x2  (twice)
-    line: 0
-  GirlD02:
-    value: [240, 25, 1] # 3000
-    line: 0
+  GirlA01: [60, 8, 1] # 200 Life
+  Phantom01: [60, 8, 1] # 120 Life, MANY MANY
+  GirlC01: [230, 25, 1] # 2800x5, 2000x2  (twice)
+  GirlD02: [240, 25, 1] # 3000
 st04.txt:
-  GirlD01:
-    value: [150, 20, 1]
-    line: 0
-  GirlC01:
-    value: [150, 20, 1] # 2000 Life
-    line: 0
+  GirlD01: [150, 20, 1]
+  GirlC01: [150, 20, 1] # 2000 Life
 st05.txt:
-  GirlD01:
-    value: [250, 15, 1] # 3400 Life, 1x, appears later at 1700x2
-    line: 0
-  GirlC01:
-    value: [180, 13, 1] # 2500 Life, 6x
-    line: 0
-  GirlC02:
-    value: [180, 13, 1] # 2500 Life, 6x
-    line: 0
+  GirlD01: [250, 15, 1] # 3400 Life, 1x, appears later at 1700x2
+  GirlC01: [180, 13, 1] # 2500 Life, 6x
+  GirlC02: [180, 13, 1] # 2500 Life, 6x
 st06.txt:
-  Phantom01:
-    value: [60, 6, 1] # 100 Life, MANY MANY MANY
-    line: 0
-  Phantom02:
-    value: [60, 6, 1] # 100 Life, MANY MANY MANY
-    line: 0
+  ECir00:
+    value: [60, 10, 1]
+    after: "flagClear(15);"
+  ECir01:
+    value: [60, 10, 1]
+    after: "flagClear(15);"
+  ECir02:
+    value: [60, 10, 1]
+    after: "flagClear(15);"
+  Phantom01: [60, 6, 1] # 100 Life, MANY MANY MANY
+  Phantom02: [60, 6, 1] # 100 Life, MANY MANY MANY
 st07.txt:
-  GirlD01:
-    value: [150, 30, 1]
-    line: 0
-  GirlC01:
-    value: [150, 30, 1]
-    line: 0
+  GirlD01: [150, 30, 1]
+  GirlC01: [150, 30, 1]

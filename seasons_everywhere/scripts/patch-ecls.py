@@ -31,6 +31,8 @@ def main():
     with open(args.enemy_drops) as f:
         enemy_drop_configs = yaml.load(f)
 
+    preprocess_drops_config(enemy_drop_configs)
+
     insert_anim(files, 4, 'seasons.anm')
     insert_ecli(files, 'seasons.ecl')
     insert_include(files, 'seasons.tecl')
@@ -116,6 +118,17 @@ def insert_season_damage_ops(files):
                 lines.insert(i, '    defaultSeasonDamage();')
         files[id] = joinlines(lines)
 
+def preprocess_drops_config(drops_config):
+    for stage_config in drops_config.values():
+        for key in stage_config:
+            if isinstance(stage_config[key], list):
+                stage_config[key] = {
+                    'value': stage_config[key],
+                    'after': '{',  # cause line to be inserted at beginning of function
+                }
+            if not isinstance(stage_config[key], dict):
+                die(f'in drop config: expected sequence or mapping, got {repr(stage_config[key])}')
+
 def insert_enemy_season_drops(files, drops_config):
     """ Insert seasonDamage calls for every boss and midboss. """
 
@@ -129,13 +142,14 @@ def insert_enemy_season_drops(files, drops_config):
                 if func in enemies_todo:
                     config = enemies_todo.pop(func)
                     time, item_max, item_min = config['value']
-                    line_number = int(config['line'])
+                    search_pattern = config['after']
 
-                    # let index 0 refer to the line after the opening brace
-                    assert lines[1] == '{'
-                    line_number += 2
-
-                    lines.insert(line_number, f'    dropSeason({time}, {item_max}, {item_min});')
+                    for i in range(len(lines)):
+                        if lines[i].strip() == search_pattern:
+                            lines.insert(i + 1, f'    dropSeason({time}, {item_max}, {item_min});')
+                            break
+                    else:
+                        die(f'{txt_filename(id)}: in function {func}: line not found: {repr(search_pattern)}')
 
             if enemies_todo:
                 func = next(iter(enemies_todo))
@@ -248,7 +262,7 @@ def format_funcs(funcs):
 #=============================
 
 def die(*args):
-    print(*args, flie=sys.stderr)
+    print(*args, file=sys.stderr)
     sys.exit(1)
 
 if __name__ == '__main__':
