@@ -341,8 +341,10 @@ void SeasonInputEnemy() {
     flagSet(32); // intangible
 
     // (in case e.g. the player did a release at the end of a stage and the release
-    //  enemy was instakilled before it could reset this)
+    //  enemy was instakilled before it could reset these)
     SetActiveReleaseState(0);
+    playerAllowBomb(true);
+    playerSetDamageMult(1f);
 
     int oldInput = $INPUT;
     int tokenSetting = CurrentTokenSetting();
@@ -513,15 +515,16 @@ void SeasonReleaseEnemy() {
         return;
     }
 
+    // Set persistent variables.
     SetActiveReleaseState(level);
+    playerAllowBomb(false);
+    if (season == WINTER) {
+        playerSetDamageMult(1.5f);
+    }
 
     int seasonIframes = SeasonIframes(season);
     if (IFRAMES < seasonIframes) {
         playerSetIframes(seasonIframes);
-    }
-
-    if (season == WINTER) {
-        playerSetDamageMult(1.5f);
     }
 
     SeasonReleaseSound();
@@ -658,9 +661,12 @@ CASE_1:
     //
     // I'm not actually sure if this should be wait(45) or wait(46) for
     // best accuracy, but who cares about 1 frame.
+    //
+    // But first, fix persistent variables. (in case a stage clear deletes us
+    // before this happens, the InputEnemy will fix these in the next stage)
     SetActiveReleaseState(RELEASE_IN_COOLDOWN);
+    playerAllowBomb(true);
     playerSetDamageMult(1f);
-    playerSetSpeedMult(1f);
     flagSet(32); // intangible
     wait(45);
 
