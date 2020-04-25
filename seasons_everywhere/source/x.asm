@@ -36,6 +36,7 @@
 %define TIMER_DECREMENT        0x40dbe0
 %define GEN_ITEMS_FROM_CANCEL  0x419c30
 %define CANCEL_RADIUS_AS_BOMB  0x419df0
+%define DO_HYPER_CANCEL        0x40f6d0
 
 %define IAT_MessageBoxA  0x49a214
 
@@ -61,6 +62,7 @@
 %define ITEM_MANAGER_PTR  0x4b76b8
 %define SAFE_RNG          0x4b7668
 %define ET_OBJECT_PTR     0x4b768c
+%define TOKEN_MANAGER_PTR 0x4b7684
 
 %define en_final_pos          0x44
 %define en_var_i3             0x298
@@ -987,6 +989,7 @@ et_ex_calltable:
     dd ecl_spec_0 ; FIXUP
     dd ecl_spec_1 ; FIXUP
     dd ecl_spec_2 ; FIXUP
+    dd ecl_spec_3 ; FIXUP
 
 ; void __thiscall Enemy::ImplSpecialEclIns(EclRawInstructionHeader*)
 impl_et_ex_neg:
@@ -1003,7 +1006,7 @@ impl_et_ex_neg:
     ; The instruction is an EtEx instruction whose first arg is NEG.
     ; Second arg is an opcode for us:
     mov    eax, [edi+eclins_args+0x4] ; opcode
-    cmp    eax, 0x2 ; max opcode
+    cmp    eax, 0x3 ; max opcode
     ja     .error
 
     ; Calltable
@@ -1065,6 +1068,13 @@ ecl_spec_2:
     call   check_for_eclplus  ; FIXUP
     ret    4
 
+; void __thiscall Enemy::Spec3(RawInstructionHeader*)
+ecl_spec_3:
+    mov    ecx, [TOKEN_MANAGER_PTR]
+    mov    eax, DO_HYPER_CANCEL
+    push   0
+    call   eax
+    ret    4
 
 codecave_et_ex:
     cmp    ecx, -999999

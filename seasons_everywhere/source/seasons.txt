@@ -69,6 +69,16 @@ void SetDebuggerGlobal(int value) { $GI7 = value; return; }
 
 //=========================================
 
+// FIXME refactor these into their own file or something
+
+// spec3  (hyper cancel)
+inline void seasonsPatchHyperCancel() {
+    etEx(NEG, 3, NEG, NEG, NEG, NEGF, NEGF);
+}
+
+//=========================================
+
+// Used by Keiki's spells to determine if they should make e.g. point fish.
 int ShouldUseAltSpellTokens() {
     return CurrentTokenSetting() != TOKEN_SETTING_ALL;
 }
@@ -356,13 +366,19 @@ void SeasonInputEnemy() {
             playerSetHyperTimer(0);
         }
 
-        int doRelease = (risingEdge & KEY_THREE);
-        doRelease = doRelease && SeasonLevel(CurrentSeasonPower()) > 0;
-        doRelease = doRelease && !DIALOG;
-        doRelease = doRelease && !ActiveReleaseState();
-        doRelease = doRelease && (PLSTATE == PL_NORMAL);
-        doRelease = doRelease && !BOMBING;
-        if (doRelease) {
+        int usedCKey = (risingEdge & KEY_THREE);
+        usedCKey = usedCKey && !DIALOG;
+        usedCKey = usedCKey && (PLSTATE == PL_NORMAL);
+
+        int canRelease = SeasonLevel(CurrentSeasonPower()) > 0;
+        canRelease = canRelease && !ActiveReleaseState();
+        canRelease = canRelease && !BOMBING;
+
+        if (usedCKey && HYPERTIMER) {
+            // cancel the hyper instead, because that's obviously what the player wanted to happen
+            seasonsPatchHyperCancel();
+
+        } else if (usedCKey && canRelease) {
             // create a release at the current season level
             enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
 
@@ -530,7 +546,7 @@ void SeasonReleaseEnemy() {
 
     SeasonReleaseSound();
 
-    anmSelect(SEASON_ANM_INDEX); // seasons.anm
+    anmSelect(SEASON_ANM_INDEX);
     anmSetSprite(0, 2*season + 0);
     anmSetSprite(1, 2*season + 1);
 

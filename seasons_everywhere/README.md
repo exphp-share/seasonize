@@ -21,7 +21,7 @@ A menu is presented at game start.  Act fast!!  Press the shot and bomb buttons 
 * **Beast tokens are suppressed (others remain):** You can still get extra lives from life tokens. However, there are significantly fewer "filler" tokens to help you reach 5 tokens, so be careful!
 * **TH16 scoring strats:** Without hypers, how shall we get PIV?  Fear not; enabling this mode will cause releases to generate PIV items, just like in TH16!
 
-To enable Beast Tokens and hypers, press Bomb on the
+To enable Beast Tokens and hypers, press Bomb on the season menu.
 
 ## How?
 

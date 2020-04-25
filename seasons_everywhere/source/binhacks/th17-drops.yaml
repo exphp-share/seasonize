@@ -210,7 +210,7 @@ codecaves:
     # The instruction is an EtEx instruction whose first arg is NEG.
     # Second arg is an opcode for us:
     - "8B4714            " # mov    eax, [edi+eclins_args+0x4] ; opcode
-    - "83F802            " # cmp    eax, 0x2 ; max opcode
+    - "83F803            " # cmp    eax, 0x3 ; max opcode
     - "7715              " # ja     .error
 
     # Calltable
@@ -232,6 +232,7 @@ codecaves:
     - "<codecave:ExpHP.seasons-everywhere.ecl-spec-0>"  # dd ecl_spec_0
     - "<codecave:ExpHP.seasons-everywhere.ecl-spec-1>"  # dd ecl_spec_1
     - "<codecave:ExpHP.seasons-everywhere.ecl-spec-2>"  # dd ecl_spec_2
+    - "<codecave:ExpHP.seasons-everywhere.ecl-spec-3>"  # dd ecl_spec_3
 
   # void __thiscall Enemy::Spec0(RawInstructionHeader*)
   ExpHP.seasons-everywhere.ecl-spec-0:
@@ -275,6 +276,14 @@ codecaves:
   # void __thiscall Enemy::Spec2(RawInstructionHeader*)
   ExpHP.seasons-everywhere.ecl-spec-2:
     - "E8 [codecave:ExpHP.seasons-everywhere.check-for-ecl-plus]" # call
+    - "C20400            " # ret    4
+
+  # void __thiscall Enemy::Spec3(RawInstructionHeader*)
+  ExpHP.seasons-everywhere.ecl-spec-3:
+    - "8B0D84764B00      " # mov    ecx, [TOKEN_MANAGER_PTR]
+    - "B8D0F64000        " # mov    eax, DO_HYPER_CANCEL
+    - "6A00              " # push   0
+    - "FFD0              " # call   eax
     - "C20400            " # ret    4
 
   # void __thiscall Enemy::SpawnItemsFromDamage())
