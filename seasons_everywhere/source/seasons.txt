@@ -68,6 +68,12 @@ int DebuggerGlobal() { return $GI7; }
 void SetDebuggerGlobal(int value) { $GI7 = value; return; }
 
 //=========================================
+
+int ShouldUseAltSpellTokens() {
+    return CurrentTokenSetting() != TOKEN_SETTING_ALL;
+}
+
+//=========================================
 // Global constants
 
 // DPS in TH17 is about 1.4 times DPS in TH16.
@@ -105,7 +111,7 @@ void SeasonMenuEnemy() {
     playerAllowBomb(false);
 
     SetCurrentSeason(SPRING);
-    SetCurrentTokenSetting(TOKEN_SETTING_ALL);
+    SetCurrentTokenSetting(TOKEN_SETTING_SIMPLE);
     SetCurrentSeasonPower(0);
     SetActiveReleaseState(0);
     if (SPELL_ID >= 0) {
@@ -144,6 +150,13 @@ void SeasonMenuEnemy() {
             playSound(10); // menu bwap
             season += 1;
             season %= NUM_SEASONS;
+            SetCurrentSeason(season);
+        }
+
+        if (risingEdge & KEY_SKIP) {
+            playSound(10); // menu bwap
+            season -= 1;
+            season = (season + NUM_SEASONS) % NUM_SEASONS;
             SetCurrentSeason(season);
         }
 

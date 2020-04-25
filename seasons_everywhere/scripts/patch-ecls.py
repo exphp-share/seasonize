@@ -40,7 +40,7 @@ def main():
     insert_season_damage_ops(files)
     insert_boss_season_drops(files)
     insert_enemy_season_drops(files, enemy_drop_configs)
-
+    insert_alt_spell_tokens(files)
 
     for id in FILE_IDS:
         with open(os.path.join(args.output, txt_filename(id)), 'wb') as f:
@@ -225,6 +225,41 @@ def insert_init_season_calls(files):
     for stage in STAGES:
         id = (stage, '')
         transform_file(files, id)
+
+def insert_alt_spell_tokens(files):
+    DROP_POWER = """
+    dropMain(21);
+    unknown562();
+"""[1:]
+    DROP_POINT = """
+    dropMain(22);
+    unknown562();
+"""[1:]
+
+    id = (6, 'bs')
+    func_drops = {
+        'BossCard6_beast': f"{DROP_POINT}{DROP_POWER}",
+        'BossCard7_beast': f"{DROP_POINT}{DROP_POINT}",
+    }
+    funcs = parse_funcs(files[id])
+    for func, lines in funcs:
+        if func in func_drops:
+            drops = func_drops.pop(func)
+            assert lines[1] == "{"
+            lines[2:2] = f"""
+    unless (ShouldUseAltSpellTokens()) goto {func}_standard @ 0;
+    if ($SPELL_ID >= 0) goto {func}_none @ 0;
+    movePos(%BOSS_X, %BOSS_Y);
+{drops}
+{func}_none:
+    delete();
+{func}_standard:
+""".splitlines()
+
+    if func_drops:
+        die(f'{txt_filename(id)}: func {next(iter(func_drops))} not found')
+
+    files[id] = format_funcs(funcs)
 
 
 #=============================

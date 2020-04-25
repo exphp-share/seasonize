@@ -15,11 +15,13 @@ A menu is presented at game start.  Act fast!!  Press the shot and bomb buttons 
 
 ## No Beast/No Hyper mode
 
-**This is the recommended way to play.**  To activate this mode, press the Bomb key once on the season menu.  This mode adjusts the balance of the game to account for having season releases:
+**This is the default setting and recommended way to play.**  This mode adjusts the balance of the game to account for having season releases:
 
-* **Hypers end immediately:** Hypers end immediately so that they cannot be used defensively.
+* **Hypers end immediately:** Season releases are such a massive defensive tool that you should not need hyper breaks to survive.
 * **Beast tokens are suppressed (others remain):** You can still get extra lives from life tokens. However, there are significantly fewer "filler" tokens to help you reach 5 tokens, so be careful!
 * **TH16 scoring strats:** Without hypers, how shall we get PIV?  Fear not; enabling this mode will cause releases to generate PIV items, just like in TH16!
+
+To enable Beast Tokens and hypers, press Bomb on the
 
 ## How?
 

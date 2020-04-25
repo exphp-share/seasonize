@@ -1,6 +1,7 @@
 #include "ECLinclude/ECLplus.tecl"
 #include "game-constants.tecl"
 
+int ShouldUseAltSpellTokens();
 
 //========================================
 // TH16 special instructions, implemented by binhacking etEx
