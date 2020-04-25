@@ -361,6 +361,7 @@ void SeasonInputEnemy() {
         doRelease = doRelease && !DIALOG;
         doRelease = doRelease && !ActiveReleaseState();
         doRelease = doRelease && (PLSTATE == PL_NORMAL);
+        doRelease = doRelease && !BOMBING;
         if (doRelease) {
             // create a release at the current season level
             enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
