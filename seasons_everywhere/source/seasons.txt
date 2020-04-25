@@ -15,13 +15,10 @@ int BitNot(int x) {
     return 0xFFFFFFFF - x;
 }
 
-// TODO: Make beast item inventory disappear if disabled
 // TODO: Show "NB" near beast items if No Hyper
 // TODO: Fix season level being above character dialogue sprites for some reason
 // TODO: Put season gauge below beast items due to their annoying flames
 // TODO: Fix season gauge starting out transparent
-// TODO: Make 'C' cancel hypers because lul
-// TODO: No bombs during release
 
 // TODO: PLAY THE DAMN GAME :D :D :D :D
 
