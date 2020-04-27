@@ -20,6 +20,8 @@ int BitNot(int x) {
 // TODO: Put season gauge below beast items due to their annoying flames
 // TODO: Fix season gauge starting out transparent
 
+// TODO: Rename "Standard" mode
+
 // TODO: PLAY THE DAMN GAME :D :D :D :D
 
 // TODO: (after dust settles) change demos
@@ -371,7 +373,7 @@ void SeasonInputEnemy() {
         canRelease = canRelease && !ActiveReleaseState();
         canRelease = canRelease && !BOMBING;
 
-        if (usedCKey && HYPERTIMER) {
+        if (usedCKey && HYPERTIMER > 0) { // Note: HYPERTIMER can be negative...
             // cancel the hyper instead, because that's obviously what the player wanted to happen
             seasonsPatchHyperCancel();
 
