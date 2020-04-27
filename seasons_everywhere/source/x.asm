@@ -1182,7 +1182,7 @@ release_cancel_mode_impl:
     prologue_sd
     mov     esi, [ebp+0x8]
 
-    ; Cancels from releases always produce a season item
+    ; Cancels from releases produce a season item and a PIV item.
     push    esi
     call    spawn_season_item_from_cancel ; FIXUP
 
@@ -1192,7 +1192,7 @@ release_cancel_mode_impl:
     cmp     eax, 1
     jne     .nopiv
 
-    call    get_active_release_level ; FIXUP
+    call    get_release_piv_enabled ; FIXUP
     test    eax, eax
     jle     .nopiv    ; only continue if positive
 
@@ -1204,6 +1204,10 @@ release_cancel_mode_impl:
 .nopiv:
     epilogue_sd
     ret     0x4
+
+get_release_piv_enabled:
+    mov     eax, 0x1
+    ret
 
 ; void __stdcall DoBombCancelMode(Float3* pos);
 bomb_cancel_mode_impl:

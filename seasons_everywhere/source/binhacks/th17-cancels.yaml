@@ -207,7 +207,7 @@ codecaves:
 
     # In the No Hyper setting, they additionally produce a PIV item
     # that scales with season level, like they do in TH16.
-    - "E8 [codecave:ExpHP.seasons-everywhere.get-token-setting]" # call
+    - "E8 [codecave:ExpHP.seasons-everywhere.get-release-piv-enabled]" # call
     - "83F801            " # cmp     eax, 1
     - "7513              " # jne     .nopiv
 

@@ -190,6 +190,12 @@ codecaves:
     - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
     - "C3                    " # ret
 
+  # 1 if PIV items on release bullet cancels are enabled.
+  ExpHP.seasons-everywhere.get-release-piv-enabled:
+    # Currently, they always are.
+    - "B8 01000000       " # mov     eax, 0x1
+    - "C3                " # ret
+
   # 0 on failure
   # int __stdcall CheckForEclPlus();
   ExpHP.seasons-everywhere.check-for-ecl-plus:
