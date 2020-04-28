@@ -1,3 +1,5 @@
+// vi: set ft=c :
+
 #include "ECLinclude/ECLplus.tecl"
 #include "game-constants.tecl"
 

@@ -1,3 +1,5 @@
+// vi: set ft=c :
+
 entry entry0 {
     version: 8,
     name: "source/img/face/dummy.png",
@@ -374,7 +376,7 @@ script gauge_season_icon {
     ins_313(2);
     pos(-376.0f, 888.0f, 0.0f);
     alpha(0);
-//+20: // 20
++20: // 20
     alphaTime(20, 0, 255);
     stop();
 
@@ -387,9 +389,16 @@ script gauge_season_icon {
     case(8); case(9); case(10); case(11); case(12); case(13);
     alphaTime(30, 0, 255);
     stop();
-    case(7);
-    alphaTime(10, 0, 64);
-    stop();
+
+    // I don't know why this is here in the original. (note: it's case(3) there).
+    // I don't know if it even gets called (but the icon stays full opacity when
+    // you fall back to level 0 so I suspect it does not).
+    // It is easier to simply not have it.
+    //
+    // case(7);
+    // alphaTime(10, 0, 64);
+    // stop();
+
     case(4);
     alphaTime(5, 0, 255);
     ins_7();
