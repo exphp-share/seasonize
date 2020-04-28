@@ -40,15 +40,18 @@ def main():
     insert_season_damage_ops(files)
     insert_boss_season_drops(files)
     insert_enemy_season_drops(files, enemy_drop_configs)
-    insert_alt_spell_tokens(files)
+    insert_keiki_alt_spell_tokens(files)
+    insert_saki_alt_spell_tokens(files)
 
     for id in FILE_IDS:
         with open(os.path.join(args.output, txt_filename(id)), 'wb') as f:
             f.write(files[id].encode('shift-jis'))
 
+
 def txt_filename(id):
     n, suffix = id
     return f'st0{n}{suffix}.txt'
+
 
 def joinlines(lines):
     """ No, it's not ``'\\n'.join(...)``, that would be missing a trailing newline. """
@@ -61,11 +64,13 @@ def append_to_file_list(line, new_file):
     assert line.endswith('}')
     return f'{line[:-1]} "{new_file}"; }}'
 
+
 def insert_include(files, filename):
     """ Add an ``#include`` to every file """
 
     for id in files:
         files[id] = f'#include "{filename}"\n\n' + files[id]
+
 
 def insert_ecli(files, ecl_filename):
     """ Add an ecl file to each stage ecli list. """
@@ -82,6 +87,7 @@ def insert_ecli(files, ecl_filename):
             die(f'{txt_filename(id)}: ecli line not found')
 
         files[id] = joinlines(lines)
+
 
 def insert_anim(files, anim_index, anim_filename):
     """ Add the given anm file at the given anim file ID (indexed from 1)
@@ -108,6 +114,7 @@ def insert_anim(files, anim_index, anim_filename):
 
         files[id] = joinlines(lines)
 
+
 def insert_season_damage_ops(files):
     """ Insert seasonDamage calls for every boss and midboss. """
 
@@ -117,6 +124,7 @@ def insert_season_damage_ops(files):
             if lines[i].strip().startswith('setBoss('):
                 lines.insert(i, '    defaultSeasonDamage();')
         files[id] = joinlines(lines)
+
 
 def preprocess_drops_config(drops_config):
     for stage_config in drops_config.values():
@@ -128,6 +136,7 @@ def preprocess_drops_config(drops_config):
                 }
             if not isinstance(stage_config[key], dict):
                 die(f'in drop config: expected sequence or mapping, got {repr(stage_config[key])}')
+
 
 def insert_enemy_season_drops(files, drops_config):
     """ Insert seasonDamage calls for every boss and midboss. """
@@ -156,6 +165,7 @@ def insert_enemy_season_drops(files, drops_config):
                 die(f'{txt_filename(id)}: No function found named {func}')
 
             files[id] = format_funcs(funcs)
+
 
 def insert_boss_season_drops(files):
     """ Insert dropSeason calls for every boss nonspell and spell. """
@@ -203,6 +213,7 @@ def insert_boss_season_drops(files):
         die('bad stage 5/6 spell count: expected 11, found {}'.format(s56_spells_found))
     return joinlines(lines)
 
+
 def insert_init_season_calls(files):
     """ Add InitSeason calls to every stage. """
 
@@ -226,7 +237,14 @@ def insert_init_season_calls(files):
         id = (stage, '')
         transform_file(files, id)
 
-def insert_alt_spell_tokens(files):
+
+def insert_keiki_alt_spell_tokens(files):
+    """
+    In No Beast/No Hyper mode, Make Keiki drop 4 non-beast tokens during the parts
+    where infinite beasts normally spawn.  This guarantees the player has a chance
+    to utilize any spirits collected before then.
+    """
+
     DROP_POWER = """
     dropMain(21);
     unknown562();
@@ -262,6 +280,32 @@ def insert_alt_spell_tokens(files):
     files[id] = format_funcs(funcs)
 
 
+def insert_saki_alt_spell_tokens(files):
+    """
+    Make Saki drop one additional point item in No Beast/No Hyper mode,
+    so that the total number of spirits is divisible by 5.
+    """
+    id = (7, 'bs')
+    funcs_to_modify = { 'Boss10' } # { 'Boss8', Boss9', 'Boss10' }
+
+    funcs = parse_funcs(files[id])
+    for func, lines in funcs:
+        if func in funcs_to_modify:
+            funcs_to_modify.remove(func)
+
+            for i, line in enumerate(lines):
+                if 'BossItem(33,' in line:
+                    break
+            else:
+                die(f'{txt_filename(id)}: func {func}: appropriate BossItem line not found')
+            lines[i] = lines[i].replace('(33,', '(33*(1-alt) + 22*alt,') # 33 = random beast, 22 = point item
+            lines.insert(i, '    int alt = ShouldUseAltSpellTokens();')
+
+    if funcs_to_modify:
+        die(f'{txt_filename(id)}: func {next(iter(funcs_to_modify))} not found')
+
+    files[id] = format_funcs(funcs)
+
 #=============================
 
 def parse_funcs(text):
@@ -286,6 +330,7 @@ def parse_funcs(text):
 
     return output
 
+
 def format_funcs(funcs):
     """ Inverse of ```parse_funcs```. """
     def inner():
@@ -293,12 +338,12 @@ def format_funcs(funcs):
             yield from lines
     return joinlines(inner())
 
-
 #=============================
 
 def die(*args):
     print(*args, file=sys.stderr)
     sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

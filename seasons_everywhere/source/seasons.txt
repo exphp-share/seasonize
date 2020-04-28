@@ -82,7 +82,7 @@ inline void seasonsPatchHyperCancel() {
 
 //=========================================
 
-// Used by Keiki's spells to determine if they should make e.g. point fish.
+// Used by Keiki and Saki to determine if they should make e.g. point fish.
 int ShouldUseAltSpellTokens() {
     return CurrentTokenSetting() != TOKEN_SETTING_ALL;
 }
