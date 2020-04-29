@@ -23,10 +23,10 @@ binhacks:
   Season items on graze:
     addr: "0x0044a0dc"
     expected: "5f // 5e // 8be5 // 5d"
-    code: "E9 [codecave:ExpHP.seasons-everywhere.item-on-graze]"
+    code: "E9 [codecave:ExpHP.seasonize.item-on-graze]"
 
 codecaves:
-  ExpHP.seasons-everywhere.item-on-graze:
+  ExpHP.seasonize.item-on-graze:
     - "8B15 D0774B00               " # mov edx, [0x4b77d0]  ; PLAYER
     - "8D92 10060000               " # lea edx, [edx+0x610] ; player pos
     - "8B7B 08                     " # mov edi, [ebx+0x8] ; bullet pos
@@ -65,7 +65,7 @@ codecaves:
     - "C3                          " # ret
 
   # Wrapper around ECLPlus' IntVarSwitch that preserves the volatile ecx, edx, and xmm registers.
-  ExpHP.seasons-everywhere.eclplus-int-switch:
+  ExpHP.seasonize.eclplus-int-switch:
     # Prologue that saves volatile registers
     - "55                    " # push   ebp
     - "89 E5                 " # mov    ebp,esp
@@ -108,7 +108,7 @@ codecaves:
   # Utils
 
   # void* __stdcall Calloc(size)
-  ExpHP.seasons-everywhere.calloc:
+  ExpHP.seasonize.calloc:
     - "55                " # push   ebp
     - "89E5              " # mov    ebp, esp
     - "57                " # push   edi
@@ -141,7 +141,7 @@ codecaves:
   # but it only has the precision of a float.
   #
   # long double __thiscall Rng::randf_minus_pi_to_pi()
-  ExpHP.seasons-everywhere.randf-minus-pi-to-pi:
+  ExpHP.seasonize.randf-minus-pi-to-pi:
     - "55                " # push     ebp
     - "89E5              " # mov      ebp, esp
     - "51                " # push     ecx

@@ -90,7 +90,7 @@ binhacks:
     addr: "0x41484a"
     expected: "68 50144a00"
     codecave:
-      - "B8 <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov eax, GLOBALS
+      - "B8 <codecave:ExpHP.seasonize.global-var-store>" # mov eax, GLOBALS
       - "C7401000000000    " # mov    dword [eax+g_bomb_cancel_count], 0x0
 
       # original code
@@ -121,12 +121,12 @@ binhacks:
 
       # .mode_4:  ; Mode 4:  Canceled by release
       - "56                " # push    esi
-      - "E8 [codecave:ExpHP.seasons-everywhere.impl-release-cancel-mode]" # call
+      - "E8 [codecave:ExpHP.seasonize.impl-release-cancel-mode]" # call
       - "EB06              " # jmp     .mode_0
 
       # .mode_5:  ; Mode 5:  Canceled by bomb
       - "56                " # push    esi
-      - "E8 [codecave:ExpHP.seasons-everywhere.impl-bomb-cancel-mode]" # call
+      - "E8 [codecave:ExpHP.seasonize.impl-bomb-cancel-mode]" # call
 
       # .mode_0:
       # abs_jmp_hack 0x419ce5
@@ -175,9 +175,9 @@ binhacks:
 
 codecaves:
   # void __stdcall DoBombCancelMode(Float3* pos);
-  ExpHP.seasons-everywhere.impl-bomb-cancel-mode:
+  ExpHP.seasonize.impl-bomb-cancel-mode:
     - "55 89E5 56 57     " # prologue w/ esi edi
-    - "BE <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov esi, GLOBALS
+    - "BE <codecave:ExpHP.seasonize.global-var-store>" # mov esi, GLOBALS
 
     # Bombs only generate season items for one in every 3 bullets canceled.
     # (beginning with the first bullet)
@@ -189,7 +189,7 @@ codecaves:
     - "7508              " # jne     .noitem
 
     - "FF7508            " # push    dword [ebp+0x8]
-    - "E8 [codecave:ExpHP.seasons-everywhere.spawn-season-from-cancel]" # call
+    - "E8 [codecave:ExpHP.seasonize.spawn-season-from-cancel]" # call
 
     # .noitem:
     - "FF4610            " # inc     dword [esi+g_bomb_cancel_count]
@@ -197,28 +197,28 @@ codecaves:
     - "C20400            " # ret     0x4
 
   # void __stdcall DoReleaseCancelMode(Float3* pos);
-  ExpHP.seasons-everywhere.impl-release-cancel-mode:
+  ExpHP.seasonize.impl-release-cancel-mode:
     - "55 89E5 56 57     " # prologue w/ esi edi
     - "8B7508            " # mov     esi, [ebp+0x8]  ; pos
 
     # Cancels from releases always produce a season item
     - "56                " # push    esi
-    - "E8 [codecave:ExpHP.seasons-everywhere.spawn-season-from-cancel]" # call
+    - "E8 [codecave:ExpHP.seasonize.spawn-season-from-cancel]" # call
 
     # In the No Hyper setting, they additionally produce a PIV item
     # that scales with season level, like they do in TH16.
-    - "E8 [codecave:ExpHP.seasons-everywhere.get-release-piv-enabled]" # call
+    - "E8 [codecave:ExpHP.seasonize.get-release-piv-enabled]" # call
     - "83F801            " # cmp     eax, 1
     - "7513              " # jne     .nopiv
 
-    - "E8 [codecave:ExpHP.seasons-everywhere.get-active-release-level]" # call
+    - "E8 [codecave:ExpHP.seasonize.get-active-release-level]" # call
     - "85C0              " # test    eax, eax
     - "7E0A              " # jle     .nopiv    ; only continue if positive
 
     - "83C008            " # add     eax, 0x8  ; level 1 makes item type 9, 2 makes 0xa, etc.
     - "56                " # push    esi
     - "50                " # push    eax
-    - "E8 [codecave:ExpHP.seasons-everywhere.spawn-item-like-cancel-piv]" # call
+    - "E8 [codecave:ExpHP.seasonize.spawn-item-like-cancel-piv]" # call
 
     # .nopiv:
     - "5F 5E 89EC 5D     " # epilogue w/ esi edi
@@ -228,11 +228,11 @@ codecaves:
   #
   # To be used for spawning season items from cancels.  These behave very
   # similarly to PIV items.
-  ExpHP.seasons-everywhere.spawn-season-from-cancel:
+  ExpHP.seasonize.spawn-season-from-cancel:
     - "55 89E5 56 57     " # prologue w/ esi edi
     - "FF7508            " # push    dword [ebp+0x8]
     - "6A30              " # push    0x30
-    - "E8 [codecave:ExpHP.seasons-everywhere.spawn-item-like-cancel-piv]" # call
+    - "E8 [codecave:ExpHP.seasonize.spawn-item-like-cancel-piv]" # call
 
     - "85C0              " # test    eax, eax  ; we'll get null pointer if we hit PIV item limit
     - "740A              " # jz      .end
@@ -253,7 +253,7 @@ codecaves:
   #
   # Spawns an item with a randomized upwards angle and velocity suitable for a PIV item.
   # (it doesn't HAVE to be a PIV item, though; season items from cancels also use this)
-  ExpHP.seasons-everywhere.spawn-item-like-cancel-piv:
+  ExpHP.seasonize.spawn-item-like-cancel-piv:
     - "55 89E5 56 57     " # prologue w/ esi edi
     - "8B7D08            " # mov     edi, [ebp+0x8]  ; item type
     - "8B750C            " # mov     esi, [ebp+0xc]  ; pos

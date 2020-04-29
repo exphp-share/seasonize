@@ -6,7 +6,7 @@ binhacks:
     expected: "837b1028 // 7c0c"
     codecave:
       # at this point, [ebp + c] holds the item type - 15
-      - "E8 [codecave:ExpHP.seasons-everywhere.get-token-setting]" # call
+      - "E8 [codecave:ExpHP.seasonize.get-token-setting]" # call
       - "83F800            " # cmp    eax, 0    ; all tokens
       - "741A              " # je     .originalcode
       - "83F801            " # cmp    eax, 1    ; no beast

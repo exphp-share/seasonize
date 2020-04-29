@@ -3,3 +3,4 @@ source
 game-files
 *.md
 *.pdn
+Makefile

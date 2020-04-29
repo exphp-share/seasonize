@@ -13,7 +13,7 @@ binhacks:
 
       # at this point, eax holds enemy id
       - "50                " # push eax
-      - "E8 [codecave:ExpHP.seasons-everywhere.new-enemy-ex]" # call
+      - "E8 [codecave:ExpHP.seasonize.new-enemy-ex]" # call
 
       - "5A                " # pop    edx
       - "59                " # pop    ecx
@@ -34,7 +34,7 @@ binhacks:
       - "52                " # push   edx
 
       - "FFB660570000      " # push   dword [esi+efull_id]
-      - "E8 [codecave:ExpHP.seasons-everywhere.free-enemy-ex-by-id]" # call
+      - "E8 [codecave:ExpHP.seasonize.free-enemy-ex-by-id]" # call
 
       - "5A                " # pop    edx
       - "59                " # pop    ecx
@@ -51,7 +51,7 @@ codecaves:
 
   #==============================================
   # Global variables
-  ExpHP.seasons-everywhere.global-var-store:
+  ExpHP.seasonize.global-var-store:
     - "00000000" # offset 0x0000:  ZunList enemy_ex_head;
     - "00000000"
     - "00000000"
@@ -73,19 +73,19 @@ codecaves:
   # }
 
   # EnemyEx* __stdcall NewEnemyEx(id)
-  ExpHP.seasons-everywhere.new-enemy-ex:
+  ExpHP.seasonize.new-enemy-ex:
     - "55 89E5 56 57     " # prologue w/ esi edi
 
     - "6A3C              " # push   EnemyEx_size
-    - "E8 [codecave:ExpHP.seasons-everywhere.calloc]" # call
+    - "E8 [codecave:ExpHP.seasonize.calloc]" # call
     - "89C7              " # mov    edi, eax
 
-    - "BE <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov esi, GLOBALS
+    - "BE <codecave:ExpHP.seasonize.global-var-store>" # mov esi, GLOBALS
 
     - "8D0E              " # lea    ecx, [esi+g_enemy_ex_head]
     - "51                " # push   ecx
     - "89F9              " # mov    ecx, edi
-    - "E8 [codecave:ExpHP.seasons-everywhere.zunlist-insert-after]" # call
+    - "E8 [codecave:ExpHP.seasonize.zunlist-insert-after]" # call
 
     - "8B4508            " # mov    eax, [ebp+0x8]
     - "894710            " # mov    [edi+ex_id], eax
@@ -94,7 +94,7 @@ codecaves:
     - "6A0A              " # push   10  ; arg 2: max
     - "6A3C              " # push   60  ; arg 1: time
     - "89F9              " # mov    ecx, edi
-    - "E8 [codecave:ExpHP.seasons-everywhere.ex-set-season-bonus]" # call
+    - "E8 [codecave:ExpHP.seasonize.ex-set-season-bonus]" # call
 
     # return the EnemyEx
     - "89F8              " # mov    eax, edi
@@ -103,15 +103,15 @@ codecaves:
     - "C20400            " # ret    0x4
 
   # stdcall void FreeEnemyExById(id)
-  ExpHP.seasons-everywhere.free-enemy-ex-by-id:
+  ExpHP.seasonize.free-enemy-ex-by-id:
     - "55                " # push   ebp
     - "89E5              " # mov    ebp, esp
 
     - "8B4508            " # mov    eax, [ebp+0x8]
     - "50                " # push   eax
-    - "E8 [codecave:ExpHP.seasons-everywhere.find-enemy-ex-by-id]" # call
+    - "E8 [codecave:ExpHP.seasonize.find-enemy-ex-by-id]" # call
     - "89C1              " # mov    ecx, eax
-    - "E8 [codecave:ExpHP.seasons-everywhere.zunlist-remove-node]" # call
+    - "E8 [codecave:ExpHP.seasonize.zunlist-remove-node]" # call
 
     - "6A3C              " # push   EnemyEx_size
     - "50                " # push   eax
@@ -123,8 +123,8 @@ codecaves:
     - "C20400            " # ret    4
 
   # [esp+0x4] is an enemy id.
-  ExpHP.seasons-everywhere.find-enemy-ex-by-id:
-    - "B9 <codecave:ExpHP.seasons-everywhere.global-var-store>" # mov    ecx, GLOBALS
+  ExpHP.seasonize.find-enemy-ex-by-id:
+    - "B9 <codecave:ExpHP.seasonize.global-var-store>" # mov    ecx, GLOBALS
     - "8D09                      " # lea    ecx, [ecx+g_enemy_ex_head]
     - "8B542404                  " # mov    edx, [esp+0x4]  ; desired id
     - "8B4104                    " # mov    eax, [ecx+l_next]
@@ -141,7 +141,7 @@ codecaves:
     - "0F0B                      " # ud2
 
   # void __thiscall EnemyEx::SetSeasonBonus(int time, int max, int min)
-  ExpHP.seasons-everywhere.ex-set-season-bonus:
+  ExpHP.seasonize.ex-set-season-bonus:
     - "55 89E5 56 57     " # prologue w/ esi edi
     - "89CE              " # mov    esi, ecx
 
@@ -161,44 +161,44 @@ codecaves:
     - "C20C00            " # ret    0xc
 
   # extern __stdcall int GetSeason(void);
-  ExpHP.seasons-everywhere.get-season:
+  ExpHP.seasonize.get-season:
     # Query ECLPlus
     - "6A 00                 " # push   0          ; arg 3: mode    (0 = get value)
     - "68 CAE0FFFF           " # push   VAR_FLAGS  ; arg 2: var ID
     - "6A 00                 " # push   0          ; arg 1: enemy   (null)
-    - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
+    - "E8 [codecave:ExpHP.seasonize.eclplus-int-switch]" # call
     - "83E0 07               " # and    eax, 0x7
     - "C3                    " # ret
 
   # extern __stdcall int GetTokenSetting(void);
-  ExpHP.seasons-everywhere.get-token-setting:
+  ExpHP.seasonize.get-token-setting:
     # Query ECLPlus
     - "6A 00                 " # push   0          ; arg 3: mode    (0 = get value)
     - "68 CAE0FFFF           " # push   VAR_FLAGS  ; arg 2: var ID
     - "6A 00                 " # push   0          ; arg 1: enemy   (null)
-    - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
+    - "E8 [codecave:ExpHP.seasonize.eclplus-int-switch]" # call
     - "C1E8 03               " # shr    eax, 3
     - "83E0 07               " # and    eax, 0x7
     - "C3                    " # ret
 
   # returns level of release if there is a release, -1 if in cooldown, 0 otherwise.
   # extern __stdcall int GetActiveRelease(void);
-  ExpHP.seasons-everywhere.get-active-release-level:
+  ExpHP.seasonize.get-active-release-level:
     - "6A 00                 " # push    0                   ; arg 3: mode    (0 = get value)
     - "68 CCE0FFFF           " # push    VAR_ACTIVE_RELEASE  ; arg 2: var ID
     - "6A 00                 " # push    0                   ; arg 1: enemy   (null)
-    - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
+    - "E8 [codecave:ExpHP.seasonize.eclplus-int-switch]" # call
     - "C3                    " # ret
 
   # 1 if PIV items on release bullet cancels are enabled.
-  ExpHP.seasons-everywhere.get-release-piv-enabled:
+  ExpHP.seasonize.get-release-piv-enabled:
     # Currently, they always are.
     - "B8 01000000       " # mov     eax, 0x1
     - "C3                " # ret
 
   # 0 on failure
   # int __stdcall CheckForEclPlus();
-  ExpHP.seasons-everywhere.check-for-ecl-plus:
+  ExpHP.seasonize.check-for-ecl-plus:
     - "55 89E5 56 57     " # prologue w/ esi edi
     - "A1E49F4900        " # mov    eax, [ECLP_PTR_TO_GETVARINT]
     - "85C0              " # test   eax, eax
@@ -206,8 +206,8 @@ codecaves:
 
     # .failure:
     - "6A30              " # push   0x00000030 ; MB_OK | MB_ICONWARNING
-    - "68<codecave:ExpHP.seasons-everywhere.error-message-window-title>" # push
-    - "68<codecave:ExpHP.seasons-everywhere.eclplus-missing-error-message>" # push
+    - "68<codecave:ExpHP.seasonize.error-message-window-title>" # push
+    - "68<codecave:ExpHP.seasonize.eclplus-missing-error-message>" # push
     - "6A00              " # push   0x0  ; hWnd
     - "FF1514A24900      " # call   [IAT_MessageBoxA]
 
@@ -220,12 +220,12 @@ codecaves:
     - "5F 5E 89EC 5D     " # epilogue w/ esi edi
     - "C3                " # ret
 
-  ExpHP.seasons-everywhere.error-message-window-title:
+  ExpHP.seasonize.error-message-window-title:
     # db "Seasons patch error"
     - "536561736F6E73207061746368206572726F72"
     - "00                " # db 0
 
-  ExpHP.seasons-everywhere.eclplus-missing-error-message:
+  ExpHP.seasonize.eclplus-missing-error-message:
     # db "The seasons patch requires installation of ECLplus: (tested on commit "
     - "54686520736561736F6E7320706174636820726571756972657320696E7374616C6C6174"
     - "696F6E206F662045434C706C75733A2028746573746564206F6E20636F6D6D697420    "
@@ -259,7 +259,7 @@ codecaves:
   #  almost nonvolatile, because rampart compiler optimizations have allowed
   #  the compiler to avoid saving and restoring them across function calls
   #  when it knows that the callee doesn't clobber these registers)
-  ExpHP.seasons-everywhere.eclplus-int-switch:
+  ExpHP.seasonize.eclplus-int-switch:
     # Prologue that saves volatile registers
     - "55                    " # push   ebp
     - "89 E5                 " # mov    ebp,esp

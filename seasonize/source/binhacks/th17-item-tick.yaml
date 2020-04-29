@@ -9,7 +9,7 @@ binhacks:
     addr: "0x433b2d"
     expected: "8d41ff // 83f80d"
     code:
-      - "E9 [codecave:ExpHP.seasons-everywhere.item-pickup-effect]"
+      - "E9 [codecave:ExpHP.seasonize.item-pickup-effect]"
       - "CC"
 
   Season items in Delayed PIV state:
@@ -24,7 +24,7 @@ binhacks:
       - "EB 15                 " # jmp finish
       # season:
       - "C787 580C0000 09000000  " # mov dword [edi + 0xc58], 9   ; Item::state  (9 = season flyout)
-      - "E8 [codecave:ExpHP.seasons-everywhere.get-season]" # call GetSeason()
+      - "E8 [codecave:ExpHP.seasonize.get-season]" # call GetSeason()
       - "05 81000000             " # add eax, 0x81
       - "50                      " # push eax   ; push ANM script
       # finish:
@@ -36,7 +36,7 @@ binhacks:
   Season item Flyout state implementation:
     addr: "0x0043386d"
     expected: "83F8 03 // 74 B1"
-    code: "E9 [codecave:ExpHP.seasons-everywhere.item-flyout-state]"
+    code: "E9 [codecave:ExpHP.seasonize.item-flyout-state]"
 
   Season item in Flyout state cannot be attracted:
     addr: "0x433fd7"
@@ -72,7 +72,7 @@ binhacks:
     addr: "0x433590"
     expected: "a1 88764b00"
     codecave:
-      - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+      - "E8 [codecave:ExpHP.seasonize.is-bomb-or-release-autocollecting]" # call
       - "85C0              " # test    eax, eax
       - "740D              " # jz      .failure
       # .success:
@@ -90,7 +90,7 @@ binhacks:
     addr: "0x4338b3"
     expected: "a1 88764b00"
     codecave:
-      - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+      - "E8 [codecave:ExpHP.seasonize.is-bomb-or-release-autocollecting]" # call
       - "85C0              " # test    eax, eax
       - "740D              " # jz      .failure
       # .success:
@@ -105,7 +105,7 @@ binhacks:
       - "C3                " # <1>  ret
 
 codecaves:
-  ExpHP.seasons-everywhere.item-pickup-effect:
+  ExpHP.seasonize.item-pickup-effect:
     - "83F930                    " #  cmp     ecx, 0x30
     - "7413                      " #  je      .effect
 
@@ -119,7 +119,7 @@ codecaves:
     - "C3                        " #  ret
 
     # .effect:
-    - "E8 [codecave:ExpHP.seasons-everywhere.increment-season-power]" #  call
+    - "E8 [codecave:ExpHP.seasonize.increment-season-power]" #  call
     - "85C0                      " #  test    eax, eax
     - "7422                      " #  jz      .skip
 
@@ -164,7 +164,7 @@ codecaves:
   # Return value is 1 if season level has just increased.
   #
   # Additionally preserves xmm registers, ecx, and edx, but not the FPU.
-  ExpHP.seasons-everywhere.increment-season-power:
+  ExpHP.seasonize.increment-season-power:
     - "51                    " # push ecx
     - "52                    " # push edx
 
@@ -172,7 +172,7 @@ codecaves:
     - "6A 01                 " # push 1      # arg 3: mode    (1 = get pointer)
     - "68 CBE0FFFF           " # push -7989  # arg 2: var ID  (GI5)
     - "6A 00                 " # push 0      # arg 1: enemy   (null)
-    - "E8 [codecave:ExpHP.seasons-everywhere.eclplus-int-switch]" # call
+    - "E8 [codecave:ExpHP.seasonize.eclplus-int-switch]" # call
 
     # Stop now if already max season
     - "8138 74040000         " # cmp    DWORD [eax], 1140
@@ -205,7 +205,7 @@ codecaves:
     - "59                    " # pop ecx
     - "C3                    " # ret
 
-  ExpHP.seasons-everywhere.delayed-piv-state:
+  ExpHP.seasonize.delayed-piv-state:
     - "83F8 30               " # cmp eax, 0x30
     - "74 13                 " # je season
     # non-season:
@@ -215,7 +215,7 @@ codecaves:
     # season:
     # FIXME: This needs its own state (season item flyout state;  state 3 from TH16)
     - "C787 580C0000 09000000  " # mov dword [edi + 0xc58], 9   ; Item::state  (9 = season flyout)
-    - "E8 [codecave:ExpHP.seasons-everywhere.get-season]" # call GetSeason()
+    - "E8 [codecave:ExpHP.seasonize.get-season]" # call GetSeason()
     - "05 81000000             " # add eax, 0x81
     - "50                      " # push eax
     # finish:
@@ -226,7 +226,7 @@ codecaves:
     - "C3                          " # ret
 
   # Implements item state 9 (equivalent to TH16's item state 3)
-  ExpHP.seasons-everywhere.item-flyout-state:
+  ExpHP.seasonize.item-flyout-state:
     # Fit in an extra branch for state 9 after the branch for state 3
     - "83F8 03                   " # cmp eax, 0x3
     - "74 07                     " # je .jmp_to_case_3
@@ -280,7 +280,7 @@ codecaves:
     #
     # If a bomb/release autocollects during any frame of the flyout state,
     # the item will be autocollected once it stops moving
-    - "E8 [codecave:ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting]" # call
+    - "E8 [codecave:ExpHP.seasonize.is-bomb-or-release-autocollecting]" # call
     - "0987700C0000              " # or      [edi+en_force_autocollect], eax
 
     # Has this item stopped moving?
@@ -335,7 +335,7 @@ codecaves:
   # - Is there an active release, period?
   #
   # (of course, TH17 only checks the first condition. We add the latter!)
-  ExpHP.seasons-everywhere.is-bomb-or-release-autocollecting:
+  ExpHP.seasonize.is-bomb-or-release-autocollecting:
     - "A188764B00        " # mov     eax, [SHOTTYPE_PTR]
     - "83783001          " # cmp     dword [eax+st_bomb_is_active], 0x1
     - "7508              " # jne     .nobomb
@@ -343,7 +343,7 @@ codecaves:
     - "7D02              " # jge     .nobomb
     - "EB0E              " # jmp     .success
     # .nobomb:
-    - "E8 [codecave:ExpHP.seasons-everywhere.get-active-release-level]" # call    codecave_get_active_release
+    - "E8 [codecave:ExpHP.seasonize.get-active-release-level]" # call    codecave_get_active_release
     - "85C0              " # test    eax, eax
     - "7E02              " # jng     .norelease    ; positive (active)
     - "EB03              " # jmp     .success
