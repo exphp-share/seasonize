@@ -117,6 +117,7 @@ codecaves:
     - "50                " # push   eax
     - "B850B24700        " # mov    eax, MALLOC
     - "FFD0              " # call   eax
+    - "83C404            " # add    esp, 0x4
     - "89C7              " # mov    edi, eax
 
     - "8B4508            " # mov    eax, [ebp+0x8]
@@ -125,6 +126,7 @@ codecaves:
     - "57                " # push   edi
     - "B860CE4700        " # mov    eax, MEMSET
     - "FFD0              " # call   eax
+    - "83C40C            " # add    esp, 0x4
 
     - "89F8              " # mov    eax, edi
     - "5F                " # pop    edi

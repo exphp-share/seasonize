@@ -129,7 +129,7 @@
     "codecaves": {
         "ExpHP.seasons-everywhere.item-on-graze": "8B15 D0774B00 // 8D92 10060000 // 8B7B 08 // 83EC 20 // F30F1047 04 // F30F5C42 04 // F30F114424 0C // D94424 0C // F30F1007 // F30F5C02 // F30F114424 0C // D94424 0C // B8 706E4900 // FF D0 // C74424 1C FFFFFFFF // C74424 10 3333F33F // D95C24 0C // 897C24 04 // C70424 30000000 // 8B0D B8764B00 // B8 40474300 // FF D0 // 5f // 5e // 8be5 // 5d // E8 00000000 // C70424 E1A04400 // C3",
         "ExpHP.seasons-everywhere.eclplus-int-switch": "55 // 89 E5 // 83 e4f0 // 81 ec80000000 // 0f290424 // 0f294c2410 // 0f29542420 // 0f295c2430 // 0f29642440 // 0f296c2450 // 0f29742460 // 0f297c2470 // 51 // 52 // ff 75 10 // ff 75 0c // ff 75 08 // FF15 E49F4900 // 5a // 59 // 0f280424 // 0f284c2410 // 0f28542420 // 0f285c2430 // 0f28642440 // 0f286c2450 // 0f28742460 // 0f287c2470 // 89 EC // 5D // C2 0c00",
-        "ExpHP.seasons-everywhere.calloc": "55 // 89E5 // 57 // 8B4508 // 50 // B850B24700 // FFD0 // 89C7 // 8B4508 // 50 // 6A00 // 57 // B860CE4700 // FFD0 // 89F8 // 5F // 89EC // 5D // C20400",
+        "ExpHP.seasons-everywhere.calloc": "55 // 89E5 // 57 // 8B4508 // 50 // B850B24700 // FFD0 // 83C404 // 89C7 // 8B4508 // 50 // 6A00 // 57 // B860CE4700 // FFD0 // 83C40C // 89F8 // 5F // 89EC // 5D // C20400",
         "ExpHP.seasons-everywhere.randf-minus-pi-to-pi": "55 // 89E5 // 51 // 9B // DBE3 // B8B0274000 // FFD0 // 660F6EC0 // C745FC83F9224E // F30FE6C0 // C1E81F // F20F5804C5303F4A00 // 660F5AC0 // F30F5E45FC // F30F5C0588454900 // F30F1145FC // D945FC // 89EC // 5D // C3",
         "protection": 64,
         "ExpHP.seasons-everywhere.global-var-store": "00000000 // 00000000 // 00000000 // 00000000 // 00000000 // ",

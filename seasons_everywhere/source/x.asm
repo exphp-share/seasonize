@@ -1373,6 +1373,7 @@ calloc:
     push   eax
     mov    eax, MALLOC
     call   eax
+    add    esp, 0x4
     mov    edi, eax
 
     mov    eax, [ebp+0x8]
@@ -1381,6 +1382,7 @@ calloc:
     push   edi
     mov    eax, MEMSET
     call   eax
+    add    esp, 0xc
 
     mov    eax, edi
     pop    edi
