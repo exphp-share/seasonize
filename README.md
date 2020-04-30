@@ -72,4 +72,4 @@ make dist
 
 # Changelog
 
-See [CHANGES.md](CHANGES.md).
+See [CHANGELOG.md](CHANGELOG.md).
