@@ -764,6 +764,10 @@ void ReleaseWait(int frames, int season, int damage) {
             playerSetSpeedMult(1.5f);
         }
 
+        if (season == SPRING) {
+            playerSetIframes(50);
+        }
+
         // TH16 does this in the second method in the ShotType vtable for fall subseason.
         // (It actually sets the vector at offset a8 on the ANM, and I'm not sure what that is
         //  since no anm commands set it... But setting abs pos seems to work!)
