@@ -1,0 +1,9 @@
+Hue/Saturation adjustments in Paint.NET
+
+Grab letters with wand and ctrl click.
+
+           H    S    L
+   Wily:  -47   94  34
+  Beast:  128   88   2
+    And:   40  100   0
+Weakest:  -98   79  -5

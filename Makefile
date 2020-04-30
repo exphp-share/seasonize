@@ -140,7 +140,6 @@ THINGS_TO_PACK = \
 	check-no-game-files \
 	# end
 
-
 seasonize-v$(VERSION).zip: $(THINGS_TO_PACK)
 	cd .make/dist && zip -o seasonize-v$(VERSION).zip -r seasonize-v$(VERSION)
 	mv .make/dist/seasonize-v$(VERSION).zip $@
