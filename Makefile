@@ -108,6 +108,7 @@ PROOFS_OF_PATCHES = \
 	$(PACKED_THCRAP_DIR)/repos/ExpHP/c_key/patch.js \
 	$(PACKED_THCRAP_DIR)/repos/32th/score_uncap/patch.js \
 	# end
+PACKED_SOURCE_ARCHIVE = $(DIR_TO_PACK)/seasonize-v$(VERSION)-src.tar.gz
 ECLPLUS_REPO_DIR = .make/ECLplus
 ECLPLUS_FILENAMES = ECLplusLoader.exe ECLPLUS.dll
 ECLPLUS_BUILD_ARTIFACTS = $(ECLPLUS_FILENAMES:%=$(ECLPLUS_REPO_DIR)/Release/%)
@@ -139,8 +140,10 @@ THINGS_TO_PACK = \
 	check-no-game-files \
 	# end
 
+
 seasonize-v$(VERSION).zip: $(THINGS_TO_PACK)
-	cd $(DIR_TO_PACK) && cd .. && zip $(shell basename "$(DIR_TO_PACK)") && mv $(shell basename "$(DIR_TO_PACK)").zip $@
+	cd .make/dist && zip -o seasonize-v$(VERSION).zip -r seasonize-v$(VERSION)
+	mv .make/dist/seasonize-v$(VERSION).zip $@
 
 #-----
 # rules
@@ -219,6 +222,11 @@ $(BUILT_LAUNCHER_EXE) : $(LAUNCHER_SOURCE_FILES) $(PACKED_THCRAP_DIR)/config/gam
 	@echo >&2 '=============================================='
 	@false
 
+$(PACKED_SOURCE_ARCHIVE): pack-source-archive
+.PHONY: pack-source-archive
+pack-source-archive:
+	git archive HEAD --prefix seasonize-v$(VERSION)/ -o $(PACKED_SOURCE_ARCHIVE)
+
 # Rule for copying our patch into the dist dir.
 # This reruns every time 'make dist' is run because it's too hard to track the addition of new files.
 .PHONY: copy-dist-patch-files
@@ -238,4 +246,4 @@ check-no-game-files:
 # don't repeatedly produce interleaved output.
 $(BUILT_LAUNCHER_EXE): | $(ECLPLUS_BUILD_ARTIFACTS) $(PROOFS_OF_PATCHES)
 copy-dist-patch-files: | $(BUILT_LAUNCHER_EXE)
-check-no-game-files: | copy-dist-patch-files
+check-no-game-files: | copy-dist-patch-files pack-source-archive
