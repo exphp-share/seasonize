@@ -436,7 +436,8 @@ void SeasonInputEnemy() {
         canRelease = canRelease && !ActiveReleaseState();
         canRelease = canRelease && !BOMBING;
 
-        if (usedCKey && HYPERTIMER > 0) { // Note: HYPERTIMER can be negative...
+        // !(HYPERDYING) prevents spamming hyper cancels.
+        if (usedCKey && HYPERTIMER > 0 && !(HYPERDYING)) { // Note: HYPERTIMER can be negative...
             // cancel the hyper instead, because that's obviously what the player wanted to happen
             seasonsPatchHyperCancel();
 

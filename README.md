@@ -69,3 +69,7 @@ make dist
 * The releases and GUI are implemented almost entirely in ECL using [ECLplus](https://github.com/Priw8/ECLplus).
 * TH17 has lots of code and data left over from TH16 (for instance, `bullet.anm` was entirely unchanged); advantage was taken of this wherever possible.
 * The season items are actually implemented as items!!  Just like in TH16, season items live in the same array as PIV items.  Their special behaviors (such as flyout and delayed autocollection), and the methods of generating them (grazing, shooting bosses, bombs, releases...) are all implemented to be as close as possible to TH16, through a terrifyingly large number of binhacks.
+
+# Changelog
+
+See [CHANGES.md](CHANGES.md).
