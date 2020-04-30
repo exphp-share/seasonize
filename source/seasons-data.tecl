@@ -1,0 +1,259 @@
+// vi: set ft=c
+
+//-----------------------------------------------------
+// Ordering of seasons
+
+// Primary ordering, and internal representation used by this patch.
+global SPRING = 0;
+global SUMMER = 1;
+global FALL = 2;
+global WINTER = 3;
+global DOYOU = 4;
+global NUM_SEASONS = 5;
+
+//-----------------------------------------------------
+// Power requirements and related data
+
+global LEVEL_0_REQ = 0;
+global LEVEL_1_REQ = 100;
+global LEVEL_2_REQ = 230;
+global LEVEL_3_REQ = 390;
+global LEVEL_4_REQ = 590;
+global LEVEL_5_REQ = 840;
+global LEVEL_6_REQ = 1140;
+global MAX_SEASON_POWER = LEVEL_6_REQ;
+
+// Lowest 12 bits: Power level for empty gauge
+// Next 12 bits:   Power level for full gauge
+int SeasonGaugeData(int level) {
+    if (level == 0) { return LEVEL_0_REQ + 0x1000 * LEVEL_1_REQ; }
+    if (level == 1) { return LEVEL_1_REQ + 0x1000 * LEVEL_2_REQ; }
+    if (level == 2) { return LEVEL_2_REQ + 0x1000 * LEVEL_3_REQ; }
+    if (level == 3) { return LEVEL_3_REQ + 0x1000 * LEVEL_4_REQ; }
+    if (level == 4) { return LEVEL_4_REQ + 0x1000 * LEVEL_5_REQ; }
+    return LEVEL_5_REQ + 0x1000 * LEVEL_6_REQ;
+}
+
+int SeasonLevel(int power) {
+    if (power < LEVEL_1_REQ) { return 0; }
+    if (power < LEVEL_2_REQ) { return 1; }
+    if (power < LEVEL_3_REQ) { return 2; }
+    if (power < LEVEL_4_REQ) { return 3; }
+    if (power < LEVEL_5_REQ) { return 4; }
+    if (power < LEVEL_6_REQ) { return 5; }
+    return 6;
+}
+
+int SeasonPowerRequired(int level) {
+    if (level == 0) { return LEVEL_0_REQ; }
+    if (level == 1) { return LEVEL_1_REQ; }
+    if (level == 2) { return LEVEL_2_REQ; }
+    if (level == 3) { return LEVEL_3_REQ; }
+    if (level == 4) { return LEVEL_4_REQ; }
+    if (level == 5) { return LEVEL_5_REQ; }
+    if (level == 6) { return LEVEL_6_REQ; }
+
+    msgf("ERROR: SeasonPowerRequired(%d)", _SS level);
+    return 0;
+}
+
+int SeasonUsesOneLevel(int season) {
+    return season == SUMMER || season == DOYOU;
+}
+
+// Cost of a spell that only uses 1 level.
+int SeasonPowerOneLevelCost(int level) {
+    if (level == 0) { return 0; }
+    if (level == 1) { return LEVEL_1_REQ - LEVEL_0_REQ; }
+    if (level == 2) { return LEVEL_2_REQ - LEVEL_1_REQ; }
+    if (level == 3) { return LEVEL_3_REQ - LEVEL_2_REQ; }
+    if (level == 4) { return LEVEL_4_REQ - LEVEL_3_REQ; }
+    if (level == 5) { return LEVEL_5_REQ - LEVEL_4_REQ; }
+    if (level == 6) { return LEVEL_6_REQ - LEVEL_5_REQ; }
+
+    msgf("ERROR: SeasonPowerRequired(%d)", _SS level);
+    return 0;
+}
+
+//-----------------------------------------------------
+
+// Positions where the season gauge goes transparent and opaque.
+// Notice there is a hysteresis on the y axis.
+//
+// TODO: Find out the true numbers.  This is guesswork, mostly based on
+//       assuming that the beast icons in TH17 use the same thresholds.
+global SG_PLAYER_NEAR_X = -64f;
+global SG_PLAYER_FAR_X = -64f;
+global SG_PLAYER_NEAR_Y = 400f;
+global SG_PLAYER_FAR_Y = 382f;
+
+// TODO: Find out if releases are affected by bombInvuln in TH16.
+global SEASON_DAMAGE_IS_BOMB = 0;
+
+int SeasonItemAnmScriptId(int season) {
+    // NOTE: these are script ids for bullet.anm.
+    //
+    // TH17's bullet.anm is identical to TH16's, so they still work.
+    return 129 + season;
+}
+
+//-----------------------------------------------------
+// Tables stored in static memory,
+// read by ShotType vtable method at offset 0.
+
+int DoyouTimeParam(int level) {
+    return 40;
+}
+float DoyouRadius0(int level) {
+    if (level == 1) { return 50f; }
+    if (level == 2) { return 52f; }
+    if (level == 3) { return 54f; }
+    if (level == 4) { return 56f; }
+    if (level == 5) { return 58f; }
+    if (level == 6) { return 60f; }
+    return 0f;
+}
+float DoyouRadius1(int level) {
+    return 30f;
+}
+
+int FallTimeParam(int level) {
+    if (level == 1) { return 40; }
+    if (level == 2) { return 55; }
+    if (level == 3) { return 70; }
+    if (level == 4) { return 90; }
+    if (level == 5) { return 110; }
+    if (level == 6) { return 130; }
+    return 0;
+}
+float FallRadius0(int level) {
+    return 60f;
+}
+float FallRadius1(int level) {
+    return 40f;
+}
+
+int SummerTimeParam(int level) {
+    return 30;
+}
+float SummerRadius(int level) {
+    if (level == 1) { return 40f; }
+    if (level == 2) { return 42f; }
+    if (level == 3) { return 44f; }
+    if (level == 4) { return 46f; }
+    if (level == 5) { return 48f; }
+    if (level == 6) { return 50f; }
+    return 0f;
+}
+
+int WinterTimeParam(int level) {
+    if (level == 1) { return 30; }
+    if (level == 2) { return 70; }
+    if (level == 3) { return 110; }
+    if (level == 4) { return 150; }
+    if (level == 5) { return 170; }
+    if (level == 6) { return 190; }
+    return 0;
+}
+float WinterRadius(int level) {
+    if (level == 1) { return 30f; }
+    if (level == 2) { return 35f; }
+    if (level == 3) { return 40f; }
+    if (level == 4) { return 45f; }
+    if (level == 5) { return 50f; }
+    if (level == 6) { return 60f; }
+    return 0f;
+}
+
+int SpringTimeParam(int level) {
+    if (level == 1) { return 10; }
+    if (level == 2) { return 13; }
+    if (level == 3) { return 16; }
+    if (level == 4) { return 20; }
+    if (level == 5) { return 20; }
+    if (level == 6) { return 20; }
+    return 0;
+}
+float SpringRadius(int level) {
+    if (level == 1) { return 60f; }
+    if (level == 2) { return 100f; }
+    if (level == 3) { return 140f; }
+    if (level == 4) { return 190f; }
+    if (level == 5) { return 240f; }
+    if (level == 6) { return 300f; }
+    return 0f;
+}
+
+// (not precisely the total duration of a season, but closely related)
+int SeasonTimeParam(int season, int level) {
+    if (season == SPRING) { return SpringTimeParam(level); }
+    if (season == SUMMER) { return SummerTimeParam(level); }
+    if (season == FALL) { return FallTimeParam(level); }
+    if (season == WINTER) { return WinterTimeParam(level); }
+    if (season == DOYOU) { return DoyouTimeParam(level); }
+
+    msgf("ERROR: SeasonTimeParam(%d)", _SS season);
+    return 0;
+}
+
+float SeasonRadius0(int season, int level) {
+    if (season == SPRING) { return SpringRadius(level); }
+    if (season == SUMMER) { return SummerRadius(level); }
+    if (season == FALL) { return FallRadius0(level); }
+    if (season == WINTER) { return WinterRadius(level); }
+    if (season == DOYOU) { return DoyouRadius0(level); }
+
+    msgf("ERROR: SeasonRadius0(%d)", _SS season);
+    return 0f;
+}
+
+float SeasonRadius1(int season, int level) {
+    if (season == SPRING) { return SpringRadius(level); }
+    if (season == SUMMER) { return SummerRadius(level); }
+    if (season == FALL) { return FallRadius1(level); }
+    if (season == WINTER) { return WinterRadius(level); }
+    if (season == DOYOU) { return DoyouRadius1(level); }
+
+    msgf("ERROR: SeasonRadius1(%d)", _SS season);
+    return 0f;
+}
+
+//-----------------------------------------------------
+// More interesting data hardcoded into vtable method at offset 4.
+
+// Season releases do give iframes!
+// They're so short to almost be useless... but fall can use them to pass through bosses.
+int SeasonIframes(int season) {
+    if (season == WINTER) { return 30; }
+    if (season == FALL) { return 30; }
+    return 10;
+}
+
+// This is the amount of damage dealt every frame in TH16.
+// We might need to scale it differently for this game. Who knows.
+//
+// (I think they might also deal damage twice on their first frame of existence in TH16...)
+int SeasonDamage(int season) {
+    if (season == WINTER) { return 13; }
+    if (season == FALL) { return 30; }
+    if (season == SUMMER) { return 60; }
+    if (season == DOYOU) { return 60; }
+    if (season == SPRING) { return 60; }
+    return 0;
+}
+
+// Stack array initialized at 0x0040decd.
+int SeasonLevelNumberColor(int level) {
+    if (level == 0) { return 0x60606060; }
+    if (level == 1) { return 0xa0b0b080; }
+    if (level == 2) { return 0xb0b8b880; }
+    if (level == 3) { return 0xc0c0c080; }
+    if (level == 4) { return 0xd0d0d080; }
+    if (level == 5) { return 0xe0e0e080; }
+    if (level == 6) { return 0xffffff30; }
+
+    msgf("ERROR: LevelNumberColor(%d)", _SS level);
+    return 0;
+}
+
+//-----------------------------------------------------

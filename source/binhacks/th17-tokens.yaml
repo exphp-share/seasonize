@@ -1,0 +1,46 @@
+# Binhacks for disabling tokens.
+
+binhacks:
+  Disable tokens based on season menu selection:
+    addr: "0x410390"
+    expected: "837b1028 // 7c0c"
+    codecave:
+      # at this point, [ebp + c] holds the item type - 15
+      - "E8 [codecave:ExpHP.seasonize.get-token-setting]" # call
+      - "83F800            " # cmp    eax, 0    ; all tokens
+      - "741A              " # je     .originalcode
+      - "83F801            " # cmp    eax, 1    ; no beast
+      - "7407              " # je     .nobeast
+      - "83F802            " # cmp    eax, 2    ; no tokens
+      - "7425              " # je     .notoken
+      - "0F0B              " # ud2
+
+      # .nobeast:
+      - "837D0C03          " # cmp    dword [ebp + 0xc], 3
+      - "7E1D              " # jle    .notoken  ; [1, 2, 3] are static beast items
+      - "837D0C0F          " # cmp    dword [ebp + 0xc], 15
+      - "7D17              " # jge    .notoken  ; [15, 16, 17] are changing beast items
+      - "EB00              " # jmp    .originalcode
+
+      # .originalcode:
+      - "837B1028          " # cmp     dword [ebx+0x10], 40
+      - "7C02              " # jl      .token
+      - "EB0D              " # jmp     .notoken
+
+      # .token:
+      # abs_jmp_hack 0x4103a2
+      - "E800000000        " # <1>  call %%next
+      - "C70424A2034100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+      # .notoken:
+      # abs_jmp_hack 0x410396
+      - "E800000000        " # <1>  call %%next
+      - "C7042496034100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+
+  # TODO: Move up the y positions at which the gauge vanishes/reappears
+  #       so that season gauge and beast items can change in unison.
+
+  # TODO: Hide beast items if disabled completely.

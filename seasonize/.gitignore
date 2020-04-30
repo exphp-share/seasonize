@@ -1,1 +1,3 @@
-game-files
+*.anm
+*.ecl
+th17*.js

@@ -1,0 +1,967 @@
+// vi: set ft=c :
+
+#include "ECLinclude/ECLplus.tecl"
+#include "seasons-data.tecl"
+#include "game-constants.tecl"
+
+global PI = 3.141592653589793f;
+global TAU = 2f*PI;
+
+int ClipInt(int x, int a, int b) {
+    if (x < a) { return a; }
+    else if (x > b) { return b; }
+    else { return x; }
+}
+
+int BitNot(int x) {
+    return 0xFFFFFFFF - x;
+}
+
+inline int msgAvail(int channel) {
+    int receive;
+    msgCheck(receive, channel);
+    return receive;
+}
+
+// TODO: Show "NB" near beast items if No Hyper
+// TODO: Fix season level being above character dialogue sprites for some reason
+// TODO: Put season gauge below beast items due to their annoying flames
+
+// TODO: PLAY THE DAMN GAME :D :D :D :D
+
+// TODO: (after dust settles) change demos
+
+// TODO: (after release?) add butt shot as a 6th season ("doyou doyou")
+
+//=========================================
+// Global vars
+
+// GI4:
+// - 00: 3 bits for season
+// - 03: 3 bits for beast item setting
+int CurrentSeason() { return $GI4 & 0b111; }
+void SetCurrentSeason(int season) {
+    $GI4 &= BitNot(0b111);
+    $GI4 |= season;
+    return;
+}
+
+global TOKEN_SETTING_ALL = 0;
+global TOKEN_SETTING_SIMPLE = 1;
+global TOKEN_SETTING_NONE = 2;
+ // Make 'None' inaccessible.  I just don't want to support it or playtest it.
+global NUM_TOKEN_SETTINGS = 2;
+int CurrentTokenSetting() { return ($GI4 / 8) & 0b111; }
+void SetCurrentTokenSetting(int setting) {
+    $GI4 &= BitNot(0b111 * 8);
+    $GI4 |= setting * 8;
+    return;
+}
+
+int CurrentSeasonPower() { return $GI5; }
+void SetCurrentSeasonPower(int power) { $GI5 = ClipInt(power, 0, MAX_SEASON_POWER); return; }
+
+// 0: no release, no cooldown
+// -1: in cooldown
+// positive: season level of current release
+global RELEASE_IN_COOLDOWN = -1;
+int ActiveReleaseState() { return $GI6; }
+void SetActiveReleaseState(int value) { $GI6 = value; return; }
+
+int DebuggerGlobal() { return $GI7; }
+void SetDebuggerGlobal(int value) { $GI7 = value; return; }
+
+//=========================================
+
+// FIXME refactor these into their own file or something
+
+// spec3  (hyper cancel)
+inline void seasonsPatchHyperCancel() {
+    etEx(NEG, 3, NEG, NEG, NEG, NEGF, NEGF);
+}
+
+//=========================================
+
+// Used by Keiki and Saki to determine if they should make e.g. point fish.
+int ShouldUseAltSpellTokens() {
+    return CurrentTokenSetting() != TOKEN_SETTING_ALL;
+}
+
+//=========================================
+// Global constants
+
+// DPS in TH17 is about 1.4 times DPS in TH16.
+//
+// It's hard to really give a precise value to this, because different things
+// may be scaled differently and there are factors to consider like how easy
+// or difficult each shot type is to use (or their other strengths besides DPS),
+// or what season level you are in TH16.
+//
+// This value of 1.4 is based on timing kill speeds of the first spell for all shot
+// types in both games. (this was done in spell practice, so TH16 was at season
+// level 3). Many shot types in both games took around 12s (give or take 0.5s),
+// but the spell has 1700 HP in TH16 and 2400 HP in TH17.  Hence, 1.4.
+//
+// Data at: https://gist.github.com/ExpHP/4bb43790a03011c3774c4926ff27f6a7
+global GAME_DPS_SCALE = 1.4f;
+
+// Using default value for all bosses.
+global SEASON_ANM_INDEX = 5; // 4th anm in stage ecl's "anim"
+
+global SMENU_BG_ANM_SCRIPT = 2 * NUM_SEASONS;  // season menu
+global SMENU_FG_ANM_SCRIPT = 2 * NUM_SEASONS + 1;  // season menu boom
+global SMENU_ICON_ANM_SCRIPT = 2 * NUM_SEASONS + 2;  // season menu icon
+global SG_FIRST_ANM_SCRIPT = 2 * NUM_SEASONS + 3; // season gauge
+
+void SeasonMenuEnemy() {
+    flagSet(1); // no hurtbox
+    flagSet(2); // no hitbox
+    flagSet(128); // not killed by dialogRead or enmKillAll
+    flagSet(12); // don't delete beyond screen edges
+
+    int stageNum = LIFE;
+
+    playerAllowShot(false);
+    playerAllowBomb(false);
+
+    SetCurrentSeason(SPRING);
+    SetCurrentTokenSetting(TOKEN_SETTING_SIMPLE);
+    SetCurrentSeasonPower(0);
+    SetActiveReleaseState(0);
+    if (SPELL_ID >= 0) {
+        SetCurrentSeasonPower(LEVEL_3_REQ);
+    } else if (stageNum != 1 && stageNum != 7 && SCORE == 0 && CONTINUES == 0) {
+        // Stage practice in stage 2 onwards
+        SetCurrentSeasonPower(LEVEL_4_REQ);
+    }
+
+    // We'll be using our own channel to tell many of our children when to stop.
+    // Tell them our ID by setting their life.
+    msgReset(ID);
+
+    enmCreate("SeasonMenuVignetteEnemy", 0f, 0f, ID, 0, 0);
+    enmCreate("SeasonMenuTextEnemy", 0f, 0f, ID, 0, 0);
+    int text_enemy_id = LAST_ENM_ID;
+
+    enmCreate("SeasonMenuIconEnemy0", 0f, 0f, ID, 0, 0);
+    enmCreate("SeasonMenuIconEnemy1", 0f, 0f, ID, 0, 0);
+    enmCreate("SeasonMenuIconEnemy2", 0f, 0f, ID, 0, 0);
+    enmCreate("SeasonMenuIconEnemy3", 0f, 0f, ID, 0, 0);
+    enmCreate("SeasonMenuIconEnemy4", 0f, 0f, ID, 0, 0);
+
+    int oldInput = $INPUT;
+    int shouldEnd = 0;
+    int tokenSetting = CurrentTokenSetting();
+
+    int menuTime = 180;
+    while (true) {
+        int risingEdge = $INPUT & BitNot(oldInput);
+        int season = CurrentSeason();
+
+        movePos(PLAYER_X, PLAYER_Y);
+
+        if (risingEdge & KEY_SHOT) {
+            playSound(10); // menu bwap
+            season += 1;
+            season %= NUM_SEASONS;
+            SetCurrentSeason(season);
+        }
+
+        if (risingEdge & KEY_SKIP) {
+            playSound(10); // menu bwap
+            season -= 1;
+            season = (season + NUM_SEASONS) % NUM_SEASONS;
+            SetCurrentSeason(season);
+        }
+
+        if (risingEdge & KEY_BOMB) {
+            playSound(10); // menu bwap
+            tokenSetting += 1;
+            tokenSetting %= NUM_TOKEN_SETTINGS;
+            SetCurrentTokenSetting(tokenSetting);
+        }
+
+        if (menuTime == 0) { break; }
+        if (risingEdge & KEY_THREE) { break; }
+
+        if (menuTime == 60) {
+            // start blinking
+            msgSend(1f, NEGF, NEGF, NEGF, text_enemy_id);
+        }
+        menuTime--;
+        oldInput = INPUT;
+        wait(1);
+    }
+    playSound(8); // menu confirm
+    playSound(74); // release PLING!!
+
+    // tell all children to start exit animations
+    msgSend(NEGF, NEGF, NEGF, NEGF, ID);
+
+    // Enable player capabilities
+    playerAllowShot(true);
+    playerAllowBomb(true);
+    enmCreate("SeasonInputEnemy", 0f, 0f, 1, 0, 0);
+
+    // wait well more than enough frames for everything to see the message on our channel
+    // (at the time of writing, at most 2 frames are needed)
+    wait(15);
+
+    msgReset(ID);
+    delete();
+}
+
+void SeasonMenuVignetteEnemy() {
+    flagSet(1); // no hurtbox
+    flagSet(2); // no hitbox
+    flagSet(128); // not killed by dialogRead or enmKillAll
+    flagSet(12); // don't delete beyond screen edges
+
+    anmSelect(SEASON_ANM_INDEX);
+    anmSetSprite(0, SMENU_BG_ANM_SCRIPT);
+    anmScale(0, 700f, 700f);
+
+    int oldSeason = -1; // ensure background change on first frame
+    int received = 0;
+    while (true) {
+        movePos(PLAYER_X, PLAYER_Y);
+        int season = CurrentSeason();
+        // if-else chain to ensure only one anmSwitch per frame.
+        // (if season change occurs on the same frame that menu would exit,
+        //  we wait one more frame before exiting to ensure BG color is fixed)
+        if (oldSeason != season) {
+            anmSwitch(0, 1 + season); // change background color
+            oldSeason = season;
+        } else if (msgAvail(LIFE)) {
+            break; // start exit animation
+        }
+        wait(1);
+    }
+
+    anmSetSprite(1, SMENU_FG_ANM_SCRIPT); // create vortex
+    anmSwitch(0, 7); // make background get sucked in
+    times(5) {
+        movePos(PLAYER_X, PLAYER_Y);
+        wait(1);
+    }
+    playSound(30); // charge sound
+    times(85) {
+        movePos(PLAYER_X, PLAYER_Y);
+        wait(1);
+    }
+
+    playSound(31); // camera KERCHONK
+    delete();
+}
+
+void SeasonMenuDrawTokensLine() {
+    int tokenSetting = CurrentTokenSetting();
+    drawAnchor(ANCHOR_CENTER, ANCHOR_CENTER);
+    if (tokenSetting == 0) {
+        drawColor(0xFF00FF50);
+        drawf(FINAL_X, FINAL_Y, "WITH BEAST/HYPER");
+    } else if (tokenSetting == 1) {
+        drawColor(0xFF00FFFF);
+        drawf(FINAL_X, FINAL_Y, "NO BEAST/HYPER");
+    } else if (tokenSetting == 2) {
+        drawColor(0xFFFF0000);
+        drawf(FINAL_X, FINAL_Y, "NO TOKENS");
+    }
+    drawReset();
+}
+
+void SeasonMenuTextEnemy() {
+    flagSet(1); // no hurtbox
+    flagSet(2); // no hitbox
+    flagSet(128); // not killed by dialogRead or enmKillAll
+    flagSet(12); // don't delete beyond screen edges
+
+    msgReset(ID);
+    movePos(0f, 180f);
+
+    int blinkTime = -1;
+    int received = 0;
+    float state = 0f;
+    while (true) {
+        int _r;
+        float newState, _b, _c, _d;
+        msgReceive(received, newState, _b, _c, _d, ID);
+        if (received) {
+            state = newState;
+        }
+
+        if (msgAvail(LIFE)) { break; } // start exit anim
+        if (state == 1f) { blinkTime += 1; }
+        if (blinkTime & 0b10) {
+            SeasonMenuDrawTokensLine();
+            drawAnchor(ANCHOR_CENTER, ANCHOR_CENTER);
+            drawColor(0xFFFFFF00);
+            drawf(FINAL_X, FINAL_Y+12f*2f, "SHOT: Season");
+            drawf(FINAL_X, FINAL_Y+12f*3f, "BOMB: Tokens");
+            drawf(FINAL_X, FINAL_Y+12f*4f, "SKIP: Confirm");
+            drawReset();
+        }
+        wait(1);
+        msgCheck(received, LIFE);
+    }
+    // Keep this around for a bit if not default in case the player hit
+    // bomb close to the cutoff and isn't sure what they selected.
+    blinkTime = 4;
+    movePosRelTime(15, 5, 0f, 32f);
+    times (36) {
+        if (blinkTime & 4) {
+            SeasonMenuDrawTokensLine();
+        }
+        blinkTime += 1;
+        wait(1);
+    }
+    msgReset(ID);
+    delete();
+}
+
+void SeasonMenuIconEnemy0() { @SeasonMenuIconEnemy(0); }
+void SeasonMenuIconEnemy1() { @SeasonMenuIconEnemy(1); }
+void SeasonMenuIconEnemy2() { @SeasonMenuIconEnemy(2); }
+void SeasonMenuIconEnemy3() { @SeasonMenuIconEnemy(3); }
+void SeasonMenuIconEnemy4() { @SeasonMenuIconEnemy(4); }
+
+global DIRECTION_UP = 4.71238898038;
+global TAU_OVER_FIVE = 1.25663706144;
+global SMENU_ICON_RADIUS = 50f;
+global SMENU_ICON_ALPHA_ACTIVE = 255;
+global SMENU_ICON_ALPHA_INACTIVE = 10;
+global SMENU_ICON_SCALE_ACTIVE = 1f;
+global SMENU_ICON_SCALE_INACTIVE = 0.75f;
+void SeasonMenuIconEnemy(int mySeason) {
+    flagSet(1); // no hurtbox
+    flagSet(2); // no hitbox
+    flagSet(128); // not killed by dialogRead or enmKillAll
+    flagSet(12); // don't delete beyond screen edges
+
+    anmSelect(SEASON_ANM_INDEX);
+    anmSetSprite(0, SMENU_ICON_ANM_SCRIPT);
+    anmSwitch(0, 100 + mySeason);
+
+    // The parent told us its ID by setting our life.
+    // Use that channel for communication.
+    int parent = LIFE;
+
+    // If the player keeps changing the season, we will keep letting the angle
+    // increase in magnitude; this way, things never appear to move backwards.
+    //
+    // Technically, this will accumulate roundoff error over time, but the player
+    // is not going to be changing season enough times for it to become noticeable.
+    int curSeason = CurrentSeason();
+    float targetAngle = DIRECTION_UP + TAU_OVER_FIVE * _f((mySeason - curSeason) % 5);
+    F0 = targetAngle;
+
+    if (curSeason == mySeason) {
+        anmAlpha(0, SMENU_ICON_ALPHA_ACTIVE);
+        anmScale(0, SMENU_ICON_SCALE_ACTIVE, SMENU_ICON_SCALE_ACTIVE);
+    } else {
+        anmAlpha(0, SMENU_ICON_ALPHA_INACTIVE);
+        anmScale(0, SMENU_ICON_SCALE_INACTIVE, SMENU_ICON_SCALE_INACTIVE);
+    }
+
+    int oldSeason = curSeason;
+    int received = 0;
+    while(!received) {
+        curSeason = CurrentSeason();
+
+        if (oldSeason != curSeason) {
+            if (oldSeason == mySeason) {
+                anmAlphaTime(0, 7, 4, SMENU_ICON_ALPHA_INACTIVE);
+                anmScaleTime(0, 7, 4, SMENU_ICON_SCALE_INACTIVE, SMENU_ICON_SCALE_INACTIVE);
+            } else if (curSeason == mySeason) {
+                anmAlphaTime(0, 7, 4, SMENU_ICON_ALPHA_ACTIVE);
+                anmScaleTime(0, 7, 4, SMENU_ICON_SCALE_ACTIVE, SMENU_ICON_SCALE_ACTIVE);
+            }
+
+            if ((oldSeason + 1) % 5 == curSeason) {
+                targetAngle -= TAU_OVER_FIVE; // CCW
+            } else if (oldSeason == (curSeason + 1) % 5) {
+                targetAngle += TAU_OVER_FIVE; // CW
+            } else {
+                printf("season changed impossibly fast!\n");
+            }
+
+            floatTime(0, F0, 7 /* time */, 4 /* mode */, F0, targetAngle);
+            oldSeason = curSeason;
+        }
+
+        movePos(PLAYER_X, PLAYER_Y);
+        moveCircleRel(F0, 0f, SMENU_ICON_RADIUS, 0f);
+
+        wait(1);
+        // stop once we hear from the parent
+        msgCheck(received, parent);
+    }
+
+    // Disappear into player
+    anmAlphaTime(0, 15, 0, 0);
+    floatTime(1, F1, 15, 0, SMENU_ICON_RADIUS, 0f);
+    times(15) {
+        moveCircleRel(F0, 0f, F1, 0f);
+        wait(1);
+    }
+    delete();
+}
+
+// ========================================
+
+void SeasonInputEnemy() {
+    flagSet(32); // intangible
+
+    // (in case e.g. the player did a release at the end of a stage and the release
+    //  enemy was instakilled before it could reset these)
+    SetActiveReleaseState(0);
+    playerAllowBomb(true);
+    playerSetDamageMult(1f);
+
+    int oldInput = $INPUT;
+    int tokenSetting = CurrentTokenSetting();
+
+    while(true) {
+        int risingEdge = $INPUT & BitNot(oldInput);
+
+        if (tokenSetting == TOKEN_SETTING_SIMPLE) {
+            playerSetHyperTimer(0);
+        }
+
+        int usedCKey = (risingEdge & KEY_THREE);
+        usedCKey = usedCKey && !DIALOG;
+        usedCKey = usedCKey && (PLSTATE == PL_NORMAL);
+
+        int canRelease = SeasonLevel(CurrentSeasonPower()) > 0;
+        canRelease = canRelease && !ActiveReleaseState();
+        canRelease = canRelease && !BOMBING;
+
+        if (usedCKey && HYPERTIMER > 0) { // Note: HYPERTIMER can be negative...
+            // cancel the hyper instead, because that's obviously what the player wanted to happen
+            seasonsPatchHyperCancel();
+
+        } else if (usedCKey && canRelease) {
+            // create a release at the current season level
+            enmCreate("SeasonReleaseEnemy", %PLAYER_X, %PLAYER_Y, 1, 0, 0);
+
+            int power = CurrentSeasonPower();
+            if (SeasonUsesOneLevel(CurrentSeason())) {
+                power -= SeasonPowerOneLevelCost(SeasonLevel(power));
+            } else {
+                power = 0;
+            }
+            SetCurrentSeasonPower(power);
+        }
+
+        oldInput = $INPUT;
+        wait(1);
+    }
+    return;
+}
+
+// ========================================
+
+global SG_SLOT__BOX = 0;
+global SG_SLOT__FILL_FG = 1;
+global SG_SLOT__FILL_BG = 2;
+global SG_SLOT__SEASON_NAME = 3;
+global SG_SLOT__RELEASABLE = 4;
+global SG_NUM_ANM_SCRIPTS = 5;
+
+// General events that all season gauge anm scripts listen for.
+global SG_EVENT__DISAPPEAR = 1;
+global SG_EVENT__PLAYER_FAR = 4;
+global SG_EVENT__PLAYER_NEAR = 5;
+// Originally in TH16, most sprites of the season gauge listened for
+// events 2 (level becomes >= 1) and 3 (level becomes 0).
+// However, one of them instead listened to events 8-13 (level became value 1-6).
+//
+// We've modified the scripts so that all listen to 7-13 for levels 0-6.
+global SG_EVENT__SET_LEVEL_0 = 7;
+
+void SeasonGaugeEnemy__Event(int event) {
+    int slot = 0;
+    times(SG_NUM_ANM_SCRIPTS) {
+        anmSwitch(slot, event);
+        slot += 1;
+    }
+    return;
+}
+
+void SeasonGaugeEnemy__SetSeason(int season) {
+    anmSwitch(SG_SLOT__SEASON_NAME, 100 + season);
+    return;
+}
+
+int ColorMultiplyAlpha(int rgba, int alpha) {
+    int rgb = rgba % 0x01000000;
+    float alphaF = _f(alpha) / 255f;
+    float alphaF2 = _f(rgba / 0x01000000) / 255f;
+    float alphaProd = (alphaF * alphaF2) * 255f;
+    return _S(alphaProd) * 0x01000000 + rgb;
+}
+
+void SeasonGaugeEnemy() {
+    flagSet(1); // no hurtbox
+    flagSet(2); // no hitbox
+    flagSet(128); // not killed by dialogRead or enmKillAll
+
+    anmSelect(SEASON_ANM_INDEX);
+
+    movePos(0f, -36f); // offset to not be on top of beast items
+
+    int slot = 0;
+    times(SG_NUM_ANM_SCRIPTS) {
+        anmSetSprite(slot, SG_FIRST_ANM_SCRIPT + slot);
+        slot += 1;
+    }
+
+    int wasPlayerNear = 0;
+    int oldSeason = -1;
+    int oldLevel = -1;
+    int oldPower = CurrentSeasonPower();
+
+    // for simulating alphaTime on the text label
+    F0 = 255;
+
+    while(true) {
+        int season = CurrentSeason();
+        int power = CurrentSeasonPower();
+        int level = SeasonLevel(power);
+
+        unless (0 <= power && power <= MAX_SEASON_POWER) {
+            msgf("ERROR: season power out of range: %d", _SS power);
+        }
+
+        // check for events.  We can only send one event per frame, so we use an if-else chain
+        // to hold off on updating more than one thing. (checking things in decreasing order
+        // of urgency)
+        if (season != oldSeason) {
+            SeasonGaugeEnemy__SetSeason(season);
+            oldSeason = season;
+
+        } else if (level != oldLevel) {
+            SeasonGaugeEnemy__Event(SG_EVENT__SET_LEVEL_0 + level);
+            oldLevel = level;
+
+        } else if (!wasPlayerNear && ((%PLAYER_X < SG_PLAYER_NEAR_X) && (%PLAYER_Y > SG_PLAYER_NEAR_Y))) {
+            SeasonGaugeEnemy__Event(SG_EVENT__PLAYER_NEAR);
+            floatTime(0, %F0, 5, 0, F0, 64f);
+            wasPlayerNear = true;
+        } else if (wasPlayerNear && !((%PLAYER_X < SG_PLAYER_FAR_X) && (%PLAYER_Y > SG_PLAYER_FAR_Y))) {
+            SeasonGaugeEnemy__Event(SG_EVENT__PLAYER_FAR);
+            floatTime(0, %F0, 5, 0, F0, 255f);
+            wasPlayerNear = false;
+        }
+
+        int gaugeData = SeasonGaugeData(level);
+        int gaugeStart = gaugeData % 0x1000;
+        int gaugeEnd = gaugeData / 0x1000;
+        float ratio = _f(power - gaugeStart) / _f(gaugeEnd - gaugeStart);
+        anmScale(SG_SLOT__FILL_FG, ratio, 1f);
+        anmScale(SG_SLOT__FILL_BG, _f(level > 0), 1f);
+
+        // FIXME: this doesn't seem to work quite correctly.
+        int color = ColorMultiplyAlpha(SeasonLevelNumberColor(level), _S(F0));
+        drawColor(color);
+        drawFont(2);
+        drawAnchor(ANCHOR_CENTER, ANCHOR_BOTTOM);
+
+        // not sure why the magic number here is 18 but it is
+        drawf(-132f, 446f-18f, "%d", _SS level);
+        drawReset();
+        wait(1);
+    }
+    return;
+}
+
+// ========================================
+
+void SeasonReleaseEnemy() {
+    flagSet(1); // no hurtbox
+    flagSet(2); // no hitbox
+    flagSet(128); // not killed by dialogRead or enmKillAll
+    flagSet(12); // don't delete beyond screen edges (cooldown would be stuck on)
+
+    movePos(PLAYER_X, PLAYER_Y);
+
+    int season = CurrentSeason();
+
+    // All releases have stats that grow with the level you are at when you perform
+    // the release, *even if only one level is spent* (i.e. Summer and Doyou).
+    int level = SeasonLevel(CurrentSeasonPower());
+    if (level == 0) {
+        return;
+    }
+
+    // Set persistent variables.
+    SetActiveReleaseState(level);
+    playerAllowBomb(false);
+    if (season == WINTER) {
+        playerSetDamageMult(1.5f);
+    }
+
+    int seasonIframes = SeasonIframes(season);
+    if (IFRAMES < seasonIframes) {
+        playerSetIframes(seasonIframes);
+    }
+
+    SeasonReleaseSound();
+
+    anmSelect(SEASON_ANM_INDEX);
+    anmSetSprite(0, 2*season + 0);
+    anmSetSprite(1, 2*season + 1);
+
+    // Originally in TH16, the following things are all controlled by the ANM:
+    //
+    // - Damage source radius.  (the game reads the current value of anm_vm.scale.x)
+    // - Damage source center position.  (the game computes anm_vm.final_pos())
+    //     - Relevant for Doyou release, which uses its ANM script to move down.
+    // - When to begin the 1.5s cooldown timer.  (the game waits until the ANM VM is deleted)
+    //
+    // None of these properties of the anm VM can be queried from ECL, however,
+    // so we instead port large portions of the anm script to ECL.
+    //
+    // To control the scales, we use the ECL floatTime instruction,
+    // and have it write to these variables.
+    %F1 = 1f; // inner radius
+    %F2 = 1f; // outer radius
+
+    // TH16 originally set three vars on the anm VM as some form of input parameters.
+    // (the subseason ShotType does this after it creates the VMs in the first method
+    //  of its vtable)
+    float innerRadius0 = SeasonRadius0(season, level); // field %F0 in original
+    float innerRadius1 = SeasonRadius1(season, level); // field %F1 in original
+    int timeParam = SeasonTimeParam(season, level); // field $I3 in original
+
+    // The second anm VM (the outer aura) gets larger input params.
+    float outerRadius0;
+    float outerRadius1;
+    if (season == WINTER) {
+        outerRadius0 = innerRadius0 * 1.2;
+        outerRadius1 = innerRadius1 * 1.2;
+    } else if (season == SPRING) {
+        outerRadius0 = innerRadius0 + 16f;
+        outerRadius1 = innerRadius1 + 16f;
+    } else {
+        outerRadius0 = innerRadius0 + 8f;
+        outerRadius1 = innerRadius1 + 8f;
+    }
+
+    int damage = SeasonDamage(season);
+    damage = _S(_f(damage) * GAME_DPS_SCALE);
+
+    // Most of the anm scripts have been preserved up to the first time label,
+    // but Doyou's downward motion had to be moved to ECL for the sake of our hitbox.
+    if (season == DOYOU) {
+        // original: posTime(60, 1, 0.0f, 48.0f, 0.0f);
+        movePosRelTime(60, 1, 0.0f, 48.0f);
+    }
+
+    // At this point there is a +1 time label in all original anm scripts.
+    //
+    // I don't believe this actually waits a frame. (more precisely, I think the
+    // anm VM runs 2 frames on the first game frame).  I believe it is here in order
+    // to exit the automatic initial call to the anm parser early, giving the ShotType
+    // a chance to initialize the %F0, %F1, and $I3 fields.
+    //
+    // I checked using frame advance with Doyou and AFAICT Doyou does appear immediately
+    // at full size rather than waiting one frame at scale 1f.
+    //
+    // Hence, we do NOT wait a frame here.
+
+    // All scripts had a case(7) label here but I'm not sure if it was ever used?
+CASE_7:
+
+    if (season == DOYOU) {
+        // in the original scripts:
+        //   scale(%F0, %F0);
+        //   scaleTime(50, 0, %F1, %F1);
+        //
+        // Basically, doyou starts big and then shrinks.
+        floatTime(0, %F1, 50, 0, innerRadius0, innerRadius1);
+        floatTime(1, %F2, 50, 0, outerRadius0, outerRadius1);
+    } else {
+        // in the original scripts:
+        //     Fall:  scaleTime(10, 4, %F0, %F0);
+        //   Spring:  scaleTime(10, 4, %F0, %F1);
+        //   Summer:  scaleTime(10, 4, %F0, %F1);
+        //   Winter:  scaleTime(10, 4, %F0, %F1);
+        //
+        // Basically, these seasons begin by expanding from a point.
+        //
+        // Notice how the latter three all use radius1 as a y radius.
+        // However, all of those three seasons had radius1 == radius0 so it didn't matter
+        // and there is no need for us to track separate y scales.
+        //
+        // The following encodes `scaleTime(10, 4, radius0, radius0);`
+        floatTime(0, %F1, 10, 4, %F1, innerRadius0);
+        floatTime(1, %F2, 10, 4, %F2, outerRadius0);
+    }
+
+    // time label +10 found in all original anm scripts
+    ReleaseWait(10, season, damage);
+
+    if (season == FALL) {
+        // in the original scripts:
+        //   scaleTime($I3, 4, %F1, %F1);
+        floatTime(0, %F1, timeParam, 4, %F1, innerRadius1);
+        floatTime(1, %F2, timeParam, 4, %F2, outerRadius1);
+    }
+
+    int slot = 0;
+    times(2) {
+        // Doesn't this first alpha2Time just get overwritten?
+        // Anyways, this exact sequence of commands appears in all anm scripts.
+        anmAlpha2Time(slot, 20, 0, 64);
+        anmAlphaTime(slot, 250, 0, 64);
+        anmAlpha2Time(slot, 250, 0, 64);
+        slot += 1;
+    }
+
+    // wait($I3) in all original anm scripts
+    ReleaseWait(timeParam, season, damage);
+
+    // All scripts had a case(1) label here but I'm not sure if it was ever used?
+CASE_1:
+
+    slot = 0;
+    times(2) {
+        anmAlphaTime(slot, 20, 0, 0);
+        anmAlpha2Time(slot, 20, 0, 0);
+        slot += 1;
+    }
+
+    // time label +20 found in all original anm scripts
+    ReleaseWait(20, season, damage);
+
+    // All seasons set a 45 frame cooldown timer once the ShotType object
+    // notices that the ANM VM has died.
+    //
+    // I'm not actually sure if this should be wait(45) or wait(46) for
+    // best accuracy, but who cares about 1 frame.
+    //
+    // But first, fix persistent variables. (in case a stage clear deletes us
+    // before this happens, the InputEnemy will fix these in the next stage)
+    SetActiveReleaseState(RELEASE_IN_COOLDOWN);
+    playerAllowBomb(true);
+    playerSetDamageMult(1f);
+    flagSet(32); // intangible
+    wait(45);
+
+    SetActiveReleaseState(0);
+    delete();
+}
+
+void ReleaseWait(int frames, int season, int damage) {
+    // This simulates wait(n) or a time label from the original anm.
+    times(frames) {
+        // Synchronize the anm scales with our computed scales.
+        anmScale(0, %F1, %F1);
+        anmScale(1, %F2, %F2);
+
+        if (season == FALL) {
+            playerSetSpeedMult(1.5f);
+        }
+
+        // TH16 does this in the second method in the ShotType vtable for fall subseason.
+        // (It actually sets the vector at offset a8 on the ANM, and I'm not sure what that is
+        //  since no anm commands set it... But setting abs pos seems to work!)
+        if (season == FALL) {
+            ABS_X = PLAYER_X;
+            ABS_Y = PLAYER_Y;
+        }
+
+        // Damage enemies within the inner circle.
+        int count; // output var
+        enmDamageRad(count, %FINAL_X, %FINAL_Y, %F1, -1, damage);
+
+        // Cancel bullets.
+        // We supply a negative value to let the binhack know it's a release.
+        etCancel2(-%F1);
+
+        wait(1);
+    }
+}
+
+// ========================================
+
+void SeasonReleaseSound() {
+    // You love it.
+    playSound(74); // PLING!!!
+    playSound(77); // PSSSHHHHOSHHHHHESHHHH
+    return;
+}
+
+// ========================================
+
+void SeasonDebugGlobalsEnemy() {
+    flagSet(32); // intangible
+
+    while(true) {
+        drawf(-224f, 0f, "G4: %d", _SS $GI4);
+        drawf(-224f, 12f, "G5: %d", _SS $GI5);
+        drawf(-224f, 24f, "G6: %d", _SS $GI6);
+        drawf(-224f, 36f, "G7: %d", _SS $GI7);
+        wait(1);
+    }
+    return;
+}
+
+void SeasonDebugMenuEnemy() {
+    flagSet(32); // intangible
+
+    playerAllowShot(false);
+    playerAllowBomb(false);
+
+    SetCurrentSeasonPower(0);
+
+    int oldInput = 0;
+    while(true) {
+        int risingEdge = $INPUT & BitNot(oldInput);
+        if (risingEdge & KEY_BOMB) {
+            SetCurrentSeason((CurrentSeason() + 1) % NUM_SEASONS);
+        }
+        if (risingEdge & KEY_SHOT) {
+            if ($INPUT & KEY_SLOW) {
+                int level = SeasonLevel(CurrentSeasonPower());
+                int power = SeasonPowerRequired((level + 1) % 7);
+                SetCurrentSeasonPower(power);
+            } else {
+                SetCurrentSeasonPower(CurrentSeasonPower() + 10);
+            }
+        }
+
+        oldInput = $INPUT;
+        playerSetLives(CurrentSeason());
+        int level = SeasonLevel(CurrentSeasonPower());
+        playerSetBombs(level);
+        $SCORE = CurrentSeasonPower();
+        wait(1);
+    }
+    return;
+}
+
+void DebugAnmMenuEnemy() {
+    flagSet(32); // intangible
+    flagSet(12); // don't delete beyond screen edges
+
+    movePos(0f, 200f);
+    playerAllowBomb(false);
+    playerAllowShot(false);
+
+    int oldInput = 0;
+    int effIndex = 0;
+    int anmIndex = 0;
+    int enemyId = 0;
+    int caseIndex = 0;
+
+    while(true) {
+        int risingEdge = $INPUT & BitNot(oldInput);
+        if (risingEdge & KEY_BOMB) {
+            if ($INPUT & KEY_SHOT) {
+                msgSend(0f, 0f, _f(caseIndex), 2f, enemyId);
+            } else {
+                if (enemyId) {
+                    msgSend(0f, 0f, 0f, 1f, enemyId);
+                }
+                SetDebuggerGlobal(1000 * anmIndex + effIndex);
+                enmCreate("DebugAnmEnemy", 0f, 0f, 1, 0, 0);
+                enemyId = LAST_ENM_ID;
+            }
+        }
+
+        int shiftMultiplier = 1;
+        if ($INPUT & KEY_SLOW) {
+            shiftMultiplier = 10;
+        }
+
+        if ($INPUT & KEY_SHOT) {
+            if (risingEdge & KEY_LEFT) { caseIndex -= shiftMultiplier; }
+            if (risingEdge & KEY_RIGHT) { caseIndex += shiftMultiplier; }
+        } else if ($INPUT & KEY_SKIP) {
+            if (risingEdge & KEY_LEFT) { %ABS_X -= _f(shiftMultiplier); }
+            if (risingEdge & KEY_RIGHT) { %ABS_X += _f(shiftMultiplier); }
+            if (risingEdge & KEY_UP) { %ABS_Y -= _f(shiftMultiplier); }
+            if (risingEdge & KEY_DOWN) { %ABS_Y += _f(shiftMultiplier); }
+            msgSend(%ABS_X, %ABS_Y, 0f, 0f, enemyId);
+        } else {
+            if (risingEdge & KEY_LEFT) { effIndex -= shiftMultiplier; }
+            if (risingEdge & KEY_RIGHT) { effIndex += shiftMultiplier; }
+            if (risingEdge & KEY_DOWN) { anmIndex -= 1; }
+            if (risingEdge & KEY_UP) { anmIndex += 1; }
+        }
+
+        playerPos(0f, 400f);
+        drawColor(0xFFFF0000);
+        drawf(0f, 0f, "INPUT %x", _SS $INPUT);
+        drawf(0f, 12f, "ANM %d (UD) SCR %d (LR)", _SS anmIndex, _SS effIndex);
+        if ($INPUT & KEY_SHOT) {
+            drawf(0f, 24f, "Z+X to do anmSwitch(%d)", _SS caseIndex);
+        }
+        oldInput = $INPUT;
+        wait(1);
+    }
+    return;
+}
+
+void DebugAnmEnemy() {
+    msgReset(ID);
+
+    flagSet(1); // no hurtbox
+    flagSet(2); // no hitbox
+    flagSet(12); // don't delete beyond screen edges
+
+    int value = DebuggerGlobal();
+    playSound(1);
+    anmSelect(value / 1000);
+    anmSetSprite(0, value % 1000);
+
+    while (true) {
+        int received;
+        msgCheck(received, ID);
+        while (received) {
+            float a, b, c, d;
+            msgReceive(received, a, b, c, d, ID);
+            if (d == 0f) { movePos(a, b); }
+            if (d == 1f) { delete(); }
+            if (d == 2f) { anmSwitch(0, _S(c)); }
+        }
+        wait(1);
+    }
+}
+
+void SoundTestEnemy() {
+    flagSet(32); // intangible
+    flagSet(12); // don't delete beyond screen edges
+
+    playerAllowBomb(false);
+    playerAllowShot(false);
+
+    int oldInput = 0;
+    int soundIndex = 0;
+
+    while(true) {
+        int risingEdge = $INPUT & BitNot(oldInput);
+        if (risingEdge & KEY_SHOT) {
+            playSound(soundIndex);
+        }
+
+        int shiftMultiplier = 1;
+        if ($INPUT & KEY_SLOW) {
+            shiftMultiplier = 10;
+        }
+
+        if (risingEdge & KEY_LEFT) { soundIndex -= shiftMultiplier; }
+        if (risingEdge & KEY_RIGHT) { soundIndex += shiftMultiplier; }
+
+        playerPos(0f, 400f);
+        drawColor(0xFFFF0000);
+        drawf(0f, 12f, "SOUND %d", _SS soundIndex);
+        drawColor(0xFFFFFFFF);
+        oldInput = $INPUT;
+        wait(1);
+    }
+    return;
+}
+

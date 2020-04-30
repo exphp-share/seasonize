@@ -1,0 +1,355 @@
+# This is a collection of binhacks that all apply to a single,
+# extremely important function (ItemManager::tick_items).
+
+# Almost the full behavior of season items is implemented here,
+# as well as the "autocollect" properties of releases.
+
+binhacks:
+  Season item pickup effect:
+    addr: "0x433b2d"
+    expected: "8d41ff // 83f80d"
+    code:
+      - "E9 [codecave:ExpHP.seasonize.item-pickup-effect]"
+      - "CC"
+
+  Season items in Delayed PIV state:
+    addr: "0x004334b3"
+    expected: "C787 580C0000 02000000 // FF 34 C5 A80D4A00"
+    codecave:
+      - "83F8 30               " # cmp eax, 0x30
+      - "74 13                 " # je season
+      # non-season:
+      - "C787 580C0000 02000000" # mov dword [edi + 0xc58], 2   ; Item::state  (2 = rising PIV item)
+      - "FF34C5 A80D4A00       " # push dword [eax*8 + 0x4a0da8]   ; push ANM script
+      - "EB 15                 " # jmp finish
+      # season:
+      - "C787 580C0000 09000000  " # mov dword [edi + 0xc58], 9   ; Item::state  (9 = season flyout)
+      - "E8 [codecave:ExpHP.seasonize.get-season]" # call GetSeason()
+      - "05 81000000             " # add eax, 0x81
+      - "50                      " # push eax   ; push ANM script
+      # finish:
+      # abs_jmp_hack 0x4334c4
+      - "E8 00000000             " # call next ins
+      - "C70424 c4344300         " # mov [esp], 004334b8
+      - "C3                      " # ret
+
+  Season item Flyout state implementation:
+    addr: "0x0043386d"
+    expected: "83F8 03 // 74 B1"
+    code: "E9 [codecave:ExpHP.seasonize.item-flyout-state]"
+
+  Season item in Flyout state cannot be attracted:
+    addr: "0x433fd7"
+    expected:
+      - "83f804 // 0f84b8000000"
+      - "83f803 // 0f84af000000"
+    codecave:
+      # The original two checks
+      - "83F804                    " #  cmp     eax, 0x4
+      - "740C                      " #  je      .cannot_attract
+      - "83F803                    " #  cmp     eax, 0x3
+      - "7407                      " #  je      .cannot_attract
+
+      # New check added by us
+      - "83F809                    " #  cmp     eax, 0x9
+      - "7402                      " #  je      .cannot_attract
+
+      - "EB0D                      " #  jmp     .can_attract
+
+      # workaround for [Rx] being broken  (side-effect-free absolute jump)
+      # .cannot_attract:
+      - "E800000000                " #  call    (next instruction)
+      - "C7042498404300            " #  mov     dword [esp], 0x00434098
+      - "C3                        " #  ret
+
+      # workaround for [Rx] being broken  (side-effect-free absolute jump)
+      # .can_attract:
+      - "E800000000                " #  call    (next instruction)
+      - "C70424E93F4300            " #  mov     dword [esp], 0x00433fe9
+      - "C3                        " #  ret
+
+  Season release autocollects items in Falling state:
+    addr: "0x433590"
+    expected: "a1 88764b00"
+    codecave:
+      - "E8 [codecave:ExpHP.seasonize.is-bomb-or-release-autocollecting]" # call
+      - "85C0              " # test    eax, eax
+      - "740D              " # jz      .failure
+      # .success:
+      # abs_jmp_hack 0x43380a
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 0A384300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+      # .failure:
+      # abs_jmp_hack 0x4335a5
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 A5354300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+  Season release autocollects items in Attracted state:
+    addr: "0x4338b3"
+    expected: "a1 88764b00"
+    codecave:
+      - "E8 [codecave:ExpHP.seasonize.is-bomb-or-release-autocollecting]" # call
+      - "85C0              " # test    eax, eax
+      - "740D              " # jz      .failure
+      # .success:
+      # abs_jmp_hack 0x43380a
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 0A384300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+      # .failure:
+      # abs_jmp_hack 0x4338c8
+      - "E8 00000000       " # <1>  call %%next
+      - "C70424 C8384300   " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+codecaves:
+  ExpHP.seasonize.item-pickup-effect:
+    - "83F930                    " #  cmp     ecx, 0x30
+    - "7413                      " #  je      .effect
+
+    # original code
+    - "8D41FF                    " #  lea     eax, [ecx-0x1]
+    - "83F80D                    " #  cmp     eax, 0xd
+
+    # workaround for [Rx] being broken  (side-effect-free absolute jump)
+    - "E800000000                " #  call    (next instruction)
+    - "C70424333B4300            " #  mov     dword [esp], 0x00433b33
+    - "C3                        " #  ret
+
+    # .effect:
+    - "E8 [codecave:ExpHP.seasonize.increment-season-power]" #  call
+    - "85C0                      " #  test    eax, eax
+    - "7422                      " #  jz      .skip
+
+    # .season_level_increase:
+    # At this point, TH16 calls a method on Player to make it regenerate its options.
+    # We haven't implemented subseason options (...yet?), so there's no point.
+
+    # Make "PowerUp" floaty text
+    - "6840FFFFFF                " #  push    0xffffff40  ; color
+    - "6AFF                      " #  push    0xffffffff  ; value -1 (displays "PowerUp")
+    - "8DB7100C0000              " #  lea     esi, [edi+0xc10]  ; Item::position
+    - "56                        " #  push    esi
+    - "B8 700b4500               " #  mov     eax, 0x450b70  ; generate_chinese_numeral_popup
+    - "FFD0                      " #  call    eax
+
+    # Play sound effect for level up
+    - "F30F1016                  " #  movss   xmm2, dword [esi]
+    - "6A3F                      " #  push    0x3f
+    - "B8 F0544600               " #  mov     eax, 0x4654f0  ; play_sound_at_position
+    - "FFD0                      " #  call    eax
+
+    # TH16 adds 10 points to score here.
+    # We don't bother because it's unclear how well this would balance
+    # with TH17 scoring, and also because add_to_score is small enough
+    # in TH17 that it got inlined everywhere. (yet is still nontrivial)
+
+    # .skip:
+    # other item pickup branches in TH17 do this if they modified esi
+    - "8B35D0774B00              " #  mov     esi, dword [0x4b77d0]
+    - "8974240C                  " #  mov     dword [esp+0xc], esi
+
+    # workaround for [Rx] being broken  (side-effect-free absolute jump)
+    - "E800000000                " #  call    (next instruction)
+    - "C70424863F4300            " #  mov     dword [esp], 0x433f86
+    - "C3                        " #  ret
+
+  # int __stdcall IncrementSeasonPower();
+  #
+  # Simulates th16.exe+3de50  `int item_collect_season(DWORD __unused)`.
+  # (we don't bother taking an argument like the original did).
+  # Increases season power by 1 (up to cap).
+  # Return value is 1 if season level has just increased.
+  #
+  # Additionally preserves xmm registers, ecx, and edx, but not the FPU.
+  ExpHP.seasonize.increment-season-power:
+    - "51                    " # push ecx
+    - "52                    " # push edx
+
+    # Query ECLPlus
+    - "6A 01                 " # push 1      # arg 3: mode    (1 = get pointer)
+    - "68 CBE0FFFF           " # push -7989  # arg 2: var ID  (GI5)
+    - "6A 00                 " # push 0      # arg 1: enemy   (null)
+    - "E8 [codecave:ExpHP.seasonize.eclplus-int-switch]" # call
+
+    # Stop now if already max season
+    - "8138 74040000         " # cmp    DWORD [eax], 1140
+    - "7D 2C                 " # jnl    .bad
+
+    # increment and find out if we hit a requirement
+    - "FF00                  " # inc    DWORD [eax]
+
+    - "8B00                  " # mov    eax, [eax]
+    - "83F8 64               " # cmp    eax, 100
+    - "74 27                 " # je     .good
+    - "3D E6000000           " # cmp    eax, 230
+    - "74 20                 " # je     .good
+    - "3D 86010000           " # cmp    eax, 390
+    - "74 19                 " # je     .good
+    - "3D 4E020000           " # cmp    eax, 590
+    - "74 12                 " # je     .good
+    - "3D 48030000           " # cmp    eax, 840
+    - "74 0B                 " # je     .good
+    - "3D 74040000           " # cmp    eax, 1140
+    - "74 04                 " # je     .good
+
+    # .bad:
+    - "31C0                  " # xor    eax, eax
+    - "EB 05                 " # jmp    .end
+    # .good:
+    - "B8 01000000           " # mov    eax, 1
+    # .end:
+    - "5A                    " # pop edx
+    - "59                    " # pop ecx
+    - "C3                    " # ret
+
+  ExpHP.seasonize.delayed-piv-state:
+    - "83F8 30               " # cmp eax, 0x30
+    - "74 13                 " # je season
+    # non-season:
+    - "C787 580C0000 02000000" # mov dword [edi + 0xc58], 2   ; Item::state  (2 = rising PIV item)
+    - "FF34C5 A80D4A00       " # push dword [eax*8 + 0x4a0da8]
+    - "EB 15                 " # jmp finish
+    # season:
+    # FIXME: This needs its own state (season item flyout state;  state 3 from TH16)
+    - "C787 580C0000 09000000  " # mov dword [edi + 0xc58], 9   ; Item::state  (9 = season flyout)
+    - "E8 [codecave:ExpHP.seasonize.get-season]" # call GetSeason()
+    - "05 81000000             " # add eax, 0x81
+    - "50                      " # push eax
+    # finish:
+    # "E8 [Rx004334b8]             "
+    # workaround for [Rx] being broken  (side-effect-free absolute jump)
+    - "E8 00000000                 " # call next ins
+    - "C70424 B8344300             " # mov [esp], 004334b8
+    - "C3                          " # ret
+
+  # Implements item state 9 (equivalent to TH16's item state 3)
+  ExpHP.seasonize.item-flyout-state:
+    # Fit in an extra branch for state 9 after the branch for state 3
+    - "83F8 03                   " # cmp eax, 0x3
+    - "74 07                     " # je .jmp_to_case_3
+    - "83F8 09                   " # cmp eax, 0x9
+    - "74 1C                     " # je .case_9
+    - "EB 0D                     " # jmp .jmp_to_more_cases
+
+    # .jmp_to_case_3:
+    # workaround for [Rx] being broken  (side-effect-free absolute jump)
+    - "E8 00000000               " # call (next instruction)
+    - "C70424 23384300           " # mov     dword [esp], 0x433823  ; state 3 code
+    - "C3                        " # ret
+
+    # .jmp_to_more_cases:
+    # workaround for [Rx] being broken  (side-effect-free absolute jump)
+    - "E8 00000000               " # call (next instruction)
+    - "C70424 72384300           " # mov     dword [esp], 0x433872  ; next in if-then-else chain
+    - "C3                        " # ret
+
+    # .case_9:
+    # Move in a straight line
+    - "F30F1005 18594B00         " # movss   xmm0, dword [0x004b5918]  ; GAME_SPEED
+    - "F30F108F 1C0C0000         " # movss   xmm1, dword [edi+0xc1c] ; {Item::velocity.x}
+    - "F30F1097 200C0000         " # movss   xmm2, dword [edi+0xc20] ; {Item::velocity.y}
+    - "F30F109F 240C0000         " # movss   xmm3, dword [edi+0xc24] ; {Item::velocity.z}
+    - "F30F59C8                  " # mulss   xmm1, xmm0
+    - "F30F59D0                  " # mulss   xmm2, xmm0
+    - "F30F59D8                  " # mulss   xmm3, xmm0
+    - "F30F588F 100C0000         " # addss   xmm1, dword [edi+0xc10] ; {Item::position.x}
+    - "F30F5897 140C0000         " # addss   xmm2, dword [edi+0xc14] ; {Item::position.y}
+    - "F30F589F 180C0000         " # addss   xmm3, dword [edi+0xc18] ; {Item::position.z}
+    - "F30F118F 100C0000         " # movss   dword [edi+0xc10], xmm1 ; {Item::position.x}
+    - "F30F1197 140C0000         " # movss   dword [edi+0xc14], xmm2 ; {Item::position.y}
+    - "F30F119F 180C0000         " # movss   dword [edi+0xc18], xmm3 ; {Item::position.z}
+
+    # Reduce velocity magnitude by 0.03f, compute new velocity vector.
+    # TH16 doesn't multiply this by GAME_SPEED, so we won't either.
+    # (seems like a bug to me though...)
+    - "F30F1087 280C0000         " # movss   xmm0, dword [edi+0xc28]  ; {Item::velocity_magnitude}
+    - "F30F5C05 C03A4A00         " # subss   xmm0, dword [0x004a3ac0]  ; 0.03f
+    - "F30F1187 280C0000         " # movss   dword [edi+0xc28], xmm0  ; {Item::velocity_magnitude}
+    - "83EC 08                   " # sub     esp, 0x8
+    - "F30F114424 04             " # movss   dword [esp+0x4], xmm0  ; arg 2: magnitude
+    - "F30F1087 2C0C0000         " # movss   xmm0, dword [edi+0xc2c]  ; {Item::velocity_angle}
+    - "F30F110424                " # movss   dword [esp], xmm0  ; arg 1: angle
+    - "8D8F 1C0C0000             " # lea     ecx, [edi+0xc1c]  ; arg 0: output
+    - "B8 F04C4300               " # mov     eax, 0x434cf0  ; cartesian_from_polar
+    - "FFD0                      " # call    eax
+
+    # TODO: TEST SEASON AUTOCOLLECT (graze and then quickly use spring release)
+    #
+    # If a bomb/release autocollects during any frame of the flyout state,
+    # the item will be autocollected once it stops moving
+    - "E8 [codecave:ExpHP.seasonize.is-bomb-or-release-autocollecting]" # call
+    - "0987700C0000              " # or      [edi+en_force_autocollect], eax
+
+    # Has this item stopped moving?
+    - "0F2FAF 280C0000           " # comiss  xmm5, dword [edi+0xc28] ; compare 0.0f to {Item::velocity_magnitude}
+    - "7315                      " # jnb     .velocity_nonpositive
+
+    # LABEL .velocity_positive:
+    # Jump to code that deletes out of bounds and collects touched items.
+
+    - "F30F1087 140C0000         " # movss   xmm0, dword [edi+0xc14] ; {Item::position.y}
+    # workaround for [Rx] being broken  (side-effect-free absolute jump)
+    - "E8 00000000               " #  call    (next instruction)
+    - "C70424 27374300           " #  mov     dword [esp], 0x00433727
+    - "C3                        " #  ret
+
+    # LABEL .velocity_nonpositive:
+    # If force_autocollect, next state is autocollected.
+    #            otherwise, next state is falling.
+    - "8B35 D0774B00             " #  mov     esi, dword [0x4b77d0]  ; PLAYER_STRUCT_PTR
+
+    - "83BF 700C0000 00          " #  cmp     dword [edi+0xc70], 0x0  ; {Item::force_autocollect__season_only}
+    - "B8 03000000               " #  mov     eax, 0x3  ; autocollected state
+    - "B9 01000000               " #  mov     ecx, 0x1  ; falling state
+    - "0F44C1                    " #  cmove   eax, ecx
+    - "8987 580C0000             " #  mov     dword [edi+0xc58], eax  ; {Item::state}
+
+    # These velocity fields will be used if we switch to falling.
+    - "C787 1C0C0000 00000000    " #  mov     dword [edi+0xc1c], 0x0  ; {Item::velocity.x}
+    - "C787 200C0000 00000000    " #  mov     dword [edi+0xc20], 0x0  ; {Item::velocity.y}
+    - "C787 240C0000 00000000    " #  mov     dword [edi+0xc24], 0x0  ; {Item::velocity.z}
+    - "C787 280C0000 00000000    " #  mov     dword [edi+0xc28], 0x0  ; {Item::velocity_magnitude}
+    - "C787 2C0C0000 DB0FC93F    " #  mov     dword [edi+0xc2c], 0x3fc90fdb  ; {Item::velocity_angle} {PI/2; straight down}
+
+    # These velocity fields will be used if we switch to autocollected.
+    # To find these offsets just find the place where the rising state transitions to
+    # the autocollected state (0x0043380a in TH17)
+    - "8B86 3C900100             " #  mov     eax, dword [esi+0x1903c]  ; {Player::__unknown_field}
+    - "8B40 08                   " #  mov     eax, dword [eax+0x8]
+    - "8987 640C0000             " #  mov     dword [edi+0xc64], eax  ; {Item::velocity_magnitude_towards_player}
+    - "8B4C24 10                 " #  mov     ecx, dword [esp+0x10]  ; restore ItemManager to ecx
+
+    # Jump to body of Falling state, regardless of which state we have become.
+    # It's only for one frame and velocity is zero, so we won't actually fall if autocollected.
+    #
+    # workaround for [Rx] being broken  (side-effect-free absolute jump)
+    - "E8 00000000               " #  call    (next instruction)
+    - "C70424 20354300           " #  mov     dword [esp], 0x00433520
+    - "C3                        " #  ret
+
+  # Several places in the item update code check the following two conditions for autocollection:
+  # - Is there an active bomb less than 60 frames old?
+  # - Is there an active release, period?
+  #
+  # (of course, TH17 only checks the first condition. We add the latter!)
+  ExpHP.seasonize.is-bomb-or-release-autocollecting:
+    - "A188764B00        " # mov     eax, [SHOTTYPE_PTR]
+    - "83783001          " # cmp     dword [eax+st_bomb_is_active], 0x1
+    - "7508              " # jne     .nobomb
+    - "8378383C          " # cmp     dword [eax+st_bomb_time], 0x3c  ; < 60 frames
+    - "7D02              " # jge     .nobomb
+    - "EB0E              " # jmp     .success
+    # .nobomb:
+    - "E8 [codecave:ExpHP.seasonize.get-active-release-level]" # call    codecave_get_active_release
+    - "85C0              " # test    eax, eax
+    - "7E02              " # jng     .norelease    ; positive (active)
+    - "EB03              " # jmp     .success
+    # .norelease:
+    - "31C0              " # xor     eax, eax
+    - "C3                " # ret
+    # .success:
+    - "B801000000        " # mov     eax, 0x1
+    - "C3                " # ret

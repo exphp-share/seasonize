@@ -1,0 +1,3 @@
+[submodule ".make/ECLplus"]
+	path = .make/ECLplus
+	url = https://github.com/Priw8/ECLplus

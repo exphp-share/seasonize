@@ -1,6 +1,0 @@
-scripts
-source
-game-files
-*.md
-*.pdn
-Makefile

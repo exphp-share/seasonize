@@ -1,0 +1,284 @@
+# Binhacks that generate season items from bullet cancels.
+
+binhacks:
+  Use season release bullet cancel mode:
+    addr: "0x425c9f"
+    expected: "6a01 // 8bcf // f30f1185 98fbffff"
+    codecave:
+      # An explanation:
+      # In TH17, the stack argument to the "cancel_bullets_in_radius" functions
+      # looks like a boolean `is_cancel` because it only has the values 0 and 1,
+      # but in fact it is more like a `cancel_mode` enum.
+      # In TH16, bullets cancelled by releases had a "cancel mode" of 4,
+      # which was checked to generate the season items. Given that the function that
+      # generates the items is used by many different types of objects (not just the
+      # Bullet struct), it seems best to continue this practice.
+      #
+      # We can't supply a cancel mode from ECL, so instead, releases are scripted
+      # to supply negative radii.
+      - "52                " # push    edx
+      - "51                " # push    ecx
+      - "83EC04            " # sub     esp, 0x4
+      - "F30F110424        " # movss   [esp], xmm0  ; xmm0 has radius
+
+      # if radius < 0, it's a release.
+      # we'll operate on the sign bit using an integer register because it's easier.
+      - "8B0C24            " # mov     ecx, [esp]  ; reinterpreting bits as integer
+      - "85C9              " # test    ecx, ecx
+      - "B801000000        " # mov     eax, 0x1
+      - "BA04000000        " # mov     edx, 0x4
+      - "0F4CC2            " # cmovl   eax, edx
+      - "81E1FFFFFF7F      " # and     ecx, 0x7fffffff  ; take absolute value
+      - "890C24            " # mov     [esp], ecx
+
+      - "F30F100424        " # movss   xmm0, [esp]
+      - "83C404            " # add     esp, 0x4
+      - "59                " # pop     ecx
+      - "5A                " # pop     edx
+
+      - "50                " # push    eax  ; save an extra copy
+      - "50                " # push    eax  ; supply as stack arg to cancel_bullets_in_radius function
+
+      # original code.  We have to copy a fair bit, because there's two places that
+      # the cancel mode needs to be used
+      - "89F9              " # mov     ecx, edi
+      - "F30F118598FBFFFF  " # movss   dword [ebp-0x468], xmm0
+      - "8D4144            " # lea     eax, [ecx+en_final_pos]
+      - "F30F109598FBFFFF  " # movss   xmm2, dword [ebp-0x468]
+      - "8B0D8C764B00      " # mov     ecx, dword [ET_OBJECT_PTR]
+      - "50                " # push    eax
+      - "B8F09D4100        " # mov     eax, CANCEL_RADIUS_AS_BOMB
+      - "FFD0              " # call    eax
+
+      - "58                " # pop     eax  ; recover extra copy
+      - "6A01              " # push    0x1  ; second stack arg to cancel_lasers_in_radius
+      - "50                " # push    eax  ; 'cancel mode' arg to cancel_lasers_in_radius
+      # abs_jmp_hack  0x425bcf
+      - "E800000000        " # <1>  call %%next
+      - "C70424CF5B4200    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+  # Bombs get cancel mode 5
+  Adjust bomb cancel mode for seasons:
+    expected: "6a 00"
+    addr:
+      - "0x412dbd" # Reimu call 1 (bullets)
+      - "0x413775" # Reimu call 2 (bullets)
+      - "0x4139ca" # Reimu call 3 (bullets)
+      - "0x413a01" # Reimu call 3 (lasers)
+      - "0x413aac" # Reimu call 4 (bullets)
+      - "0x413ae3" # Reimu call 4 (lasers)
+      - "0x41260c" # Marisa (bullets)
+      - "0x412674" # Marisa (lasers)
+      - "0x4143cc" # Youmu (bullets)
+      - "0x435a13" # Youmu (lasers)
+    code: "6a 05"
+
+  Adjust bomb cancel mode for seasons - Bugged callsites:
+    expected: "6a 01"  # vanilla bug, these callsites generate PIV
+    addr:
+      - "0x412df4" # Reimu call 1 (lasers)
+      - "0x4137ae" # Reimu call 2 (lasers)
+    code: "6a 05"
+
+  # Reset bomb cancel count whenever Bullet manager is reinitialized.
+  #
+  # In TH16, this is a field at offset 0x58 on the supermassive bullet manager struct.
+  # I haven't reversed the TH17 bullet manager much so I don't know if this field is still
+  # there as an unused leftover; we'll just put it in our globals to be safe.
+  Reset bomb cancel counter for seasons:
+    addr: "0x41484a"
+    expected: "68 50144a00"
+    codecave:
+      - "B8 <codecave:ExpHP.seasonize.global-var-store>" # mov eax, GLOBALS
+      - "C7401000000000    " # mov    dword [eax+g_bomb_cancel_count], 0x0
+
+      # original code
+      - "6850144A00        " # push    0x4a1450
+      # abs_jmp_hack 0x41484f
+      - "E800000000        " # <1>  call %%next
+      - "C704244F484100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+  Implement season bullet cancel modes:
+    addr: "0x419c9c"
+    expected: "83fa01 // 7544"
+    codecave:
+      - "83FA01            " # cmp     edx, 0x1
+      - "740C              " # je      .mode_1
+      - "83FA04            " # cmp     edx, 0x4
+      - "7414              " # je      .mode_4
+      - "83FA05            " # cmp     edx, 0x5
+      - "7417              " # je      .mode_5
+      - "EB1B              " # jmp     .mode_0
+
+      # .mode_1:
+      # abs_jmp_hack 0x419ca1
+      - "E800000000        " # <1>  call %%next
+      # <1>  %%next:
+      - "C70424A19C4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+      # .mode_4:  ; Mode 4:  Canceled by release
+      - "56                " # push    esi
+      - "E8 [codecave:ExpHP.seasonize.impl-release-cancel-mode]" # call
+      - "EB06              " # jmp     .mode_0
+
+      # .mode_5:  ; Mode 5:  Canceled by bomb
+      - "56                " # push    esi
+      - "E8 [codecave:ExpHP.seasonize.impl-bomb-cancel-mode]" # call
+
+      # .mode_0:
+      # abs_jmp_hack 0x419ce5
+      - "E800000000        " # <1>  call %%next
+      - "C70424E59C4100    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+  # This is pretty annoying; gen_items_from_cancel got inlined into all places that cancel lasers.
+  # Lots of conditional checks and registers got shuffled around during optimization, and some
+  # instructions in the function were even reordered around code outside the function.
+  #
+  # e.g. the stuff at 0x43b41d seems to be new, so 0x43b429 is the earliest we can do this:
+  Uninline gen_items_from_cancel - Callsite 1:
+    addr: "0x43b429"
+    expected: "85f6 // 0f84d5000000"
+    codecave:
+      - "52 51             " # push edx & ecx
+
+      - "89F2              " # mov     edx, esi           ; edx arg:  cancel mode
+      - "8D4C2444          " # lea     ecx, [esp+0x3c+8]  ; ecx arg:  position
+      - "B8309C4100        " # mov     eax, GEN_ITEMS_FROM_CANCEL
+      - "FFD0              " # call    eax
+
+      - "59 5A             " # pop ecx & edx
+      # abs_jmp_hack 0x43b506
+      - "E800000000        " # <1>  call %%next
+      - "C7042406B54300    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+  Uninline gen_items_from_cancel - Callsite 2:
+    addr: "0x438d77"
+    expected: "85c9 // 0f84be000000"
+    codecave:
+      - "52 51             " # push edx & ecx
+
+      - "89CA              " # mov     edx, ecx           ; edx arg:  cancel mode
+      - "8D4C2440          " # lea     ecx, [esp+0x38+8]  ; ecx arg:  position
+      - "B8309C4100        " # mov     eax, GEN_ITEMS_FROM_CANCEL
+      - "FFD0              " # call    eax
+
+      - "59 5A             " # pop ecx & edx
+      # abs_jmp_hack 0x438e3d
+      - "E800000000        " # <1>  call %%next
+      - "C704243D8E4300    " # <1>  mov dword [esp], %1
+      - "C3                " # <1>  ret
+
+codecaves:
+  # void __stdcall DoBombCancelMode(Float3* pos);
+  ExpHP.seasonize.impl-bomb-cancel-mode:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "BE <codecave:ExpHP.seasonize.global-var-store>" # mov esi, GLOBALS
+
+    # Bombs only generate season items for one in every 3 bullets canceled.
+    # (beginning with the first bullet)
+    - "8B4610            " # mov     eax, dword [esi+g_bomb_cancel_count]
+    - "BF03000000        " # mov     edi, 0x3
+    - "99                " # cdq
+    - "F7FF              " # idiv    edi
+    - "85D2              " # test    edx, edx
+    - "7508              " # jne     .noitem
+
+    - "FF7508            " # push    dword [ebp+0x8]
+    - "E8 [codecave:ExpHP.seasonize.spawn-season-from-cancel]" # call
+
+    # .noitem:
+    - "FF4610            " # inc     dword [esi+g_bomb_cancel_count]
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret     0x4
+
+  # void __stdcall DoReleaseCancelMode(Float3* pos);
+  ExpHP.seasonize.impl-release-cancel-mode:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "8B7508            " # mov     esi, [ebp+0x8]  ; pos
+
+    # Cancels from releases always produce a season item
+    - "56                " # push    esi
+    - "E8 [codecave:ExpHP.seasonize.spawn-season-from-cancel]" # call
+
+    # In the No Hyper setting, they additionally produce a PIV item
+    # that scales with season level, like they do in TH16.
+    - "E8 [codecave:ExpHP.seasonize.get-release-piv-enabled]" # call
+    - "83F801            " # cmp     eax, 1
+    - "7513              " # jne     .nopiv
+
+    - "E8 [codecave:ExpHP.seasonize.get-active-release-level]" # call
+    - "85C0              " # test    eax, eax
+    - "7E0A              " # jle     .nopiv    ; only continue if positive
+
+    - "83C008            " # add     eax, 0x8  ; level 1 makes item type 9, 2 makes 0xa, etc.
+    - "56                " # push    esi
+    - "50                " # push    eax
+    - "E8 [codecave:ExpHP.seasonize.spawn-item-like-cancel-piv]" # call
+
+    # .nopiv:
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret     0x4
+
+  # void __stdcall SpawnSeasonItemFromCancel(Float3* pos);
+  #
+  # To be used for spawning season items from cancels.  These behave very
+  # similarly to PIV items.
+  ExpHP.seasonize.spawn-season-from-cancel:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "FF7508            " # push    dword [ebp+0x8]
+    - "6A30              " # push    0x30
+    - "E8 [codecave:ExpHP.seasonize.spawn-item-like-cancel-piv]" # call
+
+    - "85C0              " # test    eax, eax  ; we'll get null pointer if we hit PIV item limit
+    - "740A              " # jz      .end
+    # Make the item get autocollected once it stops moving.
+    # (this field used to be an argument to spawn_item in TH16)
+    # (this is implemented by another binhack; this field is an unused leftover from TH16)
+    #
+    # Since releases already do this to all season items on every frame, it only really has
+    # an effect on items that are still in the "uninitialized PIV" state at release end.
+    # For bombs, this makes a much bigger difference, since those normally only autocollect
+    # items during the first 60 frames.
+    - "C780700C000001000000" # mov    dword [eax+en_force_autocollect], 0x1
+    # .end:
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20400            " # ret     0x4
+
+  # Item* __stdcall SpawnItemLikeCancelPiv(int itemType, Float3* pos);
+  #
+  # Spawns an item with a randomized upwards angle and velocity suitable for a PIV item.
+  # (it doesn't HAVE to be a PIV item, though; season items from cancels also use this)
+  ExpHP.seasonize.spawn-item-like-cancel-piv:
+    - "55 89E5 56 57     " # prologue w/ esi edi
+    - "8B7D08            " # mov     edi, [ebp+0x8]  ; item type
+    - "8B750C            " # mov     esi, [ebp+0xc]  ; pos
+    - "83EC20            " # sub     esp, 0x20
+
+    # Random direction +/- 10 degrees from straight up
+    - "B968764B00        " # mov     ecx, SAFE_RNG
+    - "B880284000        " # mov     eax, RANDF_NEG_1_TO_1
+    - "FFD0              " # call    eax
+    - "D80DF83A4A00      " # fmul    dword [FLOAT_PI_OVER_18]
+    - "D95C240C          " # fstp    dword [esp+0x0c]
+    - "F30F1044240C      " # movss   xmm0, dword [esp+0x0c]
+    - "F30F5C05F43B4A00  " # subss   xmm0, dword [FLOAT_PI_OVER_2]
+
+    - "C744241CFFFFFFFF  " # mov     dword [esp+0x1c], -1          ; stack arg 20: (unknown, new in TH17)
+    - "C7442418ADDE0000  " # mov     dword [esp+0x18], 0xdead      ; stack arg 1c: (unused/optimized away)
+    - "C744241400000000  " # mov     dword [esp+0x14], 0           ; stack arg 18: delay (ignored for PIV/season)
+    - "C7442410CDCC0C40  " # mov     dword [esp+0x10], 0x400ccccd  ; stack arg 14: vel_norm
+    - "F30F1144240C      " # movss   dword [esp+0x0c], xmm0        ; stack arg 10: vel_angle
+    - "C7442408ADDE0000  " # mov     dword [esp+0x08], 0xdead      ; stack arg  c: (unused/optimized away)
+    - "89742404          " # mov     dword [esp+0x04], esi         ; stack arg  8: pos
+    - "893C24            " # mov     dword [esp+0x00], edi         ; stack arg  4: item type
+    - "8B0DB8764B00      " # mov     ecx, dword [ITEM_MANAGER_PTR]
+    - "B840474300        " # mov     eax, ITMMGR_SPAWN_ITEM
+    - "FFD0              " # call    eax
+
+    - "5F 5E 89EC 5D     " # epilogue w/ esi edi
+    - "C20800            " # ret     0x8
