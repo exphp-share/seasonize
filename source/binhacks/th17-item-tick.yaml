@@ -213,7 +213,6 @@ codecaves:
     - "FF34C5 A80D4A00       " # push dword [eax*8 + 0x4a0da8]
     - "EB 15                 " # jmp finish
     # season:
-    # FIXME: This needs its own state (season item flyout state;  state 3 from TH16)
     - "C787 580C0000 09000000  " # mov dword [edi + 0xc58], 9   ; Item::state  (9 = season flyout)
     - "E8 [codecave:ExpHP.seasonize.get-season]" # call GetSeason()
     - "05 81000000             " # add eax, 0x81
@@ -276,8 +275,6 @@ codecaves:
     - "B8 F04C4300               " # mov     eax, 0x434cf0  ; cartesian_from_polar
     - "FFD0                      " # call    eax
 
-    # TODO: TEST SEASON AUTOCOLLECT (graze and then quickly use spring release)
-    #
     # If a bomb/release autocollects during any frame of the flyout state,
     # the item will be autocollected once it stops moving
     - "E8 [codecave:ExpHP.seasonize.is-bomb-or-release-autocollecting]" # call

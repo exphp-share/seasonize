@@ -254,8 +254,6 @@ item_flyout:
     mov     eax, 0x434cf0  ; cartesian_from_polar
     call    eax
 
-    ; TODO: TEST SEASON AUTOCOLLECT (graze and then quickly use spring release)
-    ;
     ; If a bomb/release autocollects during any frame of the flyout state,
     ; the item will be autocollected once it stops moving
     call    codecave_is_bomb_or_release_autocollecting
