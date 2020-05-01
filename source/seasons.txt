@@ -27,10 +27,6 @@ inline int msgAvail(int channel) {
 // TODO: Fix season level being above character dialogue sprites for some reason
 // TODO: Put season gauge below beast items due to their annoying flames
 
-// TODO: PLAY THE DAMN GAME :D :D :D :D
-
-// TODO: (after dust settles) change demos
-
 // TODO: (after release?) add butt shot as a 6th season ("doyou doyou")
 
 //=========================================
