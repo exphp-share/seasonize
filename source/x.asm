@@ -39,6 +39,8 @@
 %define DO_HYPER_CANCEL        0x40f6d0
 
 %define IAT_MessageBoxA  0x49a214
+%define IAT_LoadLibraryA 0x49a0d4
+%define IAT_ExitProcess  0x49a114
 
 %define ECLP_PTR_TO_GETVARINT 0x499FE4
 
@@ -1297,7 +1299,7 @@ check_for_eclplus:
     jnz    .success
 .failure:
     push   0x00000030 ; MB_OK | MB_ICONWARNING
-    push   eclplus_missing_window_title  ; lpCaption FIXUP
+    push   error_window_title  ; lpCaption FIXUP
     push   eclplus_missing_err_msg  ; lpText FIXUP
     push   0x0  ; hWnd
     call   [IAT_MessageBoxA]
@@ -1310,7 +1312,7 @@ check_for_eclplus:
     epilogue_sd
     ret
 
-eclplus_missing_window_title:
+error_window_title:
     db "Seasons patch error"
     db 0
 
@@ -1325,6 +1327,30 @@ eclplus_missing_err_msg:
     db 13, 10
     db "(alternatively, hotpatch the game by running ECLplusLoader.exe while on the main menu)"
     db 0
+
+eclplus_load_err_msg:
+    db "seasonize cannot "
+    db "find ECLPLUS.dll."
+    db " This should have"
+    db " been included wi"
+    db "th the patch.", 13, 10
+    db 13, 10
+    db "If you are runnin"
+    db "g from the season"
+    db "ize source tree, "
+    db "you need to build"
+    db " ECLplus (commit "
+    ECLPLUS_TESTED_COMMIT
+    db " or later) and in"
+    db "stall it yourself"
+    db " by copying ECLPL"
+    db "US.dll into the d"
+    db "irectory with th1"
+    db "7.exe. (ECLplusLo"
+    db "ader.exe is not r"
+    db "equired)", 13, 10
+    db 0
+
 
 ; This is pretty annoying; gen_items_from_cancel got inlined into the two special types of
 ; things that can be canceled (e.g. lasers).  Lots of conditional checks and registers got
@@ -1388,3 +1414,30 @@ calloc:
     mov    esp, ebp
     pop    ebp
     ret    4
+
+codecave_load_eclplus: ; 0x46083e
+    call    load_eclplus ; FIXUP
+    ; Original code
+    push    0x40
+    lea     eax, [ebp-0x226c]
+    abs_jmp_hack 0x460846
+
+load_eclplus:
+    push    eclplus_library_name ; FIXUP
+    call    [IAT_LoadLibraryA]
+    test    eax, eax
+    jz      .error
+    ret
+.error:
+    push   0x00000030 ; MB_OK | MB_ICONWARNING
+    push   error_window_title  ; lpCaption FIXUP
+    push   eclplus_load_err_msg  ; lpText FIXUP
+    push   0x0  ; hWnd
+    call   [IAT_MessageBoxA]
+    push   1
+    call   [IAT_ExitProcess]
+    ud2
+
+eclplus_library_name:
+    db "ECLPLUS.dll", 0
+

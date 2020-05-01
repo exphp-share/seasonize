@@ -1,19 +1,8 @@
 // vi: set ft=c :
+#version 8
 
 entry entry0 {
-    version: 8,
     name: "source/img/face/dummy.png",
-    format: 7,
-    width: 4,
-    height: 4,
-    memoryPriority: 0,
-    lowResScale: 0,
-    hasData: 1,
-    THTXSize: 16,
-    THTXFormat: 7,
-    THTXWidth: 4,
-    THTXHeight: 4,
-    THTXZero: 0,
     sprites: {
         unused: { x: 0, y: 0, w: 4, h: 4 }
     }
@@ -230,19 +219,7 @@ script menu_icon {
 }
 
 entry entry1 {
-    version: 8,
     name: "source/img/front/seasons.png",
-    format: 1,
-    width: 1024,
-    height: 1024,
-    memoryPriority: 10,
-    lowResScale: 1,
-    hasData: 1,
-    THTXSize: 4194304,
-    THTXFormat: 1,
-    THTXWidth: 1024,
-    THTXHeight: 1024,
-    THTXZero: 0,
     sprites: {
         spring: { x: 832, y: 80, w: 32, h: 32 },
         summer: { x: 864, y: 80, w: 32, h: 32 },

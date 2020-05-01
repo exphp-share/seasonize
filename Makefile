@@ -25,6 +25,7 @@ $(PATCH_DEV_DIR)/th17.v1.00b.js: \
 		source/binhacks/th17-drops.yaml \
 		source/binhacks/th17-tokens.yaml \
 		source/binhacks/th17-item-tick.yaml \
+		source/binhacks/th17-eclplus.yaml \
 		source/binhacks/zunlist.yaml
 	scripts/convert-yaml.py -o $@ $^
 
@@ -110,7 +111,7 @@ PROOFS_OF_PATCHES = \
 	# end
 PACKED_SOURCE_ARCHIVE = $(DIR_TO_PACK)/seasonize-v$(VERSION)-src.tar.gz
 ECLPLUS_REPO_DIR = .make/ECLplus
-ECLPLUS_FILENAMES = ECLplusLoader.exe ECLPLUS.dll
+ECLPLUS_FILENAMES = ECLPLUS.dll
 ECLPLUS_BUILD_ARTIFACTS = $(ECLPLUS_FILENAMES:%=$(ECLPLUS_REPO_DIR)/Release/%)
 PACKED_ECLPLUS_FILES = $(ECLPLUS_FILENAMES:%=$(PACKED_EXE_DIR)/%)
 

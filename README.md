@@ -10,13 +10,11 @@ This adds season items and releases to WBaWC.  Subseason options are neither imp
 ## Installation
 
 * Download the latest release zip [from here](https://github.com/exphp-share/seasonize/releases)
+* Unpack it somewhere.  (don't try to use the files from inside your archive viewer...)
 * Copy `th17.dat`, `th17bgm.dat` and `th17.exe` into the `game-files` directory.
-* **If your game copy is DRM-free:** Just run `seasonize-launcher.exe`.
-* **If your game copy is from steam:** ECLplus, thcrap, and Steam DRM currently make for a hot mess. Your best bet is to do the following:
-  - Edit `thcrap/config/games.js`.  You will see that th17 is defined to run `ECLplusLoader.exe`; change this to `th17.exe`.
-  - Run `seasonize-launcher.exe`, wait for the game to load and enter any of the menus on the title screen (this is just to prevent demoplay from starting).
-  - Alt-tab over to your file explorer and run `game-files/ECLplusLoader.exe`.  You should see the message: *Applied ECLplus to a running instance of th17.exe.*
-  - Return to the game; all functionality should work now.
+* Run `seasonize-launcher.exe`, and enjoy!
+
+The patch no longer requires additional workarounds for owners of a copy with Steam DRM.
 
 ## How to play
 
@@ -53,8 +51,7 @@ Many of the raw files for `thcrap` are produced from higher-level source files. 
 
 If this succeeds, the `seasonize/` directory will be a suitable thcrap patch directory.  To testplay:
 
-* Get [ECLPlus](https://github.com/Priw8/ECLplus) and configure thcrap to use `ECLplusLoader.exe` for `th17` in `config/games.js`.
-  + **If your copy is from Steam:**  You'll have to do things differently.  See the note about Steam in the Installation section above.
+* Get [ECLPlus](https://github.com/Priw8/ECLplus).  You only need to place `ECLPLUS.dll` next to your `th17.exe`; seasonize will automatically load it on startup. (thanks to this, `ECLplusLoader.exe` is not required; but it won't hurt if you use it)
 * Use `thcrap_configure` to make a configuration with **`thpatch/lang_en`**, **`32th/score_uncap`**, **`ExpHP/c_key`** and whatever else suits your fancy.  Edit its `.js` file in `<THCRAP DIR>/config` to add an entry for `<SEASONIZE GIT ROOT>/seasonize` at or near the end.
 
 ### New releases
