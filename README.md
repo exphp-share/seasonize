@@ -1,11 +1,9 @@
-# `seasonize` - a.k.a. Wily Beast and Weakest Season
+# `seasonize` - a.k.a.
 
-> How to write an EPIC MEME PATCH:
->
-> 1. spend several months reverse engineering every possible facet of a game
-> 2. write over a thousand lines of assembly to make the experience as authentic as possible
-> 3. ~~cry~~
-> 4. add BIG, JUICY CANCELS and now see everything is better, there's no more badness okay
+<p align="center">
+  <img src="https://github.com/exphp-share/seasonize/blob/master/doc/readme-logo.png?raw=true" title="Wily Beast and Weakest Season">
+  </p>
+
 
 This adds season items and releases to WBaWC.  Subseason options are neither implemented nor planned.  (aside from Doyou's rear shot, which I would like to add eventually)
 
@@ -24,17 +22,21 @@ This adds season items and releases to WBaWC.  Subseason options are neither imp
 
 A menu is presented at game start.  Act fast!!  Press the shot and bomb buttons a number of times corresponding to the season and settings you want, then press C (or wait a few seconds).
 
-This patch uses a separate scorefile.  If you want it to start with your existing progress, you can copy `scoreth17.dat` to `scoreth17_season.dat`.
+### Things to note
+
+* This patch uses a separate scorefile.  If you want it to start with your existing progress, you can copy `scoreth17.dat` to `scoreth17_season.dat`.
+
+* Replays of the main game must be watched beginning from stage 1  (i.e. don't start at stage 3, just fast forward).  Aside from that, replays are fully supported in any game mode.
 
 ### No Beast/No Hyper mode
 
 **This is the default setting and recommended way to play.**  This mode adjusts the balance of the game to account for having season releases:
 
-* **Hypers end immediately:** Season releases are such a massive defensive tool that you should not need hyper breaks to survive.
+* **Hypers end immediately:** Season releases are such a massive defensive tool that you should not need hyper breaks (or the S6 secret token) to survive.
 * **Beast tokens are suppressed (others remain):** You can still get extra lives from life tokens. However, there are significantly fewer "filler" tokens to help you reach 5 tokens, so be careful!
 * **TH16 scoring strats:** Without hypers, how shall we get PIV?  Fear not; bullets canceled by releases generate PIV items, just like in TH16!  Higher season levels produce bigger PIV items, so try to cash in big!
 
-**To enable Beast Tokens and hypers, press Bomb on the season menu.**  Because Hypers + Releases might result in... quite a bit of PIV, the `score_uncap` patch is included.
+**To enable Beast Tokens and hypers, press Bomb on the season menu.**  The `score_uncap` patch is included. You're welcome.
 
 ## Building from source
 
@@ -51,7 +53,8 @@ Many of the raw files for `thcrap` are produced from higher-level source files. 
 
 If this succeeds, the `seasonize/` directory will be a suitable thcrap patch directory.  To testplay:
 
-* Get [ECLPlus](https://github.com/Priw8/ECLplus) and configure thcrap to use `ECLplusLoader.exe` for `th17` in `config/games.js`.  (if you have trouble getting this to work and you have the Steam version of the game, try to obtain a copy without the Steam DRM)
+* Get [ECLPlus](https://github.com/Priw8/ECLplus) and configure thcrap to use `ECLplusLoader.exe` for `th17` in `config/games.js`.
+  + **If your copy is from Steam:**  You'll have to do things differently.  See the note about Steam in the Installation section above.
 * Use `thcrap_configure` to make a configuration with **`thpatch/lang_en`**, **`32th/score_uncap`**, **`ExpHP/c_key`** and whatever else suits your fancy.  Edit its `.js` file in `<THCRAP DIR>/config` to add an entry for `<SEASONIZE GIT ROOT>/seasonize` at or near the end.
 
 ### New releases
