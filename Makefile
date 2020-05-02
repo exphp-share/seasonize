@@ -101,13 +101,14 @@ $(PATCH_DEV_DIR)/th17/st%.ecl: game-files/patched/st%.txt game-files/patched/ECL
 DIR_TO_PACK=.make/dist/seasonize-v$(VERSION)
 PACKED_PATCH_DIR=$(DIR_TO_PACK)/seasonize
 THCRAP_CONFIG_FILENAME=seasonize.js
+BUILD_THCRAP_DIR=.make/thcrap
 PACKED_THCRAP_DIR=$(DIR_TO_PACK)/thcrap
 PACKED_EXE_DIR=$(DIR_TO_PACK)/game-files
-PROOF_OF_THCRAP=$(PACKED_THCRAP_DIR)/bin/thcrap_loader.exe
+PROOF_OF_THCRAP=$(BUILD_THCRAP_DIR)/bin/thcrap_loader.exe
 PROOFS_OF_PATCHES = \
-	$(PACKED_THCRAP_DIR)/repos/thpatch/lang_en/patch.js \
-	$(PACKED_THCRAP_DIR)/repos/ExpHP/c_key/patch.js \
-	$(PACKED_THCRAP_DIR)/repos/32th/score_uncap/patch.js \
+	$(BUILD_THCRAP_DIR)/repos/thpatch/lang_en/patch.js \
+	$(BUILD_THCRAP_DIR)/repos/ExpHP/c_key/patch.js \
+	$(BUILD_THCRAP_DIR)/repos/32th/score_uncap/patch.js \
 	# end
 PACKED_SOURCE_ARCHIVE = $(DIR_TO_PACK)/seasonize-v$(VERSION)-src.tar.gz
 ECLPLUS_REPO_DIR = .make/ECLplus
@@ -130,13 +131,8 @@ THINGS_TO_PACK = \
 	$(DIR_TO_PACK)/LICENSE_ECLPLUS.txt \
 	$(DIR_TO_PACK)/README.md \
 	$(PACKED_LAUNCHER_EXE) \
-	$(PROOF_OF_THCRAP) \
-	$(PROOF_OF_CKEY_PATCH) \
-	$(PROOF_OF_EN_PATCH) \
-	$(PACKED_THCRAP_DIR)/bin/thcrap_update_nope.dll \
-	$(PACKED_THCRAP_DIR)/config/games.js \
-	$(PACKED_THCRAP_DIR)/config/$(THCRAP_CONFIG_FILENAME) \
 	$(PACKED_ECLPLUS_FILES) \
+	copy-thcrap-to-dist \
 	copy-dist-patch-files \
 	check-no-game-files \
 	# end
@@ -164,10 +160,17 @@ $(ECLPLUS_BUILD_ARTIFACTS) &: .make/submodules.stamp
 	@echo >&2 '=============================================='
 	@false
 
+FILES_REQUIRED_IN_THCRAP = \
+	$(PROOF_OF_THCRAP) \
+	$(PROOFS_OF_PATCHES) \
+	$(BUILD_THCRAP_DIR)/bin/thcrap_update_nope.dll \
+	$(BUILD_THCRAP_DIR)/config/games.js \
+	$(BUILD_THCRAP_DIR)/config/$(THCRAP_CONFIG_FILENAME) \
+
 $(PROOF_OF_THCRAP):
-	rm -rf $(PACKED_THCRAP_DIR)
-	mkdir -p $(PACKED_THCRAP_DIR)
-	cd $(PACKED_THCRAP_DIR) && ( \
+	rm -rf $(BUILD_THCRAP_DIR)
+	mkdir -p $(BUILD_THCRAP_DIR)
+	cd $(BUILD_THCRAP_DIR) && ( \
 		wget -O thcrap.zip https://github.com/thpatch/thcrap/releases/download/$(THCRAP_VERSION)/thcrap.zip && \
 		unzip thcrap.zip && \
 		rm thcrap.zip && \
@@ -175,11 +178,11 @@ $(PROOF_OF_THCRAP):
 
 # The order-only prerequisite here is to prevent interleaving output to
 # stderr when both of these need attention.
-$(PROOFS_OF_PATCHES) &: $(PROOF_OF_THCRAP) $(PACKED_THCRAP_DIR)/config/games.js | $(ECLPLUS_BUILD_ARTIFACTS)
+$(PROOFS_OF_PATCHES) &: $(PROOF_OF_THCRAP) $(BUILD_THCRAP_DIR)/config/games.js | $(ECLPLUS_BUILD_ARTIFACTS)
 	@echo >&2 '=============================================='
 	@echo >&2 "== Hi! It's me again, the makefile that can't do anything!"
 	@echo >&2 "== I know it's a pain and all, but... could you by any chance run"
-	@echo >&2 "==     $(PACKED_THCRAP_DIR)/thcrap_configure.exe"
+	@echo >&2 "==     $(BUILD_THCRAP_DIR)/thcrap_configure.exe"
 	@echo >&2 "== and create a configuration with the following patches installed?"
 	@echo >&2 "==     thpatch/lang_en"
 	@echo >&2 "==     32th/score_uncap"
@@ -190,16 +193,21 @@ $(PROOFS_OF_PATCHES) &: $(PROOF_OF_THCRAP) $(PACKED_THCRAP_DIR)/config/games.js 
 
 # thcrap_update.dll needs to exist for patches to be downloaded.
 # After that, we disable it for distribution.
-$(PACKED_THCRAP_DIR)/bin/thcrap_update_nope.dll: $(PROOFS_OF_PATCHES)
+$(BUILD_THCRAP_DIR)/bin/thcrap_update_nope.dll: $(PROOFS_OF_PATCHES)
 	@# The check for existence is in case something somehow causes this to be spuriously run again
 	@#  after thcrap_update.dll has already been moved.
 	@# We don't list thcrap_update.dll as a dependency because, without a recipe, make would treat
 	@#  it like a phony target and constantly rerun this rule.
-	[ -e "$@" ] || mv $(PACKED_THCRAP_DIR)/bin/thcrap_update.dll $@
+	[ -e "$@" ] || mv $(BUILD_THCRAP_DIR)/bin/thcrap_update.dll $@
 	touch $@
 
-$(PACKED_THCRAP_DIR)/config/%.js: source/dist-files/%.js $(PROOF_OF_THCRAP)
+$(BUILD_THCRAP_DIR)/config/%.js: source/dist-files/%.js $(PROOF_OF_THCRAP)
 	mkdir -p $(@D) && cp $< $@
+
+.PHONY: copy-thcrap-to-dist
+copy-thcrap-to-dist: $(FILES_REQUIRED_IN_THCRAP)
+	rm -rf $(PACKED_THCRAP_DIR)
+	cp -a $(BUILD_THCRAP_DIR) $(PACKED_THCRAP_DIR)
 
 $(DIR_TO_PACK)/LICENSE_ECLPLUS.txt: LICENSE_ECLPLUS.txt
 	mkdir -p $(@D) && cp $< $@
@@ -211,7 +219,7 @@ $(DIR_TO_PACK)/README.md: README.md
 
 $(PACKED_LAUNCHER_EXE): $(BUILT_LAUNCHER_EXE)
 	mkdir -p $(@D) && cp $< $@
-$(BUILT_LAUNCHER_EXE) : $(LAUNCHER_SOURCE_FILES) $(PACKED_THCRAP_DIR)/config/games.js | $(ECLPLUS_BUILD_ARTIFACTS)
+$(BUILT_LAUNCHER_EXE) : $(LAUNCHER_SOURCE_FILES) $(BUILD_THCRAP_DIR)/config/games.js | $(ECLPLUS_BUILD_ARTIFACTS)
 	@echo >&2 '=============================================='
 	@echo >&2 '== NOT FOUND:' $@
 	@echo >&2 '=='
@@ -245,5 +253,6 @@ check-no-game-files:
 # .PHONY targets with echoed output are included here too so that repeated runs to make
 # don't repeatedly produce interleaved output.
 $(BUILT_LAUNCHER_EXE): | $(ECLPLUS_BUILD_ARTIFACTS) $(PROOFS_OF_PATCHES)
+copy-thcrap-to-dist: | $(BUILT_LAUNCHER_EXE)
 copy-dist-patch-files: | $(BUILT_LAUNCHER_EXE)
-check-no-game-files: | copy-dist-patch-files pack-source-archive
+check-no-game-files: | copy-dist-patch-files pack-source-archive copy-thcrap-to-dist
