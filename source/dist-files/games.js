@@ -1,3 +1,3 @@
 {
-    "th17": "..\\game-files\\ECLplusLoader.exe"
+    "th17": "..\\game-files\\th17.exe"
 }
