@@ -52,7 +52,7 @@ Many of the raw files for `thcrap` are produced from higher-level source files. 
 If this succeeds, the `seasonize/` directory will be a suitable thcrap patch directory.  To testplay:
 
 * Get [ECLPlus](https://github.com/Priw8/ECLplus).  You only need to place `ECLPLUS.dll` next to your `th17.exe`; seasonize will automatically load it on startup. (thanks to this, `ECLplusLoader.exe` is not required; but it won't hurt if you use it)
-* Use `thcrap_configure` to make a configuration with **`thpatch/lang_en`**, **`32th/score_uncap`**, **`ExpHP/c_key`** and whatever else suits your fancy.  Edit its `.js` file in `<THCRAP DIR>/config` to add an entry for `<SEASONIZE GIT ROOT>/seasonize` at or near the end.
+* Use `thcrap_configure` to make a configuration with **`32th/score_uncap`**, **`ExpHP/c_key`** and whatever else suits your fancy (e.g. **`thpatch/lang_en`**).  Edit its `.js` file in `<THCRAP DIR>/config` to add an entry for `<SEASONIZE GIT ROOT>/seasonize` at or near the end.
 
 ### New releases
 
