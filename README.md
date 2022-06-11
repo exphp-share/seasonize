@@ -7,6 +7,10 @@
 
 This adds season items and releases to WBaWC.  Subseason options are neither implemented nor planned.  (aside from Doyou's rear shot, which I would like to add eventually)
 
+## Gameplay Demo
+
+[![image](https://user-images.githubusercontent.com/1411280/173202923-45181c40-409f-4f15-97e8-28761ba377f0.png)](https://youtu.be/m-jhRNGR8cg)
+
 ## Installation
 
 * Download the latest release zip [from here](https://github.com/exphp-share/seasonize/releases)
